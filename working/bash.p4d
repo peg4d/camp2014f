@@ -30,6 +30,9 @@ NL
 W
 	= [a-zA-Z0-9_]
 
+FILENAME
+	= ((!'/' !' ' !'\x00' .) / '\\ ')+
+
 Statement
 	= IfStatement
 	/ WhileStatement
@@ -397,10 +400,12 @@ ToHead = { @Variable '=' '(' @Constant _ '"' '$' '{' @Variable '[' @INDEX ']' '}
 ToTail = { @Variable '=' '(' '"' '$' '{' @Variable '[' @INDEX ']' '}' '"' _ @Constant ')' #ToTail}
 
 
+FilePath
+	= { (FILENAME / '/')+ #FilePath }
 
-//FilePath
-//	[example: /dir/file]
-//	[example: "dir name/file"]
-//	[example: dir\ name/file]
-//	[example: /dir/$file]
-//	= 森谷
+PathExpr
+	[example: /dir/file]
+	[example: "dir name/file"]
+	[example: dir\ name/file]
+	[example: /dir/$file]
+	= { ( SubExpr / Literal / FilePath )+ #PathExpr }
