@@ -31,8 +31,7 @@ W
 	= [a-zA-Z0-9_]
 
 FILENAME
-//	= ('\\\\' / '\\"' / '\\ ' / (![ /\x00] .))+
-	= (ESCAPED_CHAR / (!FORBIDDEN_CHAR !'\x00' . ))+
+	= (ESCAPED_CHAR / (!FORBIDDEN_CHAR ![\x00] . ))+
 
 Statement
 	= IfStatement
