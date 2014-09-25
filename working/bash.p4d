@@ -5,18 +5,16 @@ File
 	= { (@Statement)* }
 
 S
-	= 松村
+	= ([ \t\n\r] / COMMENT)*
 
 COMMENT
-	= 松村
-=======
 	= '#' (!BREAK .)*
 
 BREAK
    = '\n' / '\r\n' / '\r'
 
 NL
-	= 松村
+	= ';' / BREAK
 
 W
 	= [a-zA-Z0-9_]
