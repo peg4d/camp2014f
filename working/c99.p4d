@@ -255,22 +255,24 @@ Type
 	/ TypeSuffix
 
 TypeSuffix
-	= PrimaryType {@ ( POINTER_QUALIFIER? @{ "*" #TPointer } #TConst / "*" POINTER_QUALIFIER? #TPointer / "[" / (NAME / DIGIT*) "]" #TPointer / addFuncType ) }*
+	= PrimaryType {@
+		POINTER_QUALIFIER? "*" #TConst
+		/ "*" POINTER_QUALIFIER? #TPointer
+		/ "[" (NAME / DIGIT*) "]" #TPointer
+		/ "(" "*" @Name ")" @FunctionParamList #TFunc
+	}*
 
 POINTER_QUALIFIER
 	= "const" / "restrict"
-
-addFuncType
-	= "(" "*" @Name ")" "(" (@Type (_ NAME _)? ("," @Type (_ NAME _)? )* )? ")" #TFunc
 
 PrimaryType
 	= StructDeclaration
 	/ { "union"  @Name addStructMember?  #TUnion } _
 	/ { "enum"   @Name "{" @EnumeratorList ","? "}" #TEnum } _
 	/ { "void" #TVoid } _
-	/ { SIGN? "char"  _       #TInt } _
-	/ { SIGN? "short" _       #TInt } _
-	/ { SIGN? "int"   _       #TInt } _
+	/ { SIGN? "char"         #TInt } _
+	/ { SIGN? "short"        #TInt } _
+	/ { SIGN? "int"          #TInt } _
 	/ { "float"       _   #TFloat } _
 	/ { "double"      _   #TFloat } _
 	/ { "long" _ "double" _ #TFloat } _
@@ -311,7 +313,7 @@ Enumerator
 //===================
 
 Block
-	= { "{" (@(Statement / @Declaration))* "}" #Block }
+	= { "{" (@Statement / @Declaration)* "}" #Block }
 
 Statement
 	= Block
@@ -409,7 +411,7 @@ CastExpression
 
 PostfixExpression
 	= ( PrimaryExpression / { "(" @Type ")" "{" @{ (addInitializerList)* ","? #Initializer } "}" } ) 
-	{@ (addFunctionCall / addIndex  / "." @Name #Field / "->" @Name #PointerField / "++" #Inc / "--" #Dec) }*
+	{@ (addFunctionCall / addIndex / addField / addInc / addDec) }*
 
 addFunctionCall
 	= @{ "(" addArgumentExpressionList? ")" #List} #Apply
@@ -419,6 +421,18 @@ addArgumentExpressionList
 
 addIndex
 	= "[" @Expression "]" #Index
+
+addField
+	= "." @Name #Field
+
+addPointerField
+	= "->" @Name #PointerField
+
+addInc
+	= "++" #Inc
+
+addDec
+	= "--" #Dec
 
 PrimaryExpression
 	= Constant
