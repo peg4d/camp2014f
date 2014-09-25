@@ -5,17 +5,24 @@ File
 	= { (@Statement)* }
 
 S
-	= ([ \t\n\r] / COMMENT)*
+	= 松村
 
 COMMENT
+	= 松村
+=======
 	= '#' (!BREAK .)*
 
 BREAK
    = '\n' / '\r\n' / '\r'
 
 NL
-	= ';' / BREAK
+	= 松村
 
+W
+	= [a-zA-Z0-9_]
+
+NAME
+	= W+
 
 Statement
 	= IfStatement
@@ -47,6 +54,25 @@ FunctionStatement
 
 CaseStatement
 	= 本多
+
+UntilStastement
+	= { 'until' Expression NL 
+	   'do' NL
+	   Block
+	   'done' NL #Unitl}
+
+DeclareStatement
+	= { 'declare' S ( '-i' #Num / '-a' #Array ) S Name NL }
+	/ { 'declare' S Name NL #String }
+
+LetStatement
+	= { 'let' S PostfixExpression S Name NL }
+PostfixExpression
+	= '++' #PrefixInc
+	/ '--' #PrefixDec
+
+Name
+	= {NAME #Name} S*
 
 // それ以外 田村 (全員調整) ただし、Command は関口
 
