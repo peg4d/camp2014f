@@ -11,7 +11,7 @@ COMMENT
 	= '#' (!BREAK .)*
 
 BREAK
-   = / '\n' / '\r\n' / '\r'
+   = '\n' / '\r\n' / '\r'
 
 NL
 	= ';' / BREAK
