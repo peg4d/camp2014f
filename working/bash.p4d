@@ -1,8 +1,10 @@
 // PEG4d Bash file
 
 File
-	[全体統合: 松村]
 	= { (@Statement)* }
+
+Chunk
+	= Statement
 
 S
 	= ([ \t\n\r] / COMMENT)
@@ -22,9 +24,6 @@ NL
 W
 	= [a-zA-Z0-9_]
 
-NAME
-	= W+
-
 Statement
 	= IfStatement
 	/ WhileStatement
@@ -35,6 +34,9 @@ Statement
 	/ DeclareStatement
 	/ LetStatement
 	/ Command
+
+Block
+	= { (@Statement)* #Block }
 
 IfStatement	//田村
 	= { 'if' 'test'? @Expression NL
@@ -72,14 +74,14 @@ CaseStatement
 	= { 'case' _ case #CaseStatement }
 	
 case
-	= @Variable _ 'in' _ caseMember _ (caseMember _)* (lastCaseMember / 'esac' ) _
+	= @Variable _ 'in' _ @CaseMember _ (@CaseMember _)* (@LastCaseMember / 'esac' ) _
 	
-caseMember
-	= ( @Expression ')' _ @Statement _ (@Statement _)* ';;')
-	
-lastCaseMember
-	= @Defualt _ ((@Statement) _) ((( 'esac' / @Statement) _)*) 
-	
+CaseMember
+	= { @Expression ')' _ @Statement _ (@Statement _)* ';;' #CaseMember }
+
+LastCaseMember
+	= { @Defualt _ ((@Statement) _) ((( 'esac' / @Statement) _)*)  #LastCaseMember }
+
 Defualt
     = { '*' #DefualtExpression } ')'
 
@@ -199,19 +201,143 @@ FORBIDDEN_CHAR
 ESCAPED_CHAR
 	= '\\' (FORBIDDEN_CHAR / . )
 
-
 Expression
-	= 内田
+	= TestCommand
+	/ ExprCommand
+	/ AssignmentExpression
+
+TestCommand
+	= { 'test' S+ @EqualityExpression #Test}
+
+ExprCommand
+	= { 'expr' S+ @EqualityExpression #Test}
+
+AssignmentExpression
+	= EqualityExpression {@ '=' @AssignmentExpression S* #Assign }*
+
+EqualityExpression
+	= RelationalExpression {@ ( "-eq" #Equals / "-ne" #NotEquals) @RelationalExpression }*
+
+RelationalExpression
+	= AdditiveExpression {@ ( "-le" #LessThanEquals / "-ge" #GreaterThanEquals / "-lt" #LessThan / "-gt" #GreaterThan ) @AdditiveExpression }*
+
+AdditiveExpression
+	= MultiplicativeExpression {@ ( "+" #Add / "-" #Sub ) @MultiplicativeExpression }*
+
+MultiplicativeExpression
+	= PrimaryExpression {@ ( "*" #Mul / "/" #Div / "%" #Mod ) @PrimaryExpression }*
+
+PrimaryExpression
+	= { '$(' S* (@Expression / @Command) S* ')' #SubCommand }
+	/ { '${' @Name '}' #Variable }
+	/ { '$' @Name '' #Variable }
+	/ { '((' @Expression '))' #Variable }
+	/ { '[' S+ @Expression S+ ']' #Variable }
+	/ Literal
 
 Literal
-	= 内田
+	= CFloat
+	/ CInteger
+	/ Name
+	/ CString
 
-Array
-	= 石井
+CString
+	=  '"' { STRING_CONTENT* #String } '"'
+	/ "'" { STRING_CONTENT* #String } "'"
 
-FilePath
-	[example: /dir/file]
-	[example: "dir name/file"]
-	[example: dir\ name/file]
-	[example: /dir/$file]
-	= 森谷
+STRING_CONTENT
+	= ESCAPE
+	/ ![\"\n\\] .
+
+ESCAPE
+	= SIMPLE_ESCAPE
+	/ OCTAL_ESCAPE
+	/ HEX_ESCAPE
+	/ UCHAR
+
+UCHAR
+	= '\\u' HEX4
+	/ '\\U' HEX4 HEX4
+
+HEX4
+	= HEX HEX HEX HEX
+
+SIMPLE_ESCAPE
+	=	 '\\' ['\"?\\abfnrtv]
+
+OCTAL_ESCAPE
+	= '\\' [0-7] [0-7]? [0-7]?
+
+HEX_ESCAPE
+	= '\\x' HEX+
+
+Name
+	= { NAME #Name } S*
+
+KEYWORD
+	= 'for' / 'while' / 'do' / 'done' / 'if' / 'case'
+
+DIGIT
+	= [0-9]
+
+CInteger
+	= { ( DECIMAL / HEXICAL / OCTAL ) #Integer } INT_SUFFIX? S*
+
+CFloat
+	= { ( DECIMAL_FLOAT / HEX_FLOAT )  #Float } FLOAT_SUFFIX? S*
+
+DECIMAL
+	= [1-9] DIGIT*
+
+HEXICAL
+	= HEX_PREFIX HEX+
+
+OCTAL
+	= '0' [0-7]*
+
+INT_SUFFIX
+	= [uU] LONG_SUFFIX?
+	/ LONG_SUFFIX [uU]?
+
+LONG_SUFFIX
+	= 'll'
+	/ 'LL'
+	/ [lL]
+
+DECIMAL_FLOAT
+	= FRACTION EXPONENT?
+	/ DIGIT+ EXPONENT
+
+HEX_FRACTION
+	= HEX* '.' HEX+
+	/ HEX+ '.'
+
+FRACTION
+	= DIGIT* '.' DIGIT+
+	/ DIGIT+ '.'
+
+BINARY_EXPONENT
+	= [pP] [+\-]? DIGIT+
+
+FLOAT_SUFFIX
+	= [flFL]
+
+EXPONENT
+	= [eE] [+\-]? DIGIT+
+
+HEX_FLOAT
+	= HEX_PREFIX HEX_FRACTION BINARY_EXPONENT?
+	/ HEX_PREFIX HEX+ BINARY_EXPONENT
+
+HEX_PREFIX
+	= '0' [xX]
+
+//Array
+//	= 石井
+//
+//FilePath
+//	[example: /dir/file]
+//	[example: "dir name/file"]
+//	[example: dir\ name/file]
+//	[example: /dir/$file]
+//	= 森谷
