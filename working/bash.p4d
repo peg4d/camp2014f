@@ -34,7 +34,18 @@ FunctionStatement
 	= 山口
 
 CaseStatement
-	= 本多
+	= = { 'case'  S* Case #CaseStatement }
+	
+Case
+	= @Variable S* 'in' S* CaseMember S*( CaseMember S*)* (LastCaseMember / 'esac' ) S*
+	
+CaseMember
+	= ( @Expression ')' S* @Statement S* (@Statement S*)* ';;')
+	
+LastCaseMember
+	= @Defualt S* ((@Statement) S*) ((( 'esac' / @Statement) S*)*) 
+	
+Defualt = { '*' #DefualtExpression } ')'
 
 // それ以外 田村 (全員調整) ただし、Command は関口
 
