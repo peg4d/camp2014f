@@ -25,21 +25,12 @@ export
 File
 	= _ {
 			( @TopLevel
-			/ @{ @StructDecl @Semicolon #StructDeclaration }
+			/ @{ @StructDecl ";" #StructDeclaration }
 			/ @Statement
 			/ @Expression
 			/ @Type
 			/ _ )*
 		#Source } EOT
-
-AfterSemicolon
-	= TopLevel
-	/ StructDecl Semicolon
-	/ "}"
-	/ Statement
-	/ Expression
-	/ Type
-	/ _
 
 Chunk
 	= TopLevel
@@ -187,21 +178,12 @@ KEYWORD
 "include"	= 'include' !W _
 "define"	= 'define' !W _
 
-LBR
-	= "(" _
-	/ {`( not found` #Message }
-
-RBR
-	= ")" _ ")" (")" / _)+ { `too many )` #Message}
-	/ ")"
-	/ {`) not found` #Message }
-
 EOT	= !.
 
 TopLevel
 	= FunctionDefinition
-	/ { @{ @AnnotationList @Type (@InitDeclAssign / @InitDecl ("," @InitDecl)+ )  ATTRIBUTE? @Semicolon #Declaration } #DeclarationStatement }
-	/ { @[0]AnnotationList @[1]Type @[2]Name @[3]LBR @[4]FunctionParamList @[5]RBR @[6]Semicolon #Function }
+	/ { @{ @AnnotationList @Type (@InitDeclAssign / @InitDecl ("," @InitDecl)+ )  ATTRIBUTE? ";" #Declaration } #DeclarationStatement }
+	/ { @AnnotationList @Type @Name "(" @FunctionParamList ")" ";" #Function }
 	/ { @Declaration #DeclarationStatement }
 	/ TypeDef
 	/ Macro
@@ -211,7 +193,7 @@ Macro
 	/ "#" "define"  { (!'\n' .)* #Define }
 
 FunctionDefinition
-	= { @[0]AnnotationList @[1]Type @[2]Name @[3]LBR @[4]FunctionParamList @[5]RBR @[6]Block #Function }
+	= { @AnnotationList @Type @Name "(" @FunctionParamList ")" @Block #Function }
 
 AnnotationList
 	= { (@Annotation)*  #List } _
@@ -237,10 +219,10 @@ FunctionParam
 //==============
 
 TypeDef
-	= { "typedef" @Type @Name _ @Semicolon #TypeDeclaration }
+	= { "typedef" @Type @Name _ ";" #TypeDeclaration }
 
 Declaration
-	= { @AnnotationList @Type @InitDecl ("," @InitDecl)*  ATTRIBUTE? @Semicolon #Declaration }
+	= { @AnnotationList @Type @InitDecl ("," @InitDecl)*  ATTRIBUTE? ";" #Declaration }
 
 InitDecl
 	= { @VarName ("=" @Initializer)? #VarDecl } _
@@ -254,9 +236,9 @@ VarName
 
 Initializer
 	= AssignmentExpression
-	/ "{" { (AddInitializerList)* ","? #Initializer } "}"
+	/ "{" { (addInitializerList)* ","? #Initializer } "}"
 
-AddInitializerList
+addInitializerList
 	= (@Designation / @Initializer)? ("," (@Designation / @Initializer))*
 
 Designation
@@ -275,17 +257,17 @@ Type
 	/ TypeSuffix
 
 TypeSuffix
-	= PrimaryType {@ ( POINTER_QUALIFIER @{ "*" #TPointer } #TConst / "*" (@POINTER_QUALIFIER)* #TPointer / "[" / (NAME / DIGIT*) "]" #TPointer / AddFuncType ) }*
+	= PrimaryType {@ ( POINTER_QUALIFIER? @{ "*" #TPointer } #TConst / "*" POINTER_QUALIFIER? #TPointer / "[" / (NAME / DIGIT*) "]" #TPointer / addFuncType ) }*
 
 POINTER_QUALIFIER
 	= "const" / "restrict"
 
-AddFuncType
+addFuncType
 	= "(" "*" @Name ")" "(" (@Type (_ NAME _)? ("," @Type (_ NAME _)? )* )? ")" #TFunc
 
 PrimaryType
 	= StructDecl
-	/ { "union"  @Name AddStructMember?  #TUnion } _
+	/ { "union"  @Name addStructMember?  #TUnion } _
 	/ { "enum"   @Name "{" @EnumeratorList ","? "}" #TEnum } _
 	/ { "void" #TVoid } _
 	/ { SIGN? "char"          #TInt } _
@@ -303,7 +285,7 @@ PrimaryType
 	/ { NAME   #Name } _
 
 StructDecl
-	= { "struct" @Name AddStructMember? #TStruct }
+	= { "struct" @Name addStructMember? #TStruct }
 
 SIGN
 	= ("signed" / "unsigned")
@@ -311,11 +293,11 @@ SIGN
 NAME_T
 	= !DIGIT (!('_t' !W)  W )+ '_t' !W
 	
-AddStructMember
+addStructMember
 	= '{' _ (@StructDeclaration / _ )+ _ "}"
 
 StructDeclaration
-	= { @AnnotationList @Type @StructMemberName  ("," @StructMemberName )* @Semicolon _ #StructMemberDeclaration }
+	= { @AnnotationList @Type @StructMemberName  ("," @StructMemberName )* ";" _ #StructMemberDeclaration }
 
 StructMemberName
 	= VarName {@ ":" @ConstantExpression #Bit}*
@@ -333,27 +315,22 @@ Enumerator
 Block
 	= { "{" (@(Statement / { @Declaration #DeclarationStatement }))* "}" #Block }
 
-Semicolon
-	= ";"
-	/ [:,] &_ &AfterSemicolon { `Semicolon` #Message}
-	/ &_ &AfterSemicolon { `Semicolon` #Message}
-
 Statement
 	= Block
-	/ { "if"     @[0]LBR @[1]Expression @[2]RBR @[3]Statement ("else" @[4]Statement)? #If }
-	/ { "switch" @[0]LBR @[1]Expression @[2]RBR @[3]Statement #Switch }
-	/ { "while"  @LBR @Expression @RBR @Statement #While }
-	/ { "do" @[0]Statement "while" @[1]LBR @[2]Expression @[3]RBR @Semicolon #DoWhile }
-	/ { "for" @[0]LBR (@[1]Expression)? @[2]Semicolon (@[3]Expression)? @[4]Semicolon (@[5]Expression)? @[6]RBR @[7]Statement #For }
-	/ { "for" @[0]LBR @[1]Declaration (@[3]Expression)? @[4]Semicolon (@[5]Expression)? @[6]RBR @[7]Statement #For }
-	/ { "goto" @Name @Semicolon #Goto }
-	/ { "continue" @Semicolon #Continue }
-	/ { "break" @Semicolon #Break }
-	/ { "return" (@Expression)?  @Semicolon #Return }
+	/ { "if"     "(" @Expression ")" @Statement ("else" @Statement)? #If }
+	/ { "switch" "(" @Expression ")" @Statement #Switch }
+	/ { "while"  "(" @Expression ")" @Statement #While }
+	/ { "do" @Statement "while" "(" @Expression ")" ";" #DoWhile }
+	/ { "for" "(" (@Expression)? ";" (@Expression)? ";" (@Expression)? ")" @Statement #For }
+	/ { "for" "(" @Declaration (@Expression)? ";" (@Expression)? ";" @Statement #For }
+	/ { "goto" @Name ";" #Goto }
+	/ { "continue" ";" #Continue }
+	/ { "break" ";" #Break }
+	/ { "return" (@Expression)?  ";" #Return }
 	/ { "case" @ConstantExpression ":" (!"case" !"default" @Statement)* #SwitchCase }
 	/ { "default" ":" (!"case" @Statement)* #SwitchDefault }
 	/ { @Name ":" #Label }
-	/ { @Expression @Semicolon #ExpressionStatement }
+	/ { @Expression ";" #ExpressionStatement }
 	/ { #Empty } ";"
 
 
@@ -364,10 +341,10 @@ Expression
 	= AssignmentExpression {@ "," @AssignmentExpression #Expression }*
 
 AssignmentExpression
-	= { @UnaryExpression AddAssignmentOperator @AssignmentExpression }
+	= { @UnaryExpression addAssignmentOperator @AssignmentExpression }
 	/ ConditionalExpression
 
-AddAssignmentOperator
+addAssignmentOperator
 	= "="        #Assign
 	/ "*="    #AssignMul
 	/ "/="     #AssignDiv
@@ -433,16 +410,16 @@ CastExpression
 	/ UnaryExpression
 
 PostfixExpression
-	= ( PrimaryExpression / { "(" @Type ")" "{" @{ (AddInitializerList)* ","? #Initializer } "}" } ) 
-	{@ (AddFunctionCall / AddIndex  / "." @Name #Field / "->" @Name #PointerField / "++" #Inc / "--" #Dec) }*
+	= ( PrimaryExpression / { "(" @Type ")" "{" @{ (addInitializerList)* ","? #Initializer } "}" } ) 
+	{@ (addFunctionCall / addIndex  / "." @Name #Field / "->" @Name #PointerField / "++" #Inc / "--" #Dec) }*
 
-AddFunctionCall
-	= @{ "(" AddArgumentExpressionList? @RBR #List} #Apply
+addFunctionCall
+	= @{ "(" addArgumentExpressionList? ")" #List} #Apply
 
-AddArgumentExpressionList
+addArgumentExpressionList
 	= (@AssignmentExpression ("," @AssignmentExpression)*)
 
-AddIndex
+addIndex
 	= "[" @Expression "]" #Index
 
 PrimaryExpression
