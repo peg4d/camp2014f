@@ -48,7 +48,7 @@ Statement
 Block
 	= { (@Statement)* #Block }
 
-IfStatement	//田村
+IfStatement
 	= { 'if' 'test'? @Expression NL
 		'then' NL
 		@Block
@@ -58,9 +58,9 @@ IfStatement	//田村
 
 ForStatement
 	= { 'for' ( @Literal 'in' @Array / '((' @Expression NL @Expression NL @Expression '))' ) NL
-        'do' NL
-        @Block
-        'done' NL #ForStatement }
+		'do' NL
+		@Block
+		'done' NL #ForStatement }
 
 FunctionStatement
 	= { ( @FunctionDecl / @FunctionCall ) #functionStatement }
@@ -97,29 +97,26 @@ Defualt
 
 UntilStatement
 	= { 'until' Expression NL
-	   'do' NL
-	   Block
-	   'done' NL #Unitl}
+		'do' NL
+		@Block
+		'done' NL #UntilStatement}
 
 DeclareStatement
-	= { 'declare' _ ( '-i' #Num / '-a' #Array ) _ Name NL }
-	/ { 'declare' _ Name NL #String }
+	= { 'declare' _ ( '-i' #Num / '-a' #Array ) _ @VarName NL }
+	/ { 'declare' _ @VarName NL #String }
 
 LetStatement
-	= { 'let' _ postfixExpression _ Name NL }
+	= { 'let' _ postfixExpression _ @VarName NL }
 
 postfixExpression
 	= '++' #PrefixInc
 	/ '--' #PrefixDec
 
-Name
-	= { NAME #Name } _
-
 WhileStatement
 	= { 'while' Expression NL
-	    'do' NL
-	    Block
-	    'done' NL #WhileStatement }
+		'do' NL
+		@Block
+		'done' NL #WhileStatement }
 
 Command
 	= CommandExpr _ NL	// <new line>, ';', '&'
