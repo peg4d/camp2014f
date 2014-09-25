@@ -36,12 +36,12 @@ Statement
 	/ Command
 
 IfStatement	//田村
-	= 'if' 'test'? @Expression NL
+	= { 'if' 'test'? @Expression NL
 		'then' NL
 		@Block
 		('elif' @Expression NL 'then' NL @Block)*
 		('else' @Expression NL @Block)?
-		'fi' NL
+		'fi' NL #IfStatement}
 
 ForStatement
 	= { 'for' ( @Literal 'in' @Array / '((' @Expression NL @Expression NL @Expression '))' ) NL
@@ -56,7 +56,7 @@ CaseStatement
 	= 本多
 
 UntilStastement
-	= { 'until' Expression NL 
+	= { 'until' Expression NL
 	   'do' NL
 	   Block
 	   'done' NL #Unitl}
