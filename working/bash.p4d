@@ -5,7 +5,7 @@ File
 	= { (@Statement)* }
 
 S
-	= ([ \t\n\r] / COMMENT)*
+	= ([ \t\n\r] / COMMENT)
 
 COMMENT
 	= '#' (!BREAK .)*
@@ -60,13 +60,13 @@ FunctionName
 	= { Name #functionName }
 
 ArgList
-	= ( @Arg S* )+
+	= ( @Arg S+ )+
 
 Arg
 	= { W #arg }
 
 CaseStatement
-	= = { 'case'  S* Case #CaseStatement }
+	= { 'case'  S* Case #CaseStatement }
 	
 Case
 	= @Variable S* 'in' S* CaseMember S*( CaseMember S*)* (LastCaseMember / 'esac' ) S*
