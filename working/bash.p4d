@@ -85,7 +85,7 @@ LastCaseMember
 Defualt
     = { '*' #DefualtExpression } ')'
 
-UntilStastement
+UntilStatement
 	= { 'until' Expression NL
 	   'do' NL
 	   Block
@@ -270,9 +270,6 @@ OCTAL_ESCAPE
 
 HEX_ESCAPE
 	= '\\x' HEX+
-
-Name
-	= { NAME #Name } S*
 
 KEYWORD
 	= 'for' / 'while' / 'do' / 'done' / 'if' / 'case'
