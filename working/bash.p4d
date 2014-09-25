@@ -392,10 +392,10 @@ AddElementToArray
 	/   @ToTail ) #AddElementToArray }
 
 ToHead
-    = { @Variable '=' '(' @Constant _ '"' '$' '{' @Variable '[' addINDEX ']' '}' '"' ')' #ToHead }
+    = { @Variable '=' '(' @Constant _ '"' @Reference '"' ')' #ToHead }
 
 ToTail
-    = { @Variable '=' '(' '"' '$' '{' @Variable '[' addINDEX ']' '}' '"' _ @Constant ')' #ToTail }
+    = { @Variable '=' '(' '"' @Reference '"' _ @Constant ')' #ToTail }
 
 FilePath
 	[example: /dir/file]
