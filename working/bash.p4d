@@ -7,6 +7,9 @@ File
 S
 	= ([ \t\n\r] / COMMENT)
 
+_
+    = S*
+
 COMMENT
 	= '#' (!BREAK .)*
 
@@ -66,18 +69,19 @@ Arg
 	= { W #arg }
 
 CaseStatement
-	= { 'case'  S* Case #CaseStatement }
+	= { 'case' _ case #CaseStatement }
 	
-Case
-	= @Variable S* 'in' S* CaseMember S*( CaseMember S*)* (LastCaseMember / 'esac' ) S*
+case
+	= @Variable _ 'in' _ caseMember _ (caseMember _)* (lastCaseMember / 'esac' ) _
 	
-CaseMember
-	= ( @Expression ')' S* @Statement S* (@Statement S*)* ';;')
+caseMember
+	= ( @Expression ')' _ @Statement _ (@Statement _)* ';;')
 	
-LastCaseMember
-	= @Defualt S* ((@Statement) S*) ((( 'esac' / @Statement) S*)*) 
+lastCaseMember
+	= @Defualt _ ((@Statement) _) ((( 'esac' / @Statement) _)*) 
 	
-Defualt = { '*' #DefualtExpression } ')'
+Defualt
+    = { '*' #DefualtExpression } ')'
 
 UntilStastement
 	= { 'until' Expression NL
@@ -86,19 +90,18 @@ UntilStastement
 	   'done' NL #Unitl}
 
 DeclareStatement
-	= { 'declare' S ( '-i' #Num / '-a' #Array ) S Name NL }
-	/ { 'declare' S Name NL #String }
+	= { 'declare' _ ( '-i' #Num / '-a' #Array ) _ Name NL }
+	/ { 'declare' _ Name NL #String }
 
 LetStatement
-	= { 'let' S PostfixExpression S Name NL }
-PostfixExpression
+	= { 'let' _ postfixExpression _ Name NL }
+
+postfixExpression
 	= '++' #PrefixInc
 	/ '--' #PrefixDec
 
 Name
-	= { NAME #Name } S*
-
-// それ以外 田村 (全員調整) ただし、Command は関口
+	= { NAME #Name } _
 
 WhileStatement
 	= { 'while' Expression NL
@@ -106,38 +109,37 @@ WhileStatement
 	    Block
 	    'done' NL #WhileStatement }
 
-
 Command
-	= CommandExpr S? NL	// <new line>, ';', '&'
+	= CommandExpr _ NL	// <new line>, ';', '&'
 
 CommandExpr
-	= { @CommandList S? @Background? #command }
+	= { @CommandList _ @Background? #command }
 
 Background
-	= {'&' #background} S?
+	= { '&' #background } _
 
 CommandList
 	= OrList
 
 OrList
-	= AndList {@ S? '||' S? @AndList #or}*
+	= AndList {@ _ '||' _ @AndList #or}*
 
 AndList
-	= PipedCommand {@ S? '&&' S? @PipedCommand #and}*
+	= PipedCommand {@ _ '&&' _ @PipedCommand #and}*
 
 PipedCommand
-	= SingleCommand {S? '|' S? @SingleCommand #pipe}*
+	= SingleCommand {_ '|' _ @SingleCommand #pipe}*
 
 SingleCommand
-	= { @CmdSymbolSeq (S (@CommandArg / @Redirect))* #singleCommand}
+	= { @CmdSymbolSeq (S+ (@CommandArg / @Redirect))* #singleCommand }
 
 Redirect
-	= {@RedirectOpArgLess / @RedirectOp S? @CommandArg #redirect}
+	= { @RedirectOpArgLess / @RedirectOp _ @CommandArg #redirect }
 
 RedirectOp
 	= {
-		Number? '>>'
-		/ Number? '>'
+		NUMBER? '>>'
+		/ NUMBER? '>'
 		/ '&>>'
 		/ '&>'
 		/ '<<<'	// here string
@@ -145,9 +147,9 @@ RedirectOp
 	 #redirectOp }
 
 RedirectOpArgLess
-	= { Number '>&' Number #redirectOp }
+	= { NUMBER '>&' NUMBER #redirectOp }
 
-Number
+NUMBER
 	= '0'
 	/ [1-9][0-9]*
 
@@ -170,32 +172,32 @@ SubCmd
 
 SubExpr
 	= '$' { @SubExprSuffix #subExpr}
-	/ '${' { @VarName '[' @Index ']' #arraySubExpr} '}'
+	/ '${' { @VarName '[' @INDEX ']' #arraySubExpr} '}'
 	/ '${' { @SubExprSuffix #subExpr} '}'
 
-Index
-	= Number / '@'
+INDEX
+	= NUMBER / '@'
 
 SubExprSuffix
 	= VarName
-	/ { '?' / '*' / '@' / '#' /Number #specialChar}
+	/ { '?' / '*' / '@' / '#' /NUMBER #specialChar }
 
 VarName
-	= { '_' ('_' / Letter / Number)+ 
-		/ Letter ('_' / Letter / Number)* #varName}
+	= { '_' ('_' / LETTER / NUMBER)+ 
+		/ LETTER ('_' / LETTER / NUMBER)* #varName }
 
-Letter
+LETTER
 	= [a-zA-Z]+
 
 Identifier	//TODO: utf8
-	= { '$' / (EscapedChar / !ForbitChar . )+ #identifier}
+	= { '$' / (ESCAPED_CHAR / !FORBIDDEN_CHAR . )+ #identifier }
 
-ForbitChar
+FORBIDDEN_CHAR
 	= '\t' / ' ' / '\n' / '\r' / '{' / '}' / '(' / ')' 
 	/ '!' / '`' / '\'' / '"' / '&' / '|' / '#' / '$' / '<' / '>'
 
-EscapedChar
-	= '\\' (ForbitChar / . )
+ESCAPED_CHAR
+	= '\\' (FORBIDDEN_CHAR / . )
 
 
 Expression
