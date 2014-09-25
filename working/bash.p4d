@@ -205,7 +205,7 @@ ESCAPED_CHAR
 Expression
 	= TestCommand
 	/ ExprCommand
-	/ AssignmentExpression
+	/ { @AssignmentExpression S* (@Command)? #CommandWithAssign }
 
 TestCommand
 	= { 'test' S+ @EqualityExpression #Test}
