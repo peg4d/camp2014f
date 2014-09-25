@@ -139,7 +139,7 @@ PipedCommand
 	= SingleCommand {_ '|' _ @SingleCommand #pipe}*
 
 SingleCommand
-	= { @CmdSymbolSeq (S+ (@CommandArg / @Redirect))* #singleCommand }
+	= { @CmdSymbolSeq (S+ (@CommandArg / @Redirect / @HereDoc))* #singleCommand }
 
 Redirect
 	= { @RedirectOpArgLess / @RedirectOp _ @CommandArg #redirect }
@@ -333,6 +333,22 @@ HEX_FLOAT
 
 HEX_PREFIX
 	= '0' [xX]
+
+HereDoc
+  =  { #HereDoc @HereDocStart " "* @HereDocDelim "\n" @HereDocBody _ }
+
+HereDocStart
+  = { #IgnoreTab ("<<-" `true` / "<<" `false`) }
+
+HereDocBody
+  = { #Body (!( "\n" DelimKeyword) .)+ } "\n" DelimKeyword
+
+HereDocDelim
+  = { ( "\"" DelimKeyword "\"" / "\'" DelimKeyword "\'")  #IgnoreArgs `true` }
+  / { DelimKeyword #IgnoreArgs `false` }
+
+DelimKeyword
+  = "EOF"
 
 //Array
 //	= 石井
