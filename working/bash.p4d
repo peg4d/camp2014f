@@ -166,10 +166,10 @@ NUMBER
 	/ [1-9][0-9]*
 
 CmdSymbolSeq
-	= { @CmdSymbol+ #commandName }
+	= { (@CmdSymbol)+ #commandName }
 
 CommandArg
-	= { @CmdSymbol+ #commandArg }
+	= { (@CmdSymbol)+ #commandArg }
 
 CmdSymbol
 	= CString
