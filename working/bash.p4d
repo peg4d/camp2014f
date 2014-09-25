@@ -39,13 +39,13 @@ IfStatement	//田村
 		@Block
 		('elif' @Expression NL 'then' NL @Block)*
 		('else' @Expression NL @Block)?
-		'fi' NL #IfStatement}
+		'fi' NL #IfStatement }
 
 ForStatement
 	= { 'for' ( @Literal 'in' @Array / '((' @Expression NL @Expression NL @Expression '))' ) NL
-  'do' NL
-  @Block
-  'done' NL #ForStatement}
+        'do' NL
+        @Block
+        'done' NL #ForStatement }
 
 FunctionStatement
 	= 山口
@@ -70,7 +70,7 @@ PostfixExpression
 	/ '--' #PrefixDec
 
 Name
-	= {NAME #Name} S*
+	= { NAME #Name } S*
 
 // それ以外 田村 (全員調整) ただし、Command は関口
 
