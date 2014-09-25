@@ -96,21 +96,21 @@ Defualt
 	= { '*' #DefualtExpression } ')'
 
 UntilStatement
-	= { 'until' Expression NL 'do' NL @Block 'done' NL #Unitl }
+	= { 'until' _ Expression NL 'do' _ NL @Block 'done' _ NL #UntilStatement }
 
 DeclareStatement
-	= { 'declare' _ ( '-i' #Num / '-a' #Array ) _ @Name NL }
-	/ { 'declare' _ @Name NL #String }
+	= { 'declare' _ ( '-i' #Num / '-a' #Array ) _ @Name _ NL }
+	/ { 'declare' _ @Name _ NL #String }
 
 LetStatement
-	= { 'let' _ postfixExpression _ @Name NL }
+	= { 'let' _ postfixExpression _ @Name _ NL }
 
 postfixExpression
 	= '++' #PrefixInc
 	/ '--' #PrefixDec
 
 WhileStatement
-	= { 'while' @Expression NL 'do' NL @Block 'done' NL #WhileStatement }
+	= { 'while' @Expression NL 'do' _ NL @Block 'done' _ NL #WhileStatement }
 
 Command
 	= CommandExpr _ NL	// <new line>, ';', '&'
