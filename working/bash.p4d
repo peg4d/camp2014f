@@ -33,6 +33,9 @@ W
 FILENAME
 	= (ESCAPED_CHAR / (!FORBIDDEN_CHAR ![\x00] . ))+
 
+NOKEYWORD
+    = !"fi" !"done" !"elif" !"else"
+
 Statement
 	= IfStatement
 	/ WhileStatement
@@ -42,19 +45,35 @@ Statement
 	/ CaseStatement
 	/ DeclareStatement
 	/ LetStatement
-	/ Command
-	/ Expression
+	/ NOKEYWORD Command
+    / Expression
 
 Block
-	= { (@Statement)* #Block }
+    = { (_ @Statement _)* #Block }
 
 IfStatement
-	= { 'if' 'test'? @Expression NL
-		'then' NL
+    [example:if 1; then; echo "A"; fi;]
+    [example:if 1; then; echo "A"; else; echo "B"; fi;]
+    [example:if 1; then; echo "A"; elif 2; then; echo "B"; else; echo "C"; fi;]
+	= { 'if' _ @Expression _ NL
+		_ 'then' _ NL
 		@Block
-		('elif' @Expression NL 'then' NL @Block)*
-		('else' @Expression NL @Block)?
-		'fi' NL #IfStatement }
+		(elseClause / elifClause)?
+		_ 'fi' _ NL #IfStatement }
+
+elifClause
+    = @ElifBlock
+
+ElifBlock
+    = { @ElifBody #Block }
+
+ElifBody
+    = { 'elif' _ @Expression _ NL _ 'then' _ NL
+        @Block
+		(elseClause / elifClause)? #IfStatement }
+
+elseClause
+    = _ 'else' _ NL @Block
 
 ForStatement
 	= { 'for' ( @Literal 'in' @Expression / '((' @Expression NL @Expression NL @Expression '))' ) NL
@@ -210,11 +229,11 @@ IdentifierEQ	//TODO: utf8
 	= { '$' / (ESCAPED_CHAR / !FORBIDDEN_CHAR_WITHOUT_EQUAL . )+ #identifier }
 
 FORBIDDEN_CHAR
-	= '\t' / ' ' / '\n' / '\r' / '{' / '}' / '(' / ')' 
+	= '\t' / ' ' / '\n' / '\r' / '{' / '}' / '(' / ')' / ';'
 	/ '!' / '`' / '\'' / '"' / '&' / '|' / '#' / '$' / '<' / '>' / '='
 
 FORBIDDEN_CHAR_WITHOUT_EQUAL
-	= '\t' / ' ' / '\n' / '\r' / '{' / '}' / '(' / ')' 
+	= '\t' / ' ' / '\n' / '\r' / '{' / '}' / '(' / ')' / ';'
 	/ '!' / '`' / '\'' / '"' / '&' / '|' / '#' / '$' / '<' / '>'
 
 ESCAPED_CHAR
@@ -224,9 +243,8 @@ Expression
 	[example:COMMAND=echo COMMAND "test" > dump.txt]
 	[example:A=B B=C]
 	[example:A=B=C]
-	= TestCommand
-	/ ExprCommand
-	/ { (@AssignmentExpression _)+ (@Command)? #CommandWithAssign }
+	= { (@AssignmentExpression _)+ (@Command)? #CommandWithAssign }
+	/ NOKEYWORD (TestCommand / ExprCommand / EqualityExpression)
 
 TestCommand
 	= { 'test' S+ @EqualityExpression #Test}
@@ -250,16 +268,22 @@ LeftValueExpression
     / CInteger
 
 EqualityExpression
-	= RelationalExpression {@ ( "-eq" #Equals / "-ne" #NotEquals) @RelationalExpression }*
+    [example:1 -eq 1]
+    [example:1 -ne 2 - 1]
+	= RelationalExpression {@ _ ( "-eq" #Equals / "-ne" #NotEquals) _ @RelationalExpression }*
 
 RelationalExpression
-	= AdditiveExpression {@ ( "-le" #LessThanEquals / "-ge" #GreaterThanEquals / "-lt" #LessThan / "-gt" #GreaterThan ) @AdditiveExpression }*
+    [example:1 -gt 2]
+    [example:1 -lt 2 + 1]
+	= AdditiveExpression {@ _ ( "-le" #LessThanEquals / "-ge" #GreaterThanEquals / "-lt" #LessThan / "-gt" #GreaterThan ) _ @AdditiveExpression }*
 
 AdditiveExpression
-	= MultiplicativeExpression {@ ( "+" #Add / "-" #Sub ) @MultiplicativeExpression }*
+    [example:1 - 2]
+    [example:10 + 20]
+	= MultiplicativeExpression {@ _ ( "+" #Add / "-" !("le" / "ge" / "lt" / "gt" / "eq" / "ne") #Sub ) _ @MultiplicativeExpression }*
 
 MultiplicativeExpression
-	= PrimaryExpression {@ ( "*" #Mul / "/" #Div / "%" #Mod ) @PrimaryExpression }*
+	= PrimaryExpression {@ _ ( "*" #Mul / "/" #Div / "%" #Mod ) _ @PrimaryExpression }*
 
 PrimaryExpression
 	= { '$(' _ (@Expression / @Command) _ ')' #SubCommand }
@@ -268,8 +292,8 @@ PrimaryExpression
 	/ { '((' @Expression '))' #Variable }
 	/ { '[' S+ @Expression S+ ']' #Variable }
 	/ { '#' @Name '[' addINDEX ']' #Variable }
-	/ PathExpression
 	/ Literal
+	/ PathExpression
 
 Literal
 	= CFloat
