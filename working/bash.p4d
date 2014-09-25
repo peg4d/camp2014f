@@ -31,7 +31,7 @@ W
 	= [a-zA-Z0-9_]
 
 FILENAME
-	= ((!'/' !' ' !'\x00' .) / '\\ ')+
+	= ('\\\\' / '\\"' / '\\ ' / (![ /\x00] .))+
 
 Statement
 	= IfStatement
@@ -235,9 +235,9 @@ MultiplicativeExpression
 	= PrimaryExpression {@ ( "*" #Mul / "/" #Div / "%" #Mod ) @PrimaryExpression }*
 
 PrimaryExpression
-	= { '$(' S* (@Expression / @Command) S* ')' #SubCommand }
+	= { '$(' _ (@Expression / @Command) _ ')' #SubCommand }
 	/ { '${' @Name '}' #Variable }
-	/ { '$' @Name '' #Variable }
+	/ { '$' @Name #Variable }
 	/ { '((' @Expression '))' #Variable }
 	/ { '[' S+ @Expression S+ ']' #Variable }
 	/ Literal
@@ -337,30 +337,30 @@ HEX_PREFIX
 	= '0' [xX]
 
 HereDoc
-  =  { #HereDoc @HereDocStart " "* @HereDocDelim "\n" @HereDocBody _ }
+    =  { #HereDoc @HereDocStart " "* @HereDocDelim "\n" @HereDocBody _ }
 
 HereDocStart
-  = { #IgnoreTab ("<<-" `true` / "<<" `false`) }
+    = { #IgnoreTab ("<<-" `true` / "<<" `false`) }
 
 HereDocBody
-  = { #Body (!( "\n" DelimKeyword) .)+ } "\n" DelimKeyword
+    = { #Body (!( "\n" DELIM_KEYWORD) .)+ } "\n" DELIM_KEYWORD
 
 HereDocDelim
-  = { ( "\"" DelimKeyword "\"" / "\'" DelimKeyword "\'")  #IgnoreArgs `true` }
-  / { DelimKeyword #IgnoreArgs `false` }
+    = { ( "\"" DELIM_KEYWORD "\"" / "\'" DELIM_KEYWORD "\'")  #IgnoreArgs `true` }
+    / { DELIM_KEYWORD #IgnoreArgs `false` }
 
-DelimKeyword
-  = "EOF"
+DELIM_KEYWORD
+    = "EOF"
 
-//Array
-//	= 石井
+Array
+	= { "石井" #Array }
 
 FilePath
+	[example: /dir/file]
+	//[example: "dir name/file"]
+	[example: dir\ name/file]
+	[example: /dir/$file]
 	= { (FILENAME / '/')+ #FilePath }
 
 PathExpr
-	[example: /dir/file]
-	[example: "dir name/file"]
-	[example: dir\ name/file]
-	[example: /dir/$file]
 	= { ( SubExpr / Literal / FilePath )+ #PathExpr }
