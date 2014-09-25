@@ -82,11 +82,11 @@ Arg
 	= { W+ #arg }
 
 CaseStatement
-	= { 'case' _ case #CaseStatement }
-	
-case
+	= { 'case' _ addCase #CaseStatement }
+
+addCase
 	= @PrimaryExpression _ 'in' _ @CaseMember _ (@CaseMember _)* (@LastCaseMember / 'esac' ) _
-	
+
 CaseMember
 	= { @Expression ')' _ @Statement _ (@Statement _)* ';;' #CaseMember }
 
@@ -94,30 +94,24 @@ LastCaseMember
 	= { @Defualt _ ((@Statement) _) ((( 'esac' / @Statement) _)*)  #LastCaseMember }
 
 Defualt
-    = { '*' #DefualtExpression } ')'
+	= { '*' #DefualtExpression } ')'
 
 UntilStatement
-	= { 'until' Expression NL
-		'do' NL
-		@Block
-		'done' NL #UntilStatement}
+	= { 'until' Expression NL 'do' NL @Block 'done' NL #Unitl }
 
 DeclareStatement
-	= { 'declare' _ ( '-i' #Num / '-a' #Array ) _ @VarName NL }
-	/ { 'declare' _ @VarName NL #String }
+	= { 'declare' _ ( '-i' #Num / '-a' #Array ) _ @Name NL }
+	/ { 'declare' _ @Name NL #String }
 
 LetStatement
-	= { 'let' _ postfixExpression _ @VarName NL }
+	= { 'let' _ postfixExpression _ @Name NL }
 
 postfixExpression
 	= '++' #PrefixInc
 	/ '--' #PrefixDec
 
 WhileStatement
-	= { 'while' Expression NL
-		'do' NL
-		@Block
-		'done' NL #WhileStatement }
+	= { 'while' @Expression NL 'do' NL @Block 'done' NL #WhileStatement }
 
 Command
 	= CommandExpr _ NL	// <new line>, ';', '&'
@@ -181,10 +175,10 @@ SubCmd
 
 SubExpr
 	= '$' { @SubExprSuffix #subExpr}
-	/ '${' { @VarName '[' @INDEX ']' #arraySubExpr} '}'
+	/ '${' { @VarName '[' addINDEX ']' #arraySubExpr} '}'
 	/ '${' { @SubExprSuffix #subExpr} '}'
 
-INDEX
+addINDEX
 	= NUMBER / '@' / '*'
 
 SubExprSuffix
@@ -373,35 +367,35 @@ Variable
 
 Assignment 
     = { @Variable _ '=' _ @Params #Assignment }
-    / { @Variable '[' @INDEX ']' '=' @Integer #Assignment }
+    / { @Variable '[' addINDEX ']' '=' @Integer #Assignment }
 
 Params
     = { '(' (@Param (_ @Param)*)?  ')' #Params }
 
 Param
-    = @Constant
+    = Constant
 
 Constant
-	= @Integer
+	= Integer
 
 Integer
 	= { [0-9]+  #Integer }
 
 Reference
-    = { '$' '{' @Variable '[' @INDEX ']' '}' #Reference }
+    = { '$' '{' @Variable '[' addINDEX ']' '}' #Reference }
 
 ArrayLength
-    = { '$' '{' '#' @Variable '[' @INDEX ']' '}' #ArrayLength }
+    = { '$' '{' '#' @Variable '[' addINDEX ']' '}' #ArrayLength }
 
 AddElementToArray
     = {( @ToHead
 	/   @ToTail ) #AddElementToArray }
 
 ToHead
-    = { @Variable '=' '(' @Constant _ '"' '$' '{' @Variable '[' @INDEX ']' '}' '"' ')' #ToHead }
+    = { @Variable '=' '(' @Constant _ '"' '$' '{' @Variable '[' addINDEX ']' '}' '"' ')' #ToHead }
 
 ToTail
-    = { @Variable '=' '(' '"' '$' '{' @Variable '[' @INDEX ']' '}' '"' _ @Constant ')' #ToTail }
+    = { @Variable '=' '(' '"' '$' '{' @Variable '[' addINDEX ']' '}' '"' _ @Constant ')' #ToTail }
 
 FilePath
 	[example: /dir/file]
@@ -412,4 +406,4 @@ PathExpr
 	[example: "dir name/file"]
 	[example: /"dir name"/$var]
 	[example: /dir/$var]
-	= { ( SubExpr / Literal / FilePath )+ #PathExpr }
+	= { ( @SubExpr / @Literal / @FilePath )+ #PathExpr }
