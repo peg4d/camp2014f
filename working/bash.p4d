@@ -47,10 +47,9 @@ Statement
 Block
 	= { (@Statement)* #Block }
 
-IfStatement	//田村
+IfStatement
 	= { 'if' 'test'? @Expression NL
-		'then' NL
-		@Block
+		'then' NL @Block
 		('elif' @Expression NL 'then' NL @Block)*
 		('else' @Expression NL @Block)?
 		'fi' NL #IfStatement }
