@@ -116,7 +116,10 @@ Command
     [example: ls -l]
     [example: echo "test"]
     [example: echo "test" > dump.txt]
+    [example: echo "test">dump.txt]
+    [example: echo 2> /dev/null "test" > dump.txt]
     [example: cat log.txt | grep "1900/01/01" > old_log.txt]
+    [example: cat log.txt|grep "1900/01/01" > old_log.txt]
 	= CommandExpr _ NL	// <new line>, ';', '&'
 
 CommandExpr
@@ -138,7 +141,7 @@ PipedCommand
 	= SingleCommand {@ _ '|' _ @SingleCommand #pipe}*
 
 SingleCommand
-	= { @CmdSymbolSeq (S+ (@CommandArg / @Redirect / @HereDoc))* #singleCommand }
+	= { @CmdSymbolSeq (S* @Redirect / S* @HereDoc / S+ @CommandArg)* #singleCommand }
 
 Redirect
 	= { @RedirectOpArgLess / @RedirectOp _ @CommandArg #redirect }
