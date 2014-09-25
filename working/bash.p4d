@@ -108,8 +108,94 @@ WhileStatement
 
 
 Command
-	[author: tetsurom]
-	= 関口 (パイプ・リダイレクトを含む)
+	= CommandExpr S? NL	// <new line>, ';', '&'
+
+CommandExpr
+	= { @CommandList S? @Background? #command }
+
+Background
+	= {'&' #background} S?
+
+CommandList
+	= OrList
+
+OrList
+	= AndList {@ S? '||' S? @AndList #or}*
+
+AndList
+	= PipedCommand {@ S? '&&' S? @PipedCommand #and}*
+
+PipedCommand
+	= SingleCommand {S? '|' S? @SingleCommand #pipe}*
+
+SingleCommand
+	= { @CmdSymbolSeq (S (@CommandArg / @Redirect))* #singleCommand}
+
+Redirect
+	= {@RedirectOpArgLess / @RedirectOp S? @CommandArg #redirect}
+
+RedirectOp
+	= {
+		Number? '>>'
+		/ Number? '>'
+		/ '&>>'
+		/ '&>'
+		/ '<<<'	// here string
+		/ '<'
+	 #redirectOp }
+
+RedirectOpArgLess
+	= { Number '>&' Number #redirectOp }
+
+Number
+	= 0
+	/ [1-9][0-9]*
+
+CmdSymbolSeq
+	= { @CmdSymbol+ #commandName }
+
+CommandArg
+	= { @CmdSymbol+ #commandArg }
+
+CmdSymbol
+	= SingleQuoteString
+	/ DoubleQuoteString
+	/ SubCmd
+	/ SubExpr
+	/ Identifier
+
+SubCmd
+	= '`' S? { @CommandExpr S? NL? #backquoteSubstitution } S? '`'
+	/ '$(' S? { @CommandExpr S? NL? #substitution } S? ')'
+
+SubExpr
+	= '$' { @SubExprSuffix #subExpr}
+	/ '${' { @VarName '[' @Index ']' #arraySubExpr} '}'
+	/ '${' { @SubExprSuffix #subExpr} '}'
+
+Index
+	= Number / '@'
+
+SubExprSuffix
+	= VarName
+	/ { '?' / '*' / '@' / '#' /Number #specialChar}
+
+VarName
+	= { '_' ('_' / Letter / Number)+ 
+		/ Letter ('_' / Letter / Number)* #varName}
+
+Letter
+	= [a-zA-Z]+
+
+Identifier	//TODO: utf8
+	= { '$' / (EscapedChar / !ForbitChar . )+ #identifier}
+
+ForbitChar
+	= '\t' / ' ' / '\n' / '\r' / '{' / '}' / '(' / ')' 
+	/ '!' / '`' / '\'' / '"' / '&' / '|' / '#' / '$' / '<' / '>'
+
+EscapedChar
+	= '\\' (ForbitChar / . )
 
 
 Expression
