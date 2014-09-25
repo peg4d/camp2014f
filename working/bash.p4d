@@ -113,6 +113,10 @@ WhileStatement
 	= { 'while' @Expression NL 'do' NL @Block 'done' NL #WhileStatement }
 
 Command
+    [example: ls -l]
+    [example: echo "test"]
+    [example: echo "test" > dump.txt]
+    [example: cat log.txt | grep "1900/01/01" > old_log.txt]
 	= CommandExpr _ NL	// <new line>, ';', '&'
 
 CommandExpr
@@ -160,12 +164,19 @@ CmdSymbolSeq
 	= { (@CmdSymbol)+ #commandName }
 
 CommandArg
-	= { (@CmdSymbol)+ #commandArg }
+	= { (@CmdSymbolEQ)+ #commandArg }
 
 CmdSymbol
 	= CString
 	/ SubCmd
 	/ SubExpr
+	/ Identifier
+
+CmdSymbolEQ
+	= CString
+	/ SubCmd
+	/ SubExpr
+	/ IdentifierEQ
 	/ Identifier
 
 SubCmd
@@ -194,17 +205,27 @@ LETTER
 Identifier	//TODO: utf8
 	= { '$' / (ESCAPED_CHAR / !FORBIDDEN_CHAR . )+ #identifier }
 
+IdentifierEQ	//TODO: utf8
+	= { '$' / (ESCAPED_CHAR / !FORBIDDEN_CHAR_WITHOUT_EQUAL . )+ #identifier }
+
 FORBIDDEN_CHAR
 	= '\t' / ' ' / '\n' / '\r' / '{' / '}' / '(' / ')' 
 	/ '!' / '`' / '\'' / '"' / '&' / '|' / '#' / '$' / '<' / '>' / '='
+
+FORBIDDEN_CHAR_WITHOUT_EQUAL
+	= '\t' / ' ' / '\n' / '\r' / '{' / '}' / '(' / ')' 
+	/ '!' / '`' / '\'' / '"' / '&' / '|' / '#' / '$' / '<' / '>'
 
 ESCAPED_CHAR
 	= '\\' (FORBIDDEN_CHAR / . )
 
 Expression
+	[example:COMMAND=echo COMMAND "test" > dump.txt]
+	[example:A=B B=C]
+	[example:A=B=C]
 	= TestCommand
 	/ ExprCommand
-	/ { @AssignmentExpression S* (@Command)? #CommandWithAssign }
+	/ { (@AssignmentExpression _)+ (@Command)? #CommandWithAssign }
 
 TestCommand
 	= { 'test' S+ @EqualityExpression #Test}
@@ -213,7 +234,19 @@ ExprCommand
 	= { 'expr' S+ @EqualityExpression #Test}
 
 AssignmentExpression
-	= EqualityExpression {@ '=' @AssignmentExpression S* #Assign }*
+    [example:A=1+2]
+    [example:A=$var]
+    [example:A=prefix$var]
+    [example:AB=${array[@]}suffix]
+	= { @LeftValueExpression '=' @CommandArg #Assign }
+
+LeftValueExpression
+    [example:1]
+    [example:A]
+    [example:A[1]]
+    = { @Name '[' addINDEX ']' #Variable }
+    / Name
+    / CInteger
 
 EqualityExpression
 	= RelationalExpression {@ ( "-eq" #Equals / "-ne" #NotEquals) @RelationalExpression }*
@@ -233,7 +266,6 @@ PrimaryExpression
 	/ { '$' @Name #Variable }
 	/ { '((' @Expression '))' #Variable }
 	/ { '[' S+ @Expression S+ ']' #Variable }
-	/ {  @Name '[' addINDEX ']' #Variable }
 	/ { '#' @Name '[' addINDEX ']' #Variable }
 	/ Literal
 
@@ -245,11 +277,10 @@ Literal
 	/ ArrayLiteral
 
 ArrayLiteral
-	= { '(' S* (@Param (S+ @Param)*)?  ')' #Array }
+	= { '(' _ (@Param (S+ @Param)*)? _ ')' #Array }
 
 Param
     = Literal
-
 
 CString
 	=  '"' { STRING_CONTENT* #String } '"'
