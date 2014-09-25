@@ -13,7 +13,7 @@ Chunk
 	= Statement
 
 S
-	= ([ \t\n\r] / COMMENT)
+	= ([ \t] / COMMENT)
 
 _
     = S*
@@ -377,9 +377,11 @@ Assignment
     = { @Variable _ '=' _ @Params #Assignment }
     / { @Variable '[' @INDEX ']' '=' @Integer #Assignment }
 
-Params = { '(' (@Param (_ @Param)*)?  ')' #Params }
+Params
+    = { '(' (@Param (_ @Param)*)?  ')' #Params }
 
-Param = @Constant
+Param
+    = @Constant
 
 Constant
 	= @Integer
