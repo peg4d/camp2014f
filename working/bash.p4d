@@ -36,12 +36,18 @@ Statement
 	/ Command
 
 IfStatement	//田村
-	= 'if' 'test'? @Expression NL
-		'then' NL
-		@Block
-		('elif' @Expression NL 'then' NL @Block)*
-		('else' @Expression NL @Block)?
-		'fi' NL
+	= { 'if' @Expression NL
+	    'then' NL @Block
+        (@ElseClause / @ElifClause)?
+	    'fi' NL #if }
+
+ElifClause
+    = { 'elif' @Expression NL
+        'then' NL @Block
+        (@ElseClause / @ElifClause)? #if }
+
+ElseClause
+    = 'else' NL @Block
 
 ForStatement
 	= 須藤
