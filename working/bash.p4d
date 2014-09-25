@@ -373,13 +373,16 @@ HEX_PREFIX
 	= '0' [xX]
 
 HereDoc
-    =  { #HereDoc @HereDocStart " "* @HereDocDelim "\n" @HereDocBody _ }
+    [example:<< EOF
+hoge
+EOF]
+    =  { #HereDoc @HereDocStart _ @HereDocDelim _ @Redirect? BREAK @HereDocBody _ }
 
 HereDocStart
     = { #IgnoreTab ("<<-" `true` / "<<" `false`) }
 
 HereDocBody
-    = { #Body (!( "\n" DELIM_KEYWORD) .)+ } "\n" DELIM_KEYWORD
+    = { #Body (!( BREAK DELIM_KEYWORD) .)+ } BREAK DELIM_KEYWORD
 
 HereDocDelim
     = { ( "\"" DELIM_KEYWORD "\"" / "\'" DELIM_KEYWORD "\'")  #IgnoreArgs `true` }
