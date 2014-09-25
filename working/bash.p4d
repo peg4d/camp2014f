@@ -10,7 +10,7 @@ File
 	= { (@Statement)* }
 
 Chunk
-	= Statement
+	= Block
 
 S
 	= ([ \t] / COMMENT)
@@ -33,19 +33,16 @@ W
 FILENAME
 	= (ESCAPED_CHAR / (!FORBIDDEN_CHAR ![\x00] . ))+
 
-NOKEYWORD
-    = !"fi" !"done" !"elif" !"else"
-
 Statement
 	= IfStatement
 	/ WhileStatement
 	/ UntilStatement
 	/ ForStatement
-	/ FunctionStatement
+	/ !KEYWORD FunctionStatement
 	/ CaseStatement
 	/ DeclareStatement
 	/ LetStatement
-	/ NOKEYWORD Command
+	/ !KEYWORD Command
     / Expression
 
 Block
@@ -55,8 +52,7 @@ IfStatement
     [example:if 1; then; echo "A"; fi;]
     [example:if 1; then; echo "A"; else; echo "B"; fi;]
     [example:if 1; then; echo "A"; elif 2; then; echo "B"; else; echo "C"; fi;]
-	= { 'if' _ @Expression _ NL
-		_ 'then' _ NL
+	= { 'if' _ @Expression _ NL _ 'then' _ NL
 		@Block
 		(elseClause / elifClause)?
 		_ 'fi' _ NL #IfStatement }
@@ -68,11 +64,13 @@ ElifBlock
     = { @ElifBody #Block }
 
 ElifBody
+    [example:elif 1; then; echo;]
     = { 'elif' _ @Expression _ NL _ 'then' _ NL
         @Block
 		(elseClause / elifClause)? #IfStatement }
 
 elseClause
+    [example:else;echo;]
     = _ 'else' _ NL @Block
 
 ForStatement
@@ -247,7 +245,7 @@ Expression
 	[example:A=B B=C]
 	[example:A=B=C]
 	= { (@AssignmentExpression _)+ (@Command)? #CommandWithAssign }
-	/ NOKEYWORD (TestCommand / ExprCommand / EqualityExpression)
+	/ !KEYWORD (TestCommand / ExprCommand / EqualityExpression)
 
 TestCommand
 	= { 'test' S+ @EqualityExpression #Test}
@@ -286,6 +284,9 @@ AdditiveExpression
 	= MultiplicativeExpression {@ _ ( "+" #Add / "-" !("le" / "ge" / "lt" / "gt" / "eq" / "ne") #Sub ) _ @MultiplicativeExpression }*
 
 MultiplicativeExpression
+    [example:10 * 2]
+    [example:10 * 2]
+    [example:10 % 2]
 	= PrimaryExpression {@ _ ( "*" #Mul / "/" #Div / "%" #Mod ) _ @PrimaryExpression }*
 
 PrimaryExpression
@@ -342,7 +343,7 @@ HEX_ESCAPE
 	= '\\x' HEX+
 
 KEYWORD
-	= 'for' / 'while' / 'do' / 'done' / 'if' / 'case'
+	= 'for' / 'while' / 'do' / 'done' / 'if' / 'elif' / 'else' / 'fi' / 'case'
 
 DIGIT
 	= [0-9]
