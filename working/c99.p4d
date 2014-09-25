@@ -257,7 +257,7 @@ Type
 	/ TypeSuffix
 
 TypeSuffix
-	= PrimaryType {@ ( POINTER_QUALIFIER @{ "*" #TPointer } #TConst / "*" (@POINTER_QUALIFIER)* #TPointer / "[" / (NAME / DIGIT*) "]" #TPointer / addFuncType ) }*
+	= PrimaryType {@ ( POINTER_QUALIFIER? @{ "*" #TPointer } #TConst / "*" POINTER_QUALIFIER? #TPointer / "[" / (NAME / DIGIT*) "]" #TPointer / addFuncType ) }*
 
 POINTER_QUALIFIER
 	= "const" / "restrict"
