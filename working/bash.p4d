@@ -30,6 +30,9 @@ NL
 W
 	= [a-zA-Z0-9_]
 
+FILENAME
+	= ((!'/' !' ' !'\x00' .) / '\\ ')+
+
 Statement
 	= IfStatement
 	/ WhileStatement
@@ -352,10 +355,13 @@ DelimKeyword
 
 //Array
 //	= 石井
-//
-//FilePath
-//	[example: /dir/file]
-//	[example: "dir name/file"]
-//	[example: dir\ name/file]
-//	[example: /dir/$file]
-//	= 森谷
+
+FilePath
+	= { (FILENAME / '/')+ #FilePath }
+
+PathExpr
+	[example: /dir/file]
+	[example: "dir name/file"]
+	[example: dir\ name/file]
+	[example: /dir/$file]
+	= { ( SubExpr / Literal / FilePath )+ #PathExpr }
