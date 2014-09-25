@@ -23,14 +23,7 @@ export
 	/ CChar
 
 File
-	= _ {
-			( @TopLevel
-			/ @{ @StructDecl ";" #StructDeclaration }
-			/ @Statement
-			/ @Expression
-			/ @Type
-			/ _ )*
-		#Source } EOT
+	= _ { ( @TopLevel / _ )* #Source } EOT
 
 Chunk
 	= TopLevel
@@ -102,12 +95,12 @@ KEYWORD
 "long"      = 'long'     !W
 "float"     = 'float'    !W
 "double"    = 'double'   !W
-"signed"    = 'signed'   !W _
-"unsigned"  = 'unsigned' !W _
+"signed"    = 'signed'   !W
+"unsigned"  = 'unsigned' !W
 "_Bool"      = '_Bool'    !W
 "_Complex"   = '_Complex' !W
-"struct"    = 'struct'   !W _
-"union"     = 'union'    !W _
+"struct"    = 'struct'   !W
+"union"     = 'union'    !W
 "{"     = '{' _
 "["      = '[' _
 "]"      = ']' _
@@ -132,20 +125,20 @@ KEYWORD
 ";"	= (';' _ / EOL)  /* this is for debug */
 "}"	= '}' _
 "->"	= '->' _
-"enum"	= 'enum' !W _
-"__asm"	= '__asm' !W _
-"case"	= 'case' !W _
-"default"	= 'default' !W _
-"if"	= 'if' !W _
-"else"	= 'else' !W _
-"switch"	= 'switch' !W _
-"while"	= 'while' !W _
-"do"	= 'do' !W _
-"for"	= 'for' !W _
-"goto"	= 'goto' !W _
-"continue"	= 'continue' !W _
-"break"	= 'break' !W _
-"return"	= 'return' !W _
+"enum"	= 'enum' !W
+"__asm"	= '__asm' !W
+"case"	= 'case' !W
+"default"	= 'default' !W
+"if"	= 'if' !W
+"else"	= 'else' !W
+"switch"	= 'switch' !W
+"while"	= 'while' !W
+"do"	= 'do' !W
+"for"	= 'for' !W
+"goto"	= 'goto' !W
+"continue"	= 'continue' !W
+"break"	= 'break' !W
+"return"	= 'return' !W
 "*="	= '*=' _
 "/="	= '/=' _
 "%="	= '%=' _
@@ -178,21 +171,26 @@ KEYWORD
 "include"	= 'include' !W _
 "define"	= 'define' !W _
 
+
 EOT	= !.
 
 TopLevel
-	= FunctionDefinition
-	/ { @{ @AnnotationList @Type (@InitDeclAssign / @InitDecl ("," @InitDecl)+ )  ATTRIBUTE? ";" #Declaration } #DeclarationStatement }
-	/ { @AnnotationList @Type @Name "(" @FunctionParamList ")" ";" #Function }
-	/ { @Declaration #DeclarationStatement }
+	= Directive
 	/ TypeDef
-	/ Macro
+	/ Declaration
 
-Macro
+Declaration
+	= FunctionDeclaration
+	/ StructDeclaration
+	/ VariableDeclaration
+
+Directive
 	= "#" "include" { (!'\n' .)* #Include }
 	/ "#" "define"  { (!'\n' .)* #Define }
+	/ "#" { (!'\n' .)* #TODO }
 
-FunctionDefinition
+
+FunctionDeclaration
 	= { @AnnotationList @Type @Name "(" @FunctionParamList ")" @Block #Function }
 
 AnnotationList
@@ -221,7 +219,7 @@ FunctionParam
 TypeDef
 	= { "typedef" @Type @Name _ ";" #TypeDeclaration }
 
-Declaration
+VariableDeclaration
 	= { @AnnotationList @Type @InitDecl ("," @InitDecl)*  ATTRIBUTE? ";" #Declaration }
 
 InitDecl
@@ -257,25 +255,27 @@ Type
 	/ TypeSuffix
 
 TypeSuffix
-	= PrimaryType {@ ( POINTER_QUALIFIER? @{ "*" #TPointer } #TConst / "*" POINTER_QUALIFIER? #TPointer / "[" / (NAME / DIGIT*) "]" #TPointer / addFuncType ) }*
+	= PrimaryType {@
+		POINTER_QUALIFIER? "*" #TConst
+		/ "*" POINTER_QUALIFIER? #TPointer
+		/ "[" (NAME / DIGIT*) "]" #TPointer
+		/ "(" "*" @Name ")" @FunctionParamList #TFunc
+	}*
 
 POINTER_QUALIFIER
 	= "const" / "restrict"
 
-addFuncType
-	= "(" "*" @Name ")" "(" (@Type (_ NAME _)? ("," @Type (_ NAME _)? )* )? ")" #TFunc
-
 PrimaryType
-	= StructDecl
+	= StructDeclaration
 	/ { "union"  @Name addStructMember?  #TUnion } _
 	/ { "enum"   @Name "{" @EnumeratorList ","? "}" #TEnum } _
 	/ { "void" #TVoid } _
-	/ { SIGN? "char"          #TInt } _
-	/ { SIGN? "short"         #TInt } _
-	/ { SIGN? "int"           #TInt } _
-	/ { "float"           #TFloat } _
-	/ { "double"          #TFloat } _
-	/ { "long" _ "double"   #TFloat } _
+	/ { SIGN? "char"         #TInt } _
+	/ { SIGN? "short"        #TInt } _
+	/ { SIGN? "int"          #TInt } _
+	/ { "float"       _   #TFloat } _
+	/ { "double"      _   #TFloat } _
+	/ { "long" _ "double" _ #TFloat } _
 	/ { SIGN? "long" (_ "long")? (_ "int")? #TInt } _
 	/ { "signed" `signed int` #TInt } _
 	/ { "unsigned" `unsigned int` #TInt } _
@@ -284,7 +284,7 @@ PrimaryType
 	/ { NAME_T #TName } _
 	/ { NAME   #Name } _
 
-StructDecl
+StructDeclaration
 	= { "struct" @Name addStructMember? #TStruct }
 
 SIGN
@@ -294,9 +294,9 @@ NAME_T
 	= !DIGIT (!('_t' !W)  W )+ '_t' !W
 	
 addStructMember
-	= '{' _ (@StructDeclaration / _ )+ _ "}"
+	= '{' _ (@StructMemberDeclaration / _ )+ _ "}"
 
-StructDeclaration
+StructMemberDeclaration
 	= { @AnnotationList @Type @StructMemberName  ("," @StructMemberName )* ";" _ #StructMemberDeclaration }
 
 StructMemberName
@@ -313,11 +313,11 @@ Enumerator
 //===================
 
 Block
-	= { "{" (@(Statement / { @Declaration #DeclarationStatement }))* "}" #Block }
+	= { "{" (@Statement / @Declaration)* "}" #Block }
 
 Statement
 	= Block
-	/ { "if"     "(" @Expression ")" @Statement ("else" @Statement)? #If }
+	/ { "if"   "(" @Expression ")" @Statement ("else" @Statement)? #If }
 	/ { "switch" "(" @Expression ")" @Statement #Switch }
 	/ { "while"  "(" @Expression ")" @Statement #While }
 	/ { "do" @Statement "while" "(" @Expression ")" ";" #DoWhile }
@@ -411,7 +411,7 @@ CastExpression
 
 PostfixExpression
 	= ( PrimaryExpression / { "(" @Type ")" "{" @{ (addInitializerList)* ","? #Initializer } "}" } ) 
-	{@ (addFunctionCall / addIndex  / "." @Name #Field / "->" @Name #PointerField / "++" #Inc / "--" #Dec) }*
+	{@ (addFunctionCall / addIndex / addField / addInc / addDec) }*
 
 addFunctionCall
 	= @{ "(" addArgumentExpressionList? ")" #List} #Apply
@@ -421,6 +421,18 @@ addArgumentExpressionList
 
 addIndex
 	= "[" @Expression "]" #Index
+
+addField
+	= "." @Name #Field
+
+addPointerField
+	= "->" @Name #PointerField
+
+addInc
+	= "++" #Inc
+
+addDec
+	= "--" #Dec
 
 PrimaryExpression
 	= Constant
