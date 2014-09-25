@@ -75,10 +75,10 @@ Name
 // それ以外 田村 (全員調整) ただし、Command は関口
 
 WhileStatement
-	= 'while' Expression NL
-	  'do' NL
-	  Block
-	  'done' NL
+	= { 'while' Expression NL
+	    'do' NL
+	    Block
+	    'done' NL #WhileStatement }
 
 
 Command
