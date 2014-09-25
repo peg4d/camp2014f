@@ -5,13 +5,17 @@ File
 	= { (@Statement)* }
 
 S
-	= 松村
+	= ([ \t\n\r] / COMMENT)*
 
 COMMENT
-	= 松村
+	= '#' (!BREAK .)*
+
+BREAK
+   = '\n' / '\r\n' / '\r'
 
 NL
-	= 松村
+	= ';' / BREAK
+
 
 Statement
 	= IfStatement
@@ -24,8 +28,13 @@ Statement
 	/ LetStatement
 	/ Command
 
-IfStatement
-	= 田村
+IfStatement	//田村
+	= 'if' 'test'? @Expression NL
+		'then' NL
+		@Block
+		('elif' @Expression NL 'then' NL @Block)*
+		('else' @Expression NL @Block)?
+		'fi' NL
 
 ForStatement
 	= { 'for' ( @Literal 'in' @Array / '((' @Expression NL @Expression NL @Expression '))' ) NL
