@@ -48,7 +48,22 @@ ForStatement
         'done' NL #ForStatement }
 
 FunctionStatement
-	= 山口
+	= { ( @FunctionDecl / @FunctionCall ) #functionStatement }
+	
+FunctionDecl
+	= { 'function'? S* @FunctionName '()' S* '{' S* @Statement  S* '}' #functionDecl }
+
+FunctionCall
+	= { @FunctionName S* ArgList S* #functionCall }
+
+FunctionName
+	= { Name #functionName }
+
+ArgList
+	= ( @Arg S* )+
+
+Arg
+	= { W #arg }
 
 CaseStatement
 	= 本多
