@@ -44,7 +44,7 @@ Statement
 	/ DeclareStatement
 	/ LetStatement
 	/ Command
-	/ Array
+	/ Expression
 
 Block
 	= { (@Statement)* #Block }
@@ -58,7 +58,7 @@ IfStatement
 		'fi' NL #IfStatement }
 
 ForStatement
-	= { 'for' ( @Literal 'in' @Array / '((' @Expression NL @Expression NL @Expression '))' ) NL
+	= { 'for' ( @Literal 'in' @Expression / '((' @Expression NL @Expression NL @Expression '))' ) NL
 		'do' NL
 		@Block
 		'done' NL #ForStatement }
@@ -67,7 +67,7 @@ FunctionStatement
 	= { ( @FunctionDecl / @FunctionCall ) #functionStatement }
 	
 FunctionDecl
-	= { 'function'? S* @FunctionName '()' S* '{' S* @Statement  S* '}' #functionDecl }
+	= { 'function'? S* @FunctionName '()' S* '{' S* @Block  S* '}' #functionDecl }
 
 FunctionCall
 	= { @FunctionName S* @ArgList S* #functionCall }
@@ -197,7 +197,7 @@ Identifier	//TODO: utf8
 
 FORBIDDEN_CHAR
 	= '\t' / ' ' / '\n' / '\r' / '{' / '}' / '(' / ')' 
-	/ '!' / '`' / '\'' / '"' / '&' / '|' / '#' / '$' / '<' / '>'
+	/ '!' / '`' / '\'' / '"' / '&' / '|' / '#' / '$' / '<' / '>' / '='
 
 ESCAPED_CHAR
 	= '\\' (FORBIDDEN_CHAR / . )
@@ -234,6 +234,8 @@ PrimaryExpression
 	/ { '$' @Name #Variable }
 	/ { '((' @Expression '))' #Variable }
 	/ { '[' S+ @Expression S+ ']' #Variable }
+	/ {  @Name '[' addINDEX ']' #Variable }
+	/ { '#' @Name '[' addINDEX ']' #Variable }
 	/ Literal
 
 Literal
@@ -241,6 +243,14 @@ Literal
 	/ CInteger
 	/ Name
 	/ CString
+	/ ArrayLiteral
+
+ArrayLiteral
+	= { '(' S* (@Param (S+ @Param)*)?  ')' #Array }
+
+Param
+    = Literal
+
 
 CString
 	=  '"' { STRING_CONTENT* #String } '"'
@@ -345,57 +355,6 @@ HereDocDelim
 
 DELIM_KEYWORD
     = "EOF"
-
-Array
-    = Declaration
-	/ Assignment
-	/ Reference
-	/ ArrayLength
-	/ AddElementToArray
-
-Declaration
-    = { @Declare _ @Option _ @Variable _ "="? @Params? #Declaration }
-
-Declare
-    = { 'declare' #Declare }
-
-Option
-    = { '-a' #Option }
-
-Variable
-    = { W* #Variable }
-
-Assignment 
-    = { @Variable _ '=' _ @Params #Assignment }
-    / { @Variable '[' addINDEX ']' '=' @Integer #Assignment }
-
-Params
-    = { '(' (@Param (_ @Param)*)?  ')' #Params }
-
-Param
-    = Constant
-
-Constant
-	= Integer
-
-Integer
-	= { [0-9]+  #Integer }
-
-Reference
-    = { '$' '{' @Variable '[' addINDEX ']' '}' #Reference }
-
-ArrayLength
-    = { '$' '{' '#' @Variable '[' addINDEX ']' '}' #ArrayLength }
-
-AddElementToArray
-    = {( @ToHead
-	/   @ToTail ) #AddElementToArray }
-
-ToHead
-    = { @Variable '=' '(' @Constant _ '"' '$' '{' @Variable '[' addINDEX ']' '}' '"' ')' #ToHead }
-
-ToTail
-    = { @Variable '=' '(' '"' '$' '{' @Variable '[' addINDEX ']' '}' '"' _ @Constant ')' #ToTail }
 
 FilePath
 	[example: /dir/file]
