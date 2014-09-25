@@ -65,22 +65,22 @@ FunctionDecl
 	= { 'function'? S* @FunctionName '()' S* '{' S* @Statement  S* '}' #functionDecl }
 
 FunctionCall
-	= { @FunctionName S* ArgList S* #functionCall }
+	= { @FunctionName S* @ArgList S* #functionCall }
 
 FunctionName
 	= { Name #functionName }
 
 ArgList
-	= ( @Arg S+ )+
+	= { ( @Arg S+ )+ #Args }
 
 Arg
-	= { W #arg }
+	= { W+ #arg }
 
 CaseStatement
 	= { 'case' _ case #CaseStatement }
 	
 case
-	= @Variable _ 'in' _ @CaseMember _ (@CaseMember _)* (@LastCaseMember / 'esac' ) _
+	= @PrimaryExpression _ 'in' _ @CaseMember _ (@CaseMember _)* (@LastCaseMember / 'esac' ) _
 	
 CaseMember
 	= { @Expression ')' _ @Statement _ (@Statement _)* ';;' #CaseMember }
@@ -168,8 +168,7 @@ CommandArg
 	= { @CmdSymbol+ #commandArg }
 
 CmdSymbol
-	= SingleQuoteString
-	/ DoubleQuoteString
+	= CString
 	/ SubCmd
 	/ SubExpr
 	/ Identifier
