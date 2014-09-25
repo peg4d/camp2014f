@@ -43,13 +43,15 @@ Statement
 	/ DeclareStatement
 	/ LetStatement
 	/ Command
+	/ Array
 
 Block
 	= { (@Statement)* #Block }
 
-IfStatement
+IfStatement	//田村
 	= { 'if' 'test'? @Expression NL
-		'then' NL @Block
+		'then' NL
+		@Block
 		('elif' @Expression NL 'then' NL @Block)*
 		('else' @Expression NL @Block)?
 		'fi' NL #IfStatement }
@@ -185,7 +187,7 @@ SubExpr
 	/ '${' { @SubExprSuffix #subExpr} '}'
 
 INDEX
-	= NUMBER / '@'
+	= NUMBER / '@' / '*'
 
 SubExprSuffix
 	= VarName
@@ -353,7 +355,53 @@ DELIM_KEYWORD
     = "EOF"
 
 Array
-	= { "石井" #Array }
+    = Declaration
+	/ Assignment
+	/ Reference
+	/ ArrayLength
+	/ AddElementToArray
+
+Declaration
+    = { @Declare _ @Option _ @Variable _ "="? @Params? #Declaration }
+
+Declare
+    = { 'declare' #Declare }
+
+Option
+    = { '-a' #Option }
+
+Variable
+    = { W* #Variable }
+
+Assignment 
+    = { @Variable _ '=' _ @Params #Assignment }
+    / { @Variable '[' @INDEX ']' '=' @Integer #Assignment }
+
+Params = { '(' (@Param (_ @Param)*)?  ')' #Params }
+
+Param = @Constant
+
+Constant
+	= @Integer
+
+Integer
+	= { [0-9]+  #Integer }
+
+Reference
+    = { '$' '{' @Variable '[' @INDEX ']' '}' #Reference }
+
+ArrayLength
+    = { '$' '{' '#' @Variable '[' @INDEX ']' '}' #ArrayLength }
+
+AddElementToArray
+    = {( @ToHead
+	/   @ToTail ) #AddElementToArray }
+
+ToHead
+    = { @Variable '=' '(' @Constant _ '"' '$' '{' @Variable '[' @INDEX ']' '}' '"' ')' #ToHead }
+
+ToTail
+    = { @Variable '=' '(' '"' '$' '{' @Variable '[' @INDEX ']' '}' '"' _ @Constant ')' #ToTail }
 
 FilePath
 	[example: /dir/file]
