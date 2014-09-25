@@ -34,21 +34,18 @@ Statement
 	/ Command
 
 IfStatement	//田村
-	= { 'if' @Expression NL
-	    'then' NL @Block
-        (@ElseClause / @ElifClause)?
-	    'fi' NL #if }
-
-ElifClause
-    = { 'elif' @Expression NL
-        'then' NL @Block
-        (@ElseClause / @ElifClause)? #if }
-
-ElseClause
-    = 'else' NL @Block
+	= { 'if' 'test'? @Expression NL
+		'then' NL
+		@Block
+		('elif' @Expression NL 'then' NL @Block)*
+		('else' @Expression NL @Block)?
+		'fi' NL #IfStatement}
 
 ForStatement
-	= 須藤
+	= { 'for' ( @Literal 'in' @Array / '((' @Expression NL @Expression NL @Expression '))' ) NL
+  'do' NL
+  @Block
+  'done' NL #ForStatement}
 
 FunctionStatement
 	= 山口
@@ -57,7 +54,7 @@ CaseStatement
 	= 本多
 
 UntilStastement
-	= { 'until' Expression NL 
+	= { 'until' Expression NL
 	   'do' NL
 	   Block
 	   'done' NL #Unitl}
