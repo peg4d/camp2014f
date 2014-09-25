@@ -13,7 +13,7 @@ Chunk
 	= Statement
 
 S
-	= ([ \t\n\r] / COMMENT)
+	= ([ \t] / COMMENT)
 
 _
     = S*
@@ -25,13 +25,14 @@ BREAK
    = '\n' / '\r\n' / '\r'
 
 NL
-	= ';' / BREAK
+	= ';' / BREAK / !.
 
 W
 	= [a-zA-Z0-9_]
 
 FILENAME
-	= ('\\\\' / '\\"' / '\\ ' / (![ /\x00] .))+
+//	= ('\\\\' / '\\"' / '\\ ' / (![ /\x00] .))+
+	= (ESCAPED_CHAR / (!FORBIDDEN_CHAR !'\x00' . ))+
 
 Statement
 	= IfStatement
@@ -137,7 +138,7 @@ AndList
 	= PipedCommand {@ _ '&&' _ @PipedCommand #and}*
 
 PipedCommand
-	= SingleCommand {_ '|' _ @SingleCommand #pipe}*
+	= SingleCommand {@ _ '|' _ @SingleCommand #pipe}*
 
 SingleCommand
 	= { @CmdSymbolSeq (S+ (@CommandArg / @Redirect / @HereDoc))* #singleCommand }
@@ -163,10 +164,10 @@ NUMBER
 	/ [1-9][0-9]*
 
 CmdSymbolSeq
-	= { @CmdSymbol+ #commandName }
+	= { (@CmdSymbol)+ #commandName }
 
 CommandArg
-	= { @CmdSymbol+ #commandArg }
+	= { (@CmdSymbol)+ #commandArg }
 
 CmdSymbol
 	= CString
@@ -374,9 +375,11 @@ Assignment
     = { @Variable _ '=' _ @Params #Assignment }
     / { @Variable '[' @INDEX ']' '=' @Integer #Assignment }
 
-Params = { '(' (@Param (_ @Param)*)?  ')' #Params }
+Params
+    = { '(' (@Param (_ @Param)*)?  ')' #Params }
 
-Param = @Constant
+Param
+    = @Constant
 
 Constant
 	= @Integer
@@ -402,10 +405,11 @@ ToTail
 
 FilePath
 	[example: /dir/file]
-	//[example: "dir name/file"]
 	[example: dir\ name/file]
-	[example: /dir/$file]
 	= { (FILENAME / '/')+ #FilePath }
 
 PathExpr
+	[example: "dir name/file"]
+	[example: /"dir name"/$var]
+	[example: /dir/$var]
 	= { ( SubExpr / Literal / FilePath )+ #PathExpr }
