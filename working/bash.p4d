@@ -28,7 +28,10 @@ IfStatement
 	= 田村
 
 ForStatement
-	= 須藤
+	= { 'for' ( @Literal 'in' @Array / '((' @Expression NL @Expression NL @Expression '))' ) NL
+  'do' NL
+  @Block
+  'done' NL #ForStatement}
 
 FunctionStatement
 	= 山口
@@ -39,9 +42,9 @@ CaseStatement
 // それ以外 田村 (全員調整) ただし、Command は関口
 
 WhileStatement
-	= 'while' Expression NL 
-	  'do' NL 
-	  Block 
+	= 'while' Expression NL
+	  'do' NL
+	  Block
 	  'done' NL
 
 
@@ -65,7 +68,3 @@ FilePath
 	[example: dir\ name/file]
 	[example: /dir/$file]
 	= 森谷
-
-
-
-
