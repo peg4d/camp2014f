@@ -24,8 +24,13 @@ Statement
 	/ LetStatement
 	/ Command
 
-IfStatement
-	= 田村
+IfStatement	//田村
+	= 'if' 'test'? @Expression NL
+		'then' NL
+		@Block
+		('elif' @Expression NL 'then' NL @Block)*
+		('else' @Expression NL @Block)?
+		'fi' NL
 
 ForStatement
 	= 須藤
@@ -39,9 +44,9 @@ CaseStatement
 // それ以外 田村 (全員調整) ただし、Command は関口
 
 WhileStatement
-	= 'while' Expression NL 
-	  'do' NL 
-	  Block 
+	= 'while' Expression NL
+	  'do' NL
+	  Block
 	  'done' NL
 
 
@@ -65,7 +70,3 @@ FilePath
 	[example: dir\ name/file]
 	[example: /dir/$file]
 	= 森谷
-
-
-
-
