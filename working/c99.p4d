@@ -265,8 +265,6 @@ POINTER_QUALIFIER
 
 PrimaryType
 	= StructDeclaration
-	/ { "union"  @Name addStructMember?  #TUnion } _
-	/ { "enum"   @Name "{" @EnumeratorList ","? "}" #TEnum } _
 	/ { "void" #TVoid } _
 	/ { SIGN? "char"         #TInt } _
 	/ { SIGN? "short"        #TInt } _
@@ -284,6 +282,8 @@ PrimaryType
 
 StructDeclaration
 	= { "struct" _ @Name addStructMember? #TStruct }
+	/ { "union"  _ @Name addStructMember?  #TUnion }
+	/ { "enum"   _ @Name "{" @EnumeratorList ","? "}" #TEnum }
 
 SIGN
 	= ("signed" / "unsigned" ) _
