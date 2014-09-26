@@ -19,14 +19,20 @@ File
 Chunk
 	= Statement*
 
+//Expression
+//==========
 Expression
     [example:1 + 1]
     = '1 + 1'
 
+//Statement
+//==========
 Statement
     [example:var a = 0;]
     = 'var a = 0;'
 
+//Literal
+//==========
 Literal
     [example:1]
     = '1'
