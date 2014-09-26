@@ -61,17 +61,25 @@ ASCII
 	= '\\x' HEXDIGIT HEXDIGIT
 
 LRMatch
-	= { '^' _? ( @ParenBlock / @String ) (@Quantifier)? _? '$' #BiginEndStmt }
-	/ { '^' _? ( @ParenBlock / @String ) (@Quantifier)? #BiginWithStmt }
-	/ { ( @ParenBlock / @String ) (@Quantifier)? _? '$' #EndWithStmt }
-	/ { ( @ParenBlock / @String ) (@Quantifier)? #Stmt }
+	= { '^' _? @ParenBlock (@Quantifier)? _? '$' #BiginEndStmt }
+	/ { '^' _? ( @Character / @Bracket ) (@Quantifier)? _? '$' #BiginEndChar }
+	/ { '^' _? @ParenBlock (@Quantifier)? #BiginWithStmt }
+	/ { '^' _? ( @Character / @Bracket ) (@Quantifier)? #BiginWithChar }
+	/ { @ParenBlock (@Quantifier)? _? '$' #EndWithStmt }
+	/ { ( @Character / @Bracket ) (@Quantifier)? _? '$' #EndWithChar }
+	/ { @ParenBlock (@Quantifier) #Stmt }
+	/ ParenBlock
+	/ { ( @Character / @Bracket ) (@Quantifier) #Char }
+	/ String
 
 //Block
 //	= { ( @ParenBlock / @String ) (@Quantifier)? #term }
 
 Quantifier
-	= { '+' #onemore }
-	/ { '*' #zeromore }
+	= { '+?' #onemoreS }
+	/ { '+' #onemoreL }
+	/ { '*?' #zeromoreS }
+	/ { '*' #zeromoreL }
 	/ { '?' #optional }
 	/ { '{' _? @AndMore _? ',' _? @AndFewer _? '}' #times }
 	/ { '{' _? @AndMore _? ',' _? '}' #times }
@@ -98,7 +106,7 @@ Item
 	/ { LETTER #item }
 
 String
-	= { ( @Character / @Bracket )+ #Str }
+	= { ( @Character !'+' !'*' !'?' !'{' !'$' / @Bracket )+ #Str }
 
 Character
 	= { LETTER #Char / ESCAPELETTER #escape / '.' #WildCard }
