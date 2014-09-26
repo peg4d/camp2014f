@@ -32,9 +32,6 @@ LINECOMMENT
 //PRAGMA
 //	= '#' (!'\n' .)*
 
-ATTRIBUTE
-	= '__attribute__' !W _ '((' (!'))' .)* '))' _
-
 EOL
 	= ('\r'? '\n' / !.)
 
@@ -59,13 +56,15 @@ NAME
 	= !DIGIT !(KEYWORD !W) W+
 
 KEYWORD
-	= 'auto' / 'break' / 'case' / 'char' / 'const' / 'continue' / 'default' 
-	/ 'double' / 'do' / 'else' / 'enum' / 'extern' / 'float' / 'for' 
-	/ 'goto' / 'if' / 'int' / 'inline' / 'long' / 'register' / 'restrict' 
-	/ 'return' / 'short' / 'signed' / 'sizeof' / 'static' / 'struct' 
-	/ 'switch' / 'typedef' / 'union' / 'unsigned' / 'void' / 'volatile' 
-	/ 'while' / '_Bool' / '_Complex' / '_Imaginary' / '_stdcall' 
-	/ '__declspec' / '__attribute__' / '__asm'
+	= 'abstract' / 'assert' / 'boolean' / 'break' / 'byte' / 'case'
+	/ 'catch' / 'char' / 'class' / 'const' / 'continue' / 'default'
+	/ 'do' / 'double' / 'else' / 'enum' / 'extends' / 'false'
+	/ 'final' / 'finally' / 'float' / 'for' / 'goto' / 'if' / 'implements'
+	/ 'import' / 'instanceof' / 'int' / 'interface' / 'long' / 'native'
+	/ 'new' / 'null' / 'package' / 'private' / 'protected' / 'public'
+	/ 'return' / 'short' / 'static' / 'strictfp' / 'super' / 'switch'
+	/ 'synchrnized' / 'this' / 'throw' / 'throws' / 'transient'
+	/ 'true' / 'try' / 'void' / 'volatile' / 'while'
 
 "++"     = '++' _
 "--"     = '--' _
@@ -75,19 +74,14 @@ KEYWORD
 "-"   = '-' !('-' / [=>]) _
 "~"   = '~' _
 "!"    = '!' !'=' _
-"void"      = 'void'     !W
 "char"      = 'char'     !W
 "short"     = 'short'    !W
 "int"       = 'int'      !W
 "long"      = 'long'     !W
 "float"     = 'float'    !W
 "double"    = 'double'   !W
-"signed"    = 'signed'   !W
-"unsigned"  = 'unsigned' !W
-"_Bool"      = '_Bool'    !W
-"_Complex"   = '_Complex' !W
-"struct"    = 'struct'   !W
-"union"     = 'union'    !W
+"boolean"   = 'boolean'  !W
+"byte"      = 'byte'     !W
 "{"     = '{' _
 "["      = '[' _
 "]"      = ']' _
@@ -111,9 +105,7 @@ KEYWORD
 "?"	= '?' _
 ";"	= (';' _ / EOL)  /* this is for debug */
 "}"	= '}' _
-"->"	= '->' _
 "enum"	= 'enum' !W
-"__asm"	= '__asm' !W
 "case"	= 'case' !W
 "default"	= 'default' !W
 "if"	= 'if' !W
@@ -138,26 +130,13 @@ KEYWORD
 "|="	= '|=' _
 "="	= '=' !'=' _
 "."	= '.' _
-"sizeof"	= 'sizeof' !W _
-"typedef"	= 'typedef' !W _
-"extern"	= 'extern' !W _
 "static"	= 'static' !W _
-"auto"	= 'auto' !W _
-"register"	= 'register' !W _
-"const"	= 'const' !W _
-"restrict"	= 'restrict' !W _
 "volatile"	= 'volatile' !W _
-"__declspec"	= '__declspec' !W _
-"inline"	= 'inline' !W _
-"_stdcall"	= '_stdcall' !W _
+
+
 
 "("	= '(' _
 ")"	= ')' _
-
-"#"	= '#' _
-"include"	= 'include' !W _
-"define"	= 'define' !W _
-
 
 EOT	= !.
 
@@ -167,14 +146,8 @@ TopLevel
 	/ Declaration
 
 Declaration
-	= FunctionDeclaration
-	/ StructDeclaration
-	/ VariableDeclaration
-
-Directive
-	= "#" "include" { (!'\n' .)* #Include }
-	/ "#" "define"  { (!'\n' .)* #Define }
-	/ "#" { (!'\n' .)* #TODO }
+	= ClassDeclaration
+//	/ VariableDeclaration
 
 // package definition
 PackageDeclaration
@@ -242,7 +215,7 @@ ElementValueList
 
 
 FunctionDeclaration
-	= { @AnnotationList @Type @Name "(" @FunctionParamList ")" @Block #Function }
+	= { @AnnotationList @Type @Name "(" @FunctionParamList ")" (@Block / ";") #Function }
 
 
 FunctionParamList
@@ -259,7 +232,7 @@ TypeDef
 	= { "typedef" @Type @Name _ ";" #TypeDeclaration }
 
 VariableDeclaration
-	= { @AnnotationList @Type @InitDecl ("," @InitDecl)*  ATTRIBUTE? ";" #Declaration }
+	= { @AnnotationList @Type @InitDecl ("," @InitDecl)*  ";" #Declaration }
 
 InitDecl
 	= { @VarName ("=" @Initializer)? #VarDecl } _
@@ -290,56 +263,54 @@ Designator
 //====
 
 Type
-	= { "const" _ @TypeSuffix #TConst } _
-	/ TypeSuffix
+	= PrimaryType {@ Generics }?
+	{@ "[" _? "]" #TArray }*
 
-TypeSuffix
-	= PrimaryType {@
-		POINTER_QUALIFIER? "*" #TConst
-		/ "*" POINTER_QUALIFIER? #TPointer
-		/ "[" (NAME / DIGIT*) "]" #TPointer
-		/ "(" "*" @Name ")" @FunctionParamList #TFunc
-	}*
-
-POINTER_QUALIFIER
-	= "const" / "restrict"
+Generics
+	= '<' @Type ("," @Type)* '>' #TGenerics
+	/ '<' _? '>' #TGenerics
 
 PrimaryType
-	= StructDeclaration
-	/ { "union"  @Name addStructMember?  #TUnion } _
-	/ { "enum"   @Name "{" @EnumeratorList ","? "}" #TEnum } _
-	/ { "void" #TVoid } _
-	/ { SIGN? "char"         #TInt } _
-	/ { SIGN? "short"        #TInt } _
-	/ { SIGN? "int"          #TInt } _
+	= { "byte"         #TInt } _
+	/ { "char"         #TInt } _
+	/ { "short"        #TInt } _
+	/ { "int"          #TInt } _
+	/ { "long"         #TInt } _
 	/ { "float"       _   #TFloat } _
 	/ { "double"      _   #TFloat } _
-	/ { "long" _ "double" _ #TFloat } _
-	/ { SIGN? "long" (_ "long")? (_ "int")? #TInt } _
-	/ { "signed" `signed int` #TInt } _
-	/ { "unsigned" `unsigned int` #TInt } _
-	/ { "_Bool" #TBoolean } _
-	/ { "_Complex" #TComplex } _
-	/ { NAME_T #TName } _
+	/ { "boolean"  #TBoolean } _
 	/ { NAME   #Name } _
 
-StructDeclaration
-	= { "struct" @Name addStructMember? #TStruct }
+ClassDeclaration
+	= { @ClassModifier* "class" @Name @{ Generics } @SuperClass? @SuperInterfaces* ClassBody #TClass }
 
-SIGN
-	= ("signed" / "unsigned")
+ClassModifier
+	= Annotation
+	/ 'public'    _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ 'protected' _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
+	/ 'private'   _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
+	/ 'abstruct'  _ { #KeyValue @{`abstruction` #Key } @{`abstruct` #Value } } _
+	/ 'final'     _ { #KeyValue @{`abstruction` #Key } @(`final` #Value) } _
+	/ 'static'    _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
+	/ 'strictfp'  _ { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
 
-NAME_T
-	= !DIGIT (!('_t' !W)  W )+ '_t' !W
-	
-addStructMember
-	= '{' _ (@StructMemberDeclaration / _ )+ _ "}"
+SuperClass
+	= { 'extends' _ @Type #SuperClass }
 
-StructMemberDeclaration
-	= { @AnnotationList @Type @StructMemberName  ("," @StructMemberName )* ";" _ #StructMemberDeclaration }
+SuperInterfaces
+	= { 'implements' _ @Type ("," @Type)* #SuperInterfaces }
 
-StructMemberName
-	= VarName {@ ":" @ConstantExpression #Bit}*
+ClassBody
+	= '{' _ (@ClassMemberDeclaration / _ )+ _ "}"
+
+ClassMemberDeclaration
+	= VariableDeclaration
+	/ FunctionDeclaration
+	/ ClassDeclaration
+//	/ InterfaceDeclaration
+
+//	EnumDeclaration
+//	= { "enum"   @Name "{" @EnumeratorList ","? "}" #TEnum } _
 
 EnumeratorList
 	= { @Enumerator ("," @Enumerator)* ","? #List }

@@ -42,9 +42,6 @@ BLOCKCOMMENT
 LINECOMMENT
 	= '//' (!'\n' .)*
 
-//PRAGMA
-//	= '#' (!'\n' .)*
-
 ATTRIBUTE
 	= '__attribute__' !W _ '((' (!'))' .)* '))' _
 
@@ -191,7 +188,7 @@ Directive
 
 
 FunctionDeclaration
-	= { @AnnotationList @Type _ @Name _ "(" @FunctionParamList ")" _ @Block #Function }
+	= { @AnnotationList @Type _ @Name _ "(" @FunctionParamList ")" (_ @Block / ";") #Function }
 
 AnnotationList
 	= { (@Annotation)*  #List } _
@@ -314,7 +311,7 @@ Enumerator
 //===================
 
 Block
-	= { "{" (@Statement / @Declaration)* "}" #Block }
+	= { "{" (@Directive /  @Statement / @Declaration / _ )* "}" #Block }
 
 Statement
 	= Block
@@ -333,7 +330,6 @@ Statement
 	/ { @Name ":" #Label }
 	/ { @Expression ";" #ExpressionStatement }
 	/ { #Empty } ";"
-
 
 //Expression
 //==========
