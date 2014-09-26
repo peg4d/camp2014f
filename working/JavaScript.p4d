@@ -14,10 +14,10 @@
 
 
 File
-	= Statement*
+  = Statement*
 
 Chunk
-	= Statement*
+  = Statement*
 
 WS
   = [\t\v\f \u000B\u000C\u00A0\uFEFF]
@@ -71,18 +71,18 @@ IDENTIFIER_PART
 //    / "\u200D"
 
 W
-	= [a-zA-Z0-9_]
-	/ UCHAR
+  = [a-zA-Z0-9_]
+  / UCHAR
 
 UCHAR
-	= '\\u' HEX4
-	/ '\\U' HEX4 HEX4
+  = '\\u' HEX4
+  / '\\U' HEX4 HEX4
 
 HEX4
-	= HEX HEX HEX HEX
+  = HEX HEX HEX HEX
 
 DIGIT
-	= [0-9]
+  = [0-9]
 
 //Automatic Semicolon Insertion
 
@@ -109,28 +109,28 @@ EOF
 "{"   = '{' __
 "["   = '[' __
 "]"   = ']' __
-"("	  = '(' __
-")"	  = ')' __
-"."	  = '.' __
-","	  = ',' __
-":"	  = ':' ![>] __
-"/"	  = '/' !'=' __
-"%"	  = '%' ![=>] __
+"("    = '(' __
+")"    = ')' __
+"."    = '.' __
+","    = ',' __
+":"    = ':' ![>] __
+"/"    = '/' !'=' __
+"%"    = '%' ![=>] __
 "<<"  = '<<' !'=' __
 ">>"  = '>>' !'=' __
 "<="  = '<=' __
 ">="  = '>=' __
-"<"	  = '<' ![=] __
-">"	  = '>' ![=] __
+"<"    = '<' ![=] __
+">"    = '>' ![=] __
 "=="  = '==' ![=]__
 "===" = '===' __
 "!="  = '!=' ![=] __
 "!==" = '!==' __
-"^"	  = '^' ![=] __
-"|"	  = '|' ![=] __
+"^"    = '^' ![=] __
+"|"    = '|' ![=] __
 "&&"  = '&&' __
 "||"  = '||' __
-"?"	  = '?' __
+"?"    = '?' __
 "*="  = '*=' __
 "/="  = '/=' __
 "%="  = '%=' __
@@ -141,7 +141,7 @@ EOF
 "&="  = '&=' __
 "^="  = '^=' __
 "|="  = '|=' __
-"="	  = '=' ![=] __
+"="    = '=' ![=] __
 "break" = 'break' !W __
 "case" = 'case' !W __
 "catch" = 'catch' !W __
@@ -210,12 +210,12 @@ ThisExpression
     = { "this" #This }
 
 PrimaryExpression
-	= ThisExpression __
+  = ThisExpression __
     / Identifier __
-	/ Literal __
+  / Literal __
     / ArrayLiteral __
     / ObjectLiteral __
-	/ "(" Expression ")"
+  / "(" Expression ")"
 
 ArrayLiteral
     [example:[]]
@@ -320,16 +320,16 @@ addUnaryOperator
     / "!"      #Not
 
 MultiplicativeExpression
-	= UnaryExpression {@ ( "*" #Mul / "/" #Div / "%" #Mod ) @UnaryExpression }*
+    = UnaryExpression {@ ( "*" #Mul / "/" #Div / "%" #Mod ) @UnaryExpression }*
 
 AdditiveExpression
-	= MultiplicativeExpression {@ ( "+" #Add / "-" #Sub ) @MultiplicativeExpression }*
-	
+    = MultiplicativeExpression {@ ( "+" #Add / "-" #Sub ) @MultiplicativeExpression }*
+  
 ShiftExpression
-	= AdditiveExpression {@ ( "<<" #LeftShift / ">>" #RightShift ) @AdditiveExpression }*
-	
+    = AdditiveExpression {@ ( "<<" #LeftShift / ">>" #RightShift ) @AdditiveExpression }*
+  
 RelationalExpression
-	= ShiftExpression {@ addRelationalOperator @ShiftExpression }*
+    = ShiftExpression {@ addRelationalOperator @ShiftExpression }*
 
 addRelationalOperator
     = "<=" #LessThanEquals
@@ -338,9 +338,9 @@ addRelationalOperator
     / ">" #GreaterThan
     / "instanceof" #InstanceOf
     / "in" #In
-	
+  
 EqualityExpression
-	= RelationalExpression {@ addEqualityOperator @RelationalExpression }*
+    = RelationalExpression {@ addEqualityOperator @RelationalExpression }*
 
 addEqualityOperator
     = "=="  #Equals
@@ -349,42 +349,42 @@ addEqualityOperator
     / "!==" #StrictNotEquals
 
 BitwiseANDExpression
-	= EqualityExpression {@ "&" @EqualityExpression #BitwiseAnd }*
+    = EqualityExpression {@ "&" @EqualityExpression #BitwiseAnd }*
 
 BitwiseXORExpression
-	= BitwiseANDExpression {@ "^" @BitwiseANDExpression #BitwiseXor }*
+    = BitwiseANDExpression {@ "^" @BitwiseANDExpression #BitwiseXor }*
 
 BitwiseORExpression
-	= BitwiseXORExpression {@ "|" @BitwiseXORExpression #BitwiseOr }*
+    = BitwiseXORExpression {@ "|" @BitwiseXORExpression #BitwiseOr }*
 
 LogicalANDExpression
-	= BitwiseORExpression {@ "&&" @BitwiseORExpression #And }*
+    = BitwiseORExpression {@ "&&" @BitwiseORExpression #And }*
 
 LogicalORExpression
-	= LogicalANDExpression {@ "||" @LogicalANDExpression #Or }*
-	
+    = LogicalANDExpression {@ "||" @LogicalANDExpression #Or }*
+  
 ConditionalExpression
-	= LogicalORExpression {@ "?"  @Expression ":" @LogicalORExpression #Trinary }*
+    = LogicalORExpression {@ "?"  @Expression ":" @LogicalORExpression #Trinary }*
 
 AssignmentExpression
-	= { @LeftHandSideExpression addAssignmentOperator @AssignmentExpression }
-	/ ConditionalExpression
+    = { @LeftHandSideExpression addAssignmentOperator @AssignmentExpression }
+    / ConditionalExpression
 
 addAssignmentOperator
-	= "="   #Assign
-	/ "*="  #AssignMul
-	/ "/="  #AssignDiv
-	/ "%="  #AssignMod
-	/ "+="  #AssignAdd
-	/ "-="  #AssignSub
-	/ "<<=" #AssignLeftShift
-	/ ">>=" #AssignRightShift
-	/ "&="  #AssignBitwiseAnd
-	/ "^="  #AssignBitwiseXOr 
-	/ "|="  #AssignBitwiseOr
+    = "="   #Assign
+    / "*="  #AssignMul
+    / "/="  #AssignDiv
+    / "%="  #AssignMod
+    / "+="  #AssignAdd
+    / "-="  #AssignSub
+    / "<<=" #AssignLeftShift
+    / ">>=" #AssignRightShift
+    / "&="  #AssignBitwiseAnd
+    / "^="  #AssignBitwiseXOr 
+    / "|="  #AssignBitwiseOr
 
 CommaExpression
-	= AssignmentExpression {@ "," @AssignmentExpression #CommaExpression }*
+    = AssignmentExpression {@ "," @AssignmentExpression #CommaExpression }*
 
 Expression
     = CommaExpression
@@ -392,154 +392,155 @@ Expression
 //Statement
 //==========
 Block
-	[example:{var a = 0;}]
-	= { "{" (@Statement)* "}" #Block }
+    [example:{var a = 0;}]
+    = { "{" (@Statement)* "}" #Block }
 
 Declaration
-	//[example:var a = 0, b, c = 1 + 3;]
-	= { "var" @Name ("=" @Expression)? ("," @InitDecl)* EOS}
+    //[example:var a = 0, b, c = 1 + 3;]
+    = { "var" @Identifier ("=" @Expression)? ("," @InitDecl)* EOS}
 
 InitDecl
-	= {"var" @Name ("=" @Expression)? #VarDecl }
+    = {"var" @Identifier ("=" @Expression)? #VarDecl }
 
 Statement
     [example:var a = 0;]
-		[example:break;]
-		[example:if(1 + 1){var a = 0;}]
-		//[example:switch(a){case 1: break; default: a = 1+3;}]
-		[example:while(1){var a = 0;}]
-		[example:do{var a = 0;}while(2 > 1)]
-		//[example:for(var i = 0;i < 5; i ++){ i += 1;}]
+    [example:break;]
+    [example:if(1 + 1){var a = 0;}]
+    //[example:switch(a){case 1: break; default: a = 1+3;}]
+    [example:while(1){var a = 0;}]
+    [example:do{var a = 0;}while(2 > 1)]
+    //[example:for(var i = 0;i < 5; i ++){ i += 1;}]
     = 'var a = 0;'
-		/ Block
-		/ { "if" "(" @Expression ")" @Statement ("else" @Statement)? EOS #If }
-		/ { "switch" "(" @Expression ")" "{" @CaseBlock (@DefaultBlock)? "}" EOS #Switch }
-		/ { "while" "(" @Expression ")" @Statement EOS #While }
-		/ { "do" @Statement "while" "(" @Expression ")" EOS #DoWhile }
-		/ { "for" "(" (@Expression)? ";" (@Expression)? ";" (@Expression)? ")" @Statement EOS #For }
-		/ { "for" "(" @Declaration? ";" (@Expression)? ";" (@Statement)? ";" EOS #For }
-		/ { "continue" (@LabelledStatement)? EOS #Continue }
-		/ { "return" (@Expression)? EOS #Return}
-		/ { "const" @Name "=" @Expression ("," @Name "=" @Expression)? #const }
-		/ { "debugger"}
-		/ { "import"}
-		/ { "export"}
-		/ { "function"}
-		/ { "let"}
-		/ { "throw"}
-		/ { "try"}
-		/ { "break" EOS #Break }
-		/ { "with"}
-		/ { "yield"}
+    / Block
+    / Declaration
+    / { "if" "(" @Expression ")" @Statement ("else" @Statement)? EOS #If }
+    / { "switch" "(" @Expression ")" "{" @CaseBlock (@DefaultBlock)? "}" EOS #Switch }
+    / { "while" "(" @Expression ")" @Statement EOS #While }
+    / { "do" @Statement "while" "(" @Expression ")" EOS #DoWhile }
+    / { "for" "(" (@Expression)? ";" (@Expression)? ";" (@Expression)? ")" @Statement EOS #For }
+    / { "for" "(" @Declaration? ";" (@Expression)? ";" (@Statement)? ";" EOS #For }
+    / { "continue" (@LabelledStatement)? EOS #Continue }
+    / { "return" (@Expression)? EOS #Return}
+    / { "const" @Identifier "=" @Expression ("," @Identifier "=" @Expression)? #const }
+    / { "debugger"}
+    / { "import"}
+    / { "export"}
+    / { "function"}
+    / { "let"}
+    / { "throw"}
+    / { "try"}
+    / { "break" EOS #Break }
+    / { "with"}
+    / { "yield"}
 
 CaseBlock
-	= { "case" @ConstantExpression ":" @Statement #CaseBlock}
+    = { "case" @ConstantExpression ":" @Statement #CaseBlock}
 
 DefaultBlock
-	= { "default" ":" @Statement #DefaultBlock}
+    = { "default" ":" @Statement #DefaultBlock}
 
 LabelledStatement
-	= { "label"}
+    = { "label"}
 
 //Literal
 //==========
 Literal
-		= NullLiteral / BooleanLiteral / NumericLiteral / StringLiteral / RegularExpressionLiteral
+    = NullLiteral / BooleanLiteral / NumericLiteral / StringLiteral / RegularExpressionLiteral
 
 NullLiteral
-		[example: null]
-		= { "null" #Null }
+    [example: null]
+    = { "null" #Null }
 
 BooleanLiteral
-		[example: true]
-		= { ( "true" / "false" ) #Bool }
+    [example: true]
+    = { ( "true" / "false" ) #Bool }
 
 NumericLiteral
-		= OctaIntegerLiteral / HexIntegerLiteral / FloatingPointLiteral / DecimalLiteral
+    = OctaIntegerLiteral / HexIntegerLiteral / FloatingPointLiteral / DecimalLiteral
 
 DecimalLiteral
-		[example: 123]
-		[example: +123]
-		[example: -123]
-		= { SIGN? [1-9] DecimalDigit* #DecimalInteger }
+    [example: 123]
+    [example: +123]
+    [example: -123]
+    = { SIGN? [1-9] DecimalDigit* #DecimalInteger }
 
 OctaIntegerLiteral
-		[example: 0]
-		[example: 012]
-		= { SIGN? '0' ( [1-7] OctaDigit* )? !. #OctaInteger }
+    [example: 0]
+    [example: 012]
+    = { SIGN? '0' ( [1-7] OctaDigit* )? !. #OctaInteger }
 
 HexIntegerLiteral
-		[example: 0xa12]
-		[example: -0Xa12]
-		= { SIGN? '0' [xX] [1-9A-Fa-f] HexDigit* #HexInteger }
+    [example: 0xa12]
+    [example: -0Xa12]
+    = { SIGN? '0' [xX] [1-9A-Fa-f] HexDigit* #HexInteger }
 
 FloatingPointLiteral
-		[example: 12.456]
-		[example: -0.12]
-		= { SIGN? ( '0' / [1-9] DecimalDigit* ) '.' [0-9]+ ( [eE] SIGN? [1-9] DecimalDigit* )? #FloatingPointNumber }
+    [example: 12.456]
+    [example: -0.12]
+    = { SIGN? ( '0' / [1-9] DecimalDigit* ) '.' [0-9]+ ( [eE] SIGN? [1-9] DecimalDigit* )? #FloatingPointNumber }
 
 DecimalDigit
-		= [0-9]
+    = [0-9]
 
 OctaDigit
-		= [0-7]
+    = [0-7]
 
 HexDigit
-		= [0-9a-fA-F]
+    = [0-9a-fA-F]
 
 SIGN
-		= ( '+' / '-' )
+    = ( '+' / '-' )
 
 SOURCE
-		= .
+    = .
 
 StringLiteral
-		= '"' { DoubleStringCharacter* #String } '"' / "'" { SingleStringCharacter* #String } "'"
+    = '"' { DoubleStringCharacter* #String } '"' / "'" { SingleStringCharacter* #String } "'"
 
 DoubleStringCharacter
-		= !( '"' / '\\' / LINE_TERMINATOR ) SOURCE / '\\' EscapeSequence / LineContinuation
+    = !( '"' / '\\' / LINE_TERMINATOR ) SOURCE / '\\' EscapeSequence / LineContinuation
 
 SingleStringCharacter
-		= !( "'" / '\\' / LINE_TERMINATOR ) SOURCE / '\\' EscapeSequence / LineContinuation
+    = !( "'" / '\\' / LINE_TERMINATOR ) SOURCE / '\\' EscapeSequence / LineContinuation
 
 LineContinuation
-		= '\\' LINE_TERMINATOR_SEQUENCE
+    = '\\' LINE_TERMINATOR_SEQUENCE
 
 EscapeSequence
-		= '\\' / "'" / '"' / [bfnrtv] / OctaEscapeSequence / HexEscapeSequence / UnicodeEscapeSequuence
+    = '\\' / "'" / '"' / [bfnrtv] / OctaEscapeSequence / HexEscapeSequence / UnicodeEscapeSequuence
 
 OctaEscapeSequence
-		= OctaDigit OctaDigit OctaDigit
+    = OctaDigit OctaDigit OctaDigit
 
 HexEscapeSequence
-		= [xX] HexDigit HexDigit
+    = [xX] HexDigit HexDigit
 
 UnicodeEscapeSequuence
-		= [uU] HexDigit HexDigit HexDigit HexDigit
+    = [uU] HexDigit HexDigit HexDigit HexDigit
 
 RegularExpressionLiteral
-	= { '/' @RegularExpressionBody '/' @RegularExpressionFlags #RegularExp }
+    = { '/' @RegularExpressionBody '/' @RegularExpressionFlags #RegularExp }
 
 RegularExpressionBody
-	= RegularExpressionFirstChar RegularExpressionChar*
+    = RegularExpressionFirstChar RegularExpressionChar*
 
 RegularExpressionFirstChar
-	= ![*\\/\x5b] RegularExpressionNonTerminator / RegularExpressionBackslashSequence / RegularExpressionClass
+    = ![*\\/\x5b] RegularExpressionNonTerminator / RegularExpressionBackslashSequence / RegularExpressionClass
 
 RegularExpressionChar
-	= ![*\\/\x5b] RegularExpressionNonTerminator / RegularExpressionBackslashSequence / RegularExpressionClass
+    = ![*\\/\x5b] RegularExpressionNonTerminator / RegularExpressionBackslashSequence / RegularExpressionClass
 
 RegularExpressionBackslashSequence
-	= '\\' RegularExpressionNonTerminator
+    = '\\' RegularExpressionNonTerminator
 
 RegularExpressionNonTerminator
-	= !LINE_TERMINATOR SOURCE
+    = !LINE_TERMINATOR SOURCE
 
 RegularExpressionClass
-	= '[' RegularExpressionClassChar* ']'
+    = '[' RegularExpressionClassChar* ']'
 
 RegularExpressionClassChar
-	= ![\x5d\\] RegularExpressionNonTerminator / RegularExpressionBackslashSequence
+    = ![\x5d\\] RegularExpressionNonTerminator / RegularExpressionBackslashSequence
 
 RegularExpressionFlags
-	= W*
+    = W*
