@@ -191,7 +191,7 @@ Directive
 
 
 FunctionDeclaration
-	= { @AnnotationList @Type _ @Name _ "(" @FunctionParamList ")" _ (@Block _)? #Function }
+	= { @AnnotationList @Type _ @Name _ "(" @FunctionParamList ")" _ (@Block)? #Function }
 
 AnnotationList
 	= { (@Annotation)*  #List } _
@@ -217,7 +217,7 @@ FunctionParam
 //==============
 
 TypeDef
-	= { "typedef" @Type @Name _ ";" #TypeDeclaration }
+	= { "typedef" _ @Type (@Name)? ";" #TypeDeclaration }
 
 VariableDeclaration
 	= { @AnnotationList @Type @InitDecl ("," @InitDecl)*  ATTRIBUTE? ";" #Declaration }
@@ -259,7 +259,7 @@ TypeSuffix
 		POINTER_QUALIFIER? "*" #TConst
 		/ "*" POINTER_QUALIFIER? #TPointer
 		/ "[" (NAME / DIGIT*) "]" #TPointer
-		/ "(" "*" @Name ")" @FunctionParamList #TFunc
+		/ "(" _ "*" _ @Name _ ")" _  "(" @FunctionParamList ")" #TFunc
 	}*
 
 POINTER_QUALIFIER
