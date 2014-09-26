@@ -186,7 +186,7 @@ Declaration
 
 Directive
 	= "#" "include" { (!'\n' .)* #Include }
-	/ "#" "define"  { (!'\n' .)* #Define }
+	/ "#" "define"  { ((&'\\\n' / !'\n') .)* #Define }
 	/ "#" { (!'\n' .)* #TODO }
 
 
@@ -288,7 +288,7 @@ StructDeclaration
 	= { "struct" @Name addStructMember? #TStruct }
 
 SIGN
-	= ("signed" / "unsigned")
+	= ("signed" / "unsigned" ) _
 
 NAME_T
 	= !DIGIT (!('_t' !W)  W )+ '_t' !W
