@@ -19,53 +19,96 @@ File
 Chunk
 	= Statement*
 
+WS
+  = [\t\v\f ]
+//  / "\u00A0"
+//  / "\uFEFF"
+//  / Zs
+
+// Space including line terminator
+__
+    = (WS / LINE_TERMINATOR_SEQUENCE / COMMENT)*
+
+// Space without line terminator
+_
+    = (WS / MULTI_LINE_COMMENT_SINGLE_LINE)*
+
+LINE_TERMINATOR
+    = [\n\r]
+
+LINE_TERMINATOR_SEQUENCE
+    = '\n' / '\r\n' / '\r'
+
+COMMENT
+  = MULTI_LINE_COMMENT / SINGLE_LINE_COMMENT
+
+MULTI_LINE_COMMENT
+  = '/*' (!'*/' .)* '*/'
+
+MULTI_LINE_COMMENT_SINGLE_LINE
+  = '/*' (!('*/' / LINE_TERMINATOR) .)* '*/'
+
+SINGLE_LINE_COMMENT
+  = '//' (!LINE_TERMINATOR .)*
+
+//Automatic Semicolon Insertion
+
+EOS
+  = __ ';'
+  / _ SINGLE_LINE_COMMENT? LINE_TERMINATOR_SEQUENCE
+  / _ &'}'
+  / __ EOF
+
+EOF
+  = !.
+
 //Operator
 //==========
 
-"++"  = '++' _
-"--"  = '--' _
-"&"   = '&' !'&' _
-"*"   = '*' !'=' _
-"+"   = '+' ![+=] _
-"-"   = '-' !('-' / [=>]) _
-"~"   = '~' _
-"!"   = '!' !'=' _
-"{"   = '{' _
-"["   = '[' _
-"]"   = ']' _
-"("	  = '(' _
-")"	  = ')' _
-"."	  = '.' _
-","	  = ',' _
-":"	  = ':' ![>] _
-"/"	  = '/' !'=' _
-"%"	  = '%' ![=>] _
-"<<"  = '<<' !'=' _
-">>"  = '>>' !'=' _
-"<="  = '<=' _
-">="  = '>=' _
-"<"	  = '<' ![=] _
-">"	  = '>' ![=] _
-"=="  = '==' ![=]_
-"===" = '===' _
-"!="  = '!=' ![=] _
-"!==" = '!==' _
-"^"	  = '^' ![=] _
-"|"	  = '|' ![=] _
-"&&"  = '&&' _
-"||"  = '||' _
-"?"	  = '?' _
-"*="  = '*=' _
-"/="  = '/=' _
-"%="  = '%=' _
-"+="  = '+=' _
-"-="  = '-=' _
-"<<=" = '<<=' _
-">>=" = '>>=' _
-"&="  = '&=' _
-"^="  = '^=' _
-"|="  = '|=' _
-"="	  = '=' ![=] _
+"++"  = '++' __
+"--"  = '--' __
+"&"   = '&' !'&' __
+"*"   = '*' !'=' __
+"+"   = '+' ![+=] __
+"-"   = '-' !('-' / [=>]) __
+"~"   = '~' __
+"!"   = '!' !'=' __
+"{"   = '{' __
+"["   = '[' __
+"]"   = ']' __
+"("	  = '(' __
+")"	  = ')' __
+"."	  = '.' __
+","	  = ',' __
+":"	  = ':' ![>] __
+"/"	  = '/' !'=' __
+"%"	  = '%' ![=>] __
+"<<"  = '<<' !'=' __
+">>"  = '>>' !'=' __
+"<="  = '<=' __
+">="  = '>=' __
+"<"	  = '<' ![=] __
+">"	  = '>' ![=] __
+"=="  = '==' ![=]__
+"===" = '===' __
+"!="  = '!=' ![=] __
+"!==" = '!==' __
+"^"	  = '^' ![=] __
+"|"	  = '|' ![=] __
+"&&"  = '&&' __
+"||"  = '||' __
+"?"	  = '?' __
+"*="  = '*=' __
+"/="  = '/=' __
+"%="  = '%=' __
+"+="  = '+=' __
+"-="  = '-=' __
+"<<=" = '<<=' __
+">>=" = '>>=' __
+"&="  = '&=' __
+"^="  = '^=' __
+"|="  = '|=' __
+"="	  = '=' ![=] __
 "break" = 'break' !W
 "case" = 'case' !W
 "catch" = 'catch' !W
@@ -107,6 +150,14 @@ Chunk
 "public" = 'public' !W
 "static" = 'static' !W
 "yield" = 'yield' !W
+
+KEYWORD
+    = "break" / "case" / "catch" / "continue" / "debugger" / "default" / "delete" / "do"
+    / "else" / "finally" / "for" / "function" / "if" / "in" / "instanceof" / "new"
+    / "return" / "switch" / "this" / "throw" / "try" / "typeof" / "var" / "void"
+    / "while" / "with" / "class" / "enum" / "export" / "extends" / "import" / "super"
+    / "implements" / "interface" / "let" / "package" / "private" / "protected" / "public"
+    / "static" / "yield"
 
 //Expression
 //==========
