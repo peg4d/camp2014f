@@ -22,17 +22,11 @@ COMMENT
 BREAK
 	= '\n' / '\r\n' / '\r'
 
-//NL
-//	= ';' / BREAK / !.
-
-IntDigit
-	= [0-9]
-
 HexDigit
 	= [0-9A-Fa-f]
 
-letter
-	= W / Escape MetaCharacter / Symbol / Unicode / ASCII
+Letter
+	= W / Escape MetaCharacter / Escape MetaLetter / Symbol / Unicode / ASCII
 
 W
 	= [a-zA-Z0-9] ;
@@ -41,13 +35,15 @@ Escape
 	= '\\'
 
 MetaCharacter
-	= '+' / '*' / '?' / '.' / '^'
+	= '+' / '*' / '?' / '.' / '^' / '$' / '|' / '\\'
 	/ '(' / ')' / '[' / ']' / '{' / '}'
-	/ '$' / '|' / '\\'
+
+MetaLetter
+	= 'w' / 'W' / 'd' / 'D' / 's' / 'S' / 'b'
 
 Symbol
-	= '&' / '/' / '@' / '_' 
-	/ '#' / '%' / ',' / '-' / ':' / ';' / '<' / '>' / '=' / '~' / '`'
+	= '&' / '/' / '@' / '_' / '#' / '%' / ',' / '-' 
+	/ ':' / ';' / '<' / '>' / '=' / '~' / '`'
 
 Unicode
 	= '\\u' HexDigit HexDigit HexDigit HexDigit
@@ -57,8 +53,8 @@ ASCII
 
 LRMatch
 	= { '^' _? @Block _? '$' #BiginEnd }
-	/ { '^' @Block #BiginWith }
-	/ { @Block '$' #EndWith }
+	/ { '^' _? @Block #BiginWith }
+	/ { @Block _? '$' #EndWith }
 	/ Block
 
 Block
@@ -66,13 +62,15 @@ Block
 	/ Statement 
 
 Bracket
-	= { '[' (@Item)* ']' #OneOf }
+	= { '[^' (@Item)+ ']' #ExceptFor }
+	/ { '[' (@Item)+ ']' #OneOf }
 
 Item
-	= { letter #item }
+	= { Letter '-' Letter #range }
+	/ { Letter #item }
 
 Statement
 	= String
 
 String
-	= { [A-Za-z0-9_]+ #Str }
+	= { Letter+ #Str }
