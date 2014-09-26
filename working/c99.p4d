@@ -412,7 +412,7 @@ CastExpression
 
 PostfixExpression
 	= ( PrimaryExpression / { "(" @Type ")" "{" @{ (addInitializerList)* ","? #Initializer } "}" } ) 
-	{@ (addFunctionCall / addIndex / addField / addInc / addDec) }*
+	{@ (addFunctionCall / addPointerField / addIndex / addField / addInc / addDec) }*
 
 addFunctionCall
 	= @{ "(" addArgumentExpressionList? ")" #List} #Apply
