@@ -20,7 +20,7 @@ Chunk
 	= Statement*
 
 WS
-  = [\t\v\f ]
+  = [\t\v\f \u000B\u000C\u00A0\uFEFF]
 //  / "\u00A0"
 //  / "\uFEFF"
 //  / Zs
@@ -40,27 +40,60 @@ LINE_TERMINATOR_SEQUENCE
     = '\n' / '\r\n' / '\r'
 
 COMMENT
-  = MULTI_LINE_COMMENT / SINGLE_LINE_COMMENT
+    = MULTI_LINE_COMMENT / SINGLE_LINE_COMMENT
 
 MULTI_LINE_COMMENT
-  = '/*' (!'*/' .)* '*/'
+    = '/*' (!'*/' .)* '*/'
 
 MULTI_LINE_COMMENT_SINGLE_LINE
-  = '/*' (!('*/' / LINE_TERMINATOR) .)* '*/'
+    = '/*' (!('*/' / LINE_TERMINATOR) .)* '*/'
 
 SINGLE_LINE_COMMENT
-  = '//' (!LINE_TERMINATOR .)*
+    = '//' (!LINE_TERMINATOR .)*
+
+Identifier
+    = !KEYWORD IdentifierName
+
+IdentifierName
+    = { IDENTIFIER_START IDENTIFIER_PART* #Name }
+
+IDENTIFIER_START
+    = W
+    / "$"
+    / "_"
+
+IDENTIFIER_PART
+    = IDENTIFIER_START
+//    / UnicodeCombiningMark
+    / DIGIT
+//    / UnicodeConnectorPunctuation
+//    / "\u200C"
+//    / "\u200D"
+
+W
+	= [a-zA-Z0-9_]
+	/ UCHAR
+
+UCHAR
+	= '\\u' HEX4
+	/ '\\U' HEX4 HEX4
+
+HEX4
+	= HEX HEX HEX HEX
+
+DIGIT
+	= [0-9]
 
 //Automatic Semicolon Insertion
 
 EOS
-  = __ ';'
-  / _ SINGLE_LINE_COMMENT? LINE_TERMINATOR_SEQUENCE
-  / _ &'}'
-  / __ EOF
+    = __ ';'
+    / _ SINGLE_LINE_COMMENT? LINE_TERMINATOR_SEQUENCE
+    / _ &'}'
+    / __ EOF
 
 EOF
-  = !.
+    = !.
 
 //Operator
 //==========
@@ -109,47 +142,49 @@ EOF
 "^="  = '^=' __
 "|="  = '|=' __
 "="	  = '=' ![=] __
-"break" = 'break' !W
-"case" = 'case' !W
-"catch" = 'catch' !W
-"continue" = 'continue' !W
-"debugger" = 'debugger' !W
-"default" = 'default' !W
-"delete" = 'delete' !W
-"do" = 'do' !W
-"else" = 'else' !W
-"finally" = 'finally' !W
-"for" = 'for' !W
-"function" = 'function' !W
-"if" = 'if' !W
-"in" = 'in' !W
-"instanceof" = 'instanceof' !W
-"new" = 'new' !W
-"return" = 'return' !W
-"switch" = 'switch' !W
-"this" = 'this' !W
-"throw" = 'throw' !W
-"try" = 'try' !W
-"typeof" = 'typeof' !W
-"var" = 'var' !W
-"void" = 'void' !W
-"while" = 'while' !W
-"with" = 'with' !W
-"class" = 'class' !W
-"enum" = 'enum' !W
-"export" = 'export' !W
-"extends" = 'extends' !W
-"import" = 'import' !W
-"super" = 'super' !W
-"implements" = 'implements' !W
-"interface" = 'interface' !W
-"let" = 'let' !W
-"package" = 'package' !W
-"private" = 'private' !W
-"protected" = 'protected' !W
-"public" = 'public' !W
-"static" = 'static' !W
-"yield" = 'yield' !W
+"break" = 'break' !W __
+"case" = 'case' !W __
+"catch" = 'catch' !W __
+"continue" = 'continue' !W __
+"debugger" = 'debugger' !W __
+"default" = 'default' !W __
+"delete" = 'delete' !W __
+"do" = 'do' !W __
+"else" = 'else' !W __
+"finally" = 'finally' !W __
+"for" = 'for' !W __
+"function" = 'function' !W __
+"if" = 'if' !W __
+"in" = 'in' !W __
+"instanceof" = 'instanceof' !W __
+"new" = 'new' !W __
+"return" = 'return' !W __
+"switch" = 'switch' !W __
+"this" = 'this' !W __
+"throw" = 'throw' !W __
+"try" = 'try' !W __
+"typeof" = 'typeof' !W __
+"var" = 'var' !W __
+"void" = 'void' !W __
+"while" = 'while' !W __
+"with" = 'with' !W __
+"class" = 'class' !W __
+"enum" = 'enum' !W __
+"export" = 'export' !W __
+"extends" = 'extends' !W __
+"import" = 'import' !W __
+"super" = 'super' !W __
+"implements" = 'implements' !W __
+"interface" = 'interface' !W __
+"let" = 'let' !W __
+"package" = 'package' !W __
+"private" = 'private' !W __
+"protected" = 'protected' !W __
+"public" = 'public' !W __
+"static" = 'static' !W __
+"yield" = 'yield' !W __
+"get" = 'yield' !W __
+"set" = 'yield' !W __
 
 KEYWORD
     = "break" / "case" / "catch" / "continue" / "debugger" / "default" / "delete" / "do"
@@ -162,14 +197,162 @@ KEYWORD
 //Expression
 //==========
 
-Expression
-    = CommaExpression
+FunctionExpression
+    = { "function(){}" #Function }
+StringLiteral
+    = { "'String'" #String }
+NumericLiteral
+    = { "1" #Number }
+Block
+    = { "{" (@Statement)* "}" #Block }
 
-CommaExpression
-	= AssignmentExpression {@ "," @AssignmentExpression #CommaExpression }*
+ThisExpression
+    = { "this" #This }
+
+PrimaryExpression
+	= ThisExpression __
+    / Identifier __
+	/ Literal __
+    / ArrayLiteral __
+    / ObjectLiteral __
+	/ "(" Expression ")"
+
+ArrayLiteral
+    [example:[]]
+    [example:[,,,]]
+    [example:[1,2,3]]
+    [example:[1,2,3,]]
+    [example:[,1,2,3,]]
+    = { "[" (addElisionList __)? "]" 
+      / "[" addElementList __ "]" 
+      / "[" addElementList addArrayDelimitor "]" #ArrayExpression }
+
+addArrayDelimitor
+    = __ ',' __ (addElisionList __)?
+
+addElementList
+    = (addElisionList __)? @AssignmentExpression ( addArrayDelimitor @AssignmentExpression )*
+
+addElisionList
+    = @ElisionExpression (__ @ElisionExpression)*
+
+ElisionExpression
+    = ',' { #Undefined }
+
+ObjectLiteral
+    [example:{}]
+    [example:{ a: 1, b: 2}]
+    = "{" "}" { #ObjectExpression }
+    / { (  "{" addPropertyList __ "}" / "{" addPropertyList __ "," "}" ) #ObjectExpression }
+
+addPropertyList
+    = @PropertyAssignment (__ ',' __ @PropertyAssignment)*
+
+PropertyAssignment
+    = { @PropertyName __ ":" __ @AssignmentExpression #Property }
+    / { "get" @PropertyName __ "(" ")" @Block #Getter }
+    / { "set" @PropertyName __ "(" @Identifier __ ")" @Block #Setter }
+
+PropertyName
+    = IdentifierName
+    / StringLiteral
+    / NumericLiteral
+
+NewExpressionWithArg
+    = { "new" __ @MemberExpression __ @Arguments #NewExpression }
+
+ReceiverExpression
+    = PrimaryExpression / FunctionExpression / NewExpressionWithArg
+
+MemberExpression
+    = ReceiverExpression {@ (__ "[" @Expression __ "]" / __ "." @IdentifierName) #MemberExpression }*
+
+NewExpression
+    = MemberExpression / { "new" @NewExpression #NewExpression }
+
+CallExpression
+    = MemberExpression {@ __ @Arguments #Apply }*
+
+Arguments
+    = { "(" (addArgumentList __)? ")" #List }
+
+addArgumentList
+    = @AssignmentExpression (__ "," @AssignmentExpression)*
+
+LeftHandSideExpression
+  = CallExpression
+  / NewExpression
+
+PostfixExpression
+  = { @LeftHandSideExpression _ addPostfixOperator }
+  / LeftHandSideExpression
+
+addPostfixOperator
+  = "++" #Inc / "--" #Dec
+
+UnaryExpression
+  = PostfixExpression / { addUnaryOperator @UnaryExpression }
+
+addUnaryOperator
+  = "delete" #Delete
+  / "void"   #Void
+  / "typeof" #TypeOf
+  / "++"     #PrefixInc
+  / "--"     #PrefixDec
+  / "+"      #Add
+  / "-"      #Sub
+  / "~"      #Compl
+  / "!"      #Not
+
+MultiplicativeExpression
+	= UnaryExpression {@ ( "*" #Mul / "/" #Div / "%" #Mod ) @UnaryExpression }*
+
+AdditiveExpression
+	= MultiplicativeExpression {@ ( "+" #Add / "-" #Sub ) @MultiplicativeExpression }*
+	
+ShiftExpression
+	= AdditiveExpression {@ ( "<<" #LeftShift / ">>" #RightShift ) @AdditiveExpression }*
+	
+RelationalExpression
+	= ShiftExpression {@ addRelationalOperator @ShiftExpression }*
+
+addRelationalOperator
+    = "<=" #LessThanEquals
+    / ">=" #GreaterThanEquals
+    / "<" #LessThan
+    / ">" #GreaterThan
+    / "instanceof" #InstanceOf
+    / "in" #In
+	
+EqualityExpression
+	= RelationalExpression {@ addEqualityOperator @RelationalExpression }*
+
+addEqualityOperator
+    = "=="  #Equals
+    / "!="  #NotEquals
+    / "===" #StrictEquals
+    / "!==" #StrictNotEquals
+
+BitwiseANDExpression
+	= EqualityExpression {@ "&" @EqualityExpression #BitwiseAnd }*
+
+BitwiseXORExpression
+	= BitwiseANDExpression {@ "^" @BitwiseANDExpression #BitwiseXor }*
+
+BitwiseORExpression
+	= BitwiseXORExpression {@ "|" @BitwiseXORExpression #BitwiseOr }*
+
+LogicalANDExpression
+	= BitwiseORExpression {@ "&&" @BitwiseORExpression #And }*
+
+LogicalORExpression
+	= LogicalANDExpression {@ "||" @LogicalANDExpression #Or }*
+	
+ConditionalExpression
+	= LogicalORExpression {@ "?"  @Expression ":" @LogicalORExpression #Trinary }*
 
 AssignmentExpression
-	= { @UnaryExpression addAssignmentOperator @AssignmentExpression }
+	= { @LeftHandSideExpression addAssignmentOperator @AssignmentExpression }
 	/ ConditionalExpression
 
 addAssignmentOperator
@@ -185,88 +368,11 @@ addAssignmentOperator
 	/ "^="  #AssignBitwiseXOr 
 	/ "|="  #AssignBitwiseOr
 
-ConstantExpression
-	= ConditionalExpression
-	
-ConditionalExpression
-	= LogicalORExpression {@ "?"  @Expression ":" @LogicalORExpression #Trinary }*
+CommaExpression
+	= AssignmentExpression {@ "," @AssignmentExpression #CommaExpression }*
 
-LogicalORExpression
-	= LogicalANDExpression {@ "||" @LogicalANDExpression #Or }*
-
-LogicalANDExpression
-	= InclusiveORExpression {@ "&&" @InclusiveORExpression #And }*
-
-InclusiveORExpression
-	= ExclusiveORExpression {@ "|" @ExclusiveORExpression #BitwiseOr }*
-
-ExclusiveORExpression
-	= ANDExpression {@ "^" @ANDExpression #BitwiseXor }*
-
-ANDExpression
-	= EqualityExpression {@ "&" @EqualityExpression #BitwiseAnd }*
-
-EqualityExpression
-	= RelationalExpression {@ ( "==" #Equals / "!=" #NotEquals ) @RelationalExpression }*
-	
-RelationalExpression
-	= ShiftExpression {@ ( "<=" #LessThanEquals / ">=" #GreaterThanEquals / "<" #LessThan / ">" #GreaterThan ) @ShiftExpression }*
-	
-ShiftExpression
-	= AdditiveExpression {@ ( "<<" #LeftShift / ">>" #RightShift ) @AdditiveExpression }*
-	
-AdditiveExpression
-	= MultiplicativeExpression {@ ( "+" #Add / "-" #Sub ) @MultiplicativeExpression }*
-	
-MultiplicativeExpression
-	= CastExpression {@ ( "*" #Mul / "/" #Div / "%" #Mod ) @CastExpression }*
-
-UnaryExpression
-	= PostfixExpression
-	/ { "++"    @UnaryExpression #PrefixInc }
-	/ { "--"    @UnaryExpression #PrefixDec }
-	/ { "&"    @CastExpression #Address }
-	/ { "*"   @CastExpression #Star }
-	/ { "+"   @CastExpression #Plus }
-	/ { "-"  @CastExpression #Minus }
-	/ { "~"  @CastExpression #Compl }
-	/ { "!"   @CastExpression #Not }
-	/ { "sizeof"  ( @UnaryExpression / "(" @Type ")" ) #SizeOf }
-
-CastExpression
-	= { "(" @Type ")" @CastExpression #Cast }
-	/ UnaryExpression
-
-PostfixExpression
-	= ( PrimaryExpression / { "(" @Type ")" "{" @{ (addInitializerList)* ","? #Initializer } "}" } ) 
-	{@ (addFunctionCall / addIndex / addField / addInc / addDec) }*
-
-addFunctionCall
-	= @{ "(" addArgumentExpressionList? ")" #List} #Apply
-
-addArgumentExpressionList
-	= (@AssignmentExpression ("," @AssignmentExpression)*)
-
-addIndex
-	= "[" @Expression "]" #Index
-
-addField
-	= "." @Name #Field
-
-addPointerField
-	= "->" @Name #PointerField
-
-addInc
-	= "++" #Inc
-
-addDec
-	= "--" #Dec
-
-PrimaryExpression
-	= Constant
-	/ CString
-	/ "(" Expression ")"
-	/ Name
+Expression
+    = CommaExpression
 
 //Statement
 //==========
