@@ -59,13 +59,15 @@ NAME
 	= !DIGIT !(KEYWORD !W) W+
 
 KEYWORD
-	= 'auto' / 'break' / 'case' / 'char' / 'const' / 'continue' / 'default' 
-	/ 'double' / 'do' / 'else' / 'enum' / 'extern' / 'float' / 'for' 
-	/ 'goto' / 'if' / 'int' / 'inline' / 'long' / 'register' / 'restrict' 
-	/ 'return' / 'short' / 'signed' / 'sizeof' / 'static' / 'struct' 
-	/ 'switch' / 'typedef' / 'union' / 'unsigned' / 'void' / 'volatile' 
-	/ 'while' / '_Bool' / '_Complex' / '_Imaginary' / '_stdcall' 
-	/ '__declspec' / '__attribute__' / '__asm'
+	= 'abstract' / 'assert' / 'boolean' / 'break' / 'byte' / 'case'
+	/ 'catch' / 'char' / 'class' / 'const' / 'continue' / 'default'
+	/ 'do' / 'double' / 'else' / 'enum' / 'extends' / 'false'
+	/ 'final' / 'finally' / 'float' / 'for' / 'goto' / 'if' / 'implements'
+	/ 'import' / 'instanceof' / 'int' / 'interface' / 'long' / 'native'
+	/ 'new' / 'null' / 'package' / 'private' / 'protected' / 'public'
+	/ 'return' / 'short' / 'static' / 'strictfp' / 'super' / 'switch'
+	/ 'synchrnized' / 'this' / 'throw' / 'throws' / 'transient'
+	/ 'true' / 'try' / 'void' / 'volatile' / 'while'
 
 "++"     = '++' _
 "--"     = '--' _
