@@ -141,13 +141,10 @@ KEYWORD
 EOT	= !.
 
 TopLevel
-	= Directive
-	/ TypeDef
-	/ Declaration
+	= PackageDeclaration
+	/ ImportDeclaration
+	/ ClassDeclaration
 
-Declaration
-	= ClassDeclaration
-//	/ VariableDeclaration
 
 // package definition
 PackageDeclaration
@@ -184,9 +181,6 @@ Annotation
 	/ SingleElementAnnotation
 	/ MarkerAnnotation
 
-AnnotationList
-	= { (@Annotation)+ #AnnotationList }
-
 NormalAnnotation
 	= '@' _ { @TypeName _ '(' _ @ElementValuePairList? _ ')' #NormalAnnotation }
 
@@ -214,25 +208,12 @@ ElementValueList
 	= { @ElementValue ( _ ',' _ @ElementValue)* #ElementValueList}
 
 
-FunctionDeclaration
-	= { @AnnotationList @Type @Name "(" @FunctionParamList ")" (@Block / ";") #Function }
-
-
-FunctionParamList
-	= { _ 'void' _ #List }
-	/ { ( @FunctionParam ("," @FunctionParam)* )? ("," "...")? #List } 
-
-FunctionParam
-	= { @Type _ @VarName #Param} _
 	
 // Declaration
 //==============
 
-TypeDef
-	= { "typedef" @Type @Name _ ";" #TypeDeclaration }
-
 VariableDeclaration
-	= { @AnnotationList @Type @InitDecl ("," @InitDecl)*  ";" #Declaration }
+	= { @Annotation* @Type @InitDecl ("," @InitDecl)*  ";" #Declaration }
 
 InitDecl
 	= { @VarName ("=" @Initializer)? #VarDecl } _
@@ -263,12 +244,11 @@ Designator
 //====
 
 Type
-	= PrimaryType {@ Generics }?
+	= PrimaryType {@ TGenerics }?
 	{@ "[" _? "]" #TArray }*
 
-Generics
+TGenerics
 	= '<' @Type ("," @Type)* '>' #TGenerics
-	/ '<' _? '>' #TGenerics
 
 PrimaryType
 	= { "byte"         #TInt } _
@@ -281,8 +261,10 @@ PrimaryType
 	/ { "boolean"  #TBoolean } _
 	/ { NAME   #Name } _
 
+//class
 ClassDeclaration
-	= { @ClassModifier* "class" @Name @{ Generics } @SuperClass? @SuperInterfaces* ClassBody #TClass }
+	= { @ClassModifier* "class" @Name @{ TGenerics } @SuperClass? @SuperInterfaces* ClassBody #TClass }
+	/ { @ClassModifier* "enum" @Name @SuperInterfaces* EnumBody #TEnum }
 
 ClassModifier
 	= Annotation
@@ -301,22 +283,62 @@ SuperInterfaces
 	= { 'implements' _ @Type ("," @Type)* #SuperInterfaces }
 
 ClassBody
-	= '{' _ (@ClassMemberDeclaration / _ )+ _ "}"
+	= '{' _ (@ClassBodyDeclaration / _ )+ _ "}"
+
+ClassBodyDeclaration
+	= ClassMemberDeclaration
+//	/ InstanceInitializer
+//	/ StaticInitializer
+//	/ ConstructorDeclaration
 
 ClassMemberDeclaration
-	= VariableDeclaration
-	/ FunctionDeclaration
+	= FieldDeclaration
+	/ MethodDeclaration
 	/ ClassDeclaration
 //	/ InterfaceDeclaration
 
-//	EnumDeclaration
-//	= { "enum"   @Name "{" @EnumeratorList ","? "}" #TEnum } _
+FieldDeclaration
+	= { @FieldModifier* @Type @InitDecl ("," @InitDecl)*  ";" #Field }
+
+FieldModifier
+	= Annotation
+	/ 'public'    _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ 'protected' _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
+	/ 'private'   _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
+	/ 'final'     _ { #KeyValue @{`final` #Key } @(`true` #Value) } _
+	/ 'static'    _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
+	/ 'transient' _ { #KeyValue @{`transient` #Key } @{`true` #Value } } _
+	/ 'volatile'  _ { #KeyValue @{`volatile` #Key } @{`true` #Value } } _
+
+MethodDeclaration
+	= { @MethodModifier* @Type @Name "(" @MethodParamList ")" (@Block / ";") #Method }
+
+MethodModifier
+	= Annotation
+	/ 'public'       _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ 'protected'    _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
+	/ 'private'      _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
+	/ 'abstruct'     _ { #KeyValue @{`abstruction` #Key } @{`abstruct` #Value } } _
+	/ 'final'        _ { #KeyValue @{`abstruction` #Key } @(`final` #Value) } _
+	/ 'static'       _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
+	/ 'synchronized' _ { #KeyValue @{`synchronized` #Key } @{`true` #Value } } _
+	/ 'native'       _ { #KeyValue @{`native` #Key } @{`true` #Value } } _
+	/ 'strictfp'     _ { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
+
+MethodParamList
+	= { ( @MethodParam ("," @MethodParam)* )? ("," "...")? #List } 
+
+MethodParam
+	= { @Type _ @VarName #Param} _
+
+EnumBody
+	= '{' _ @EnumeratorList? ","? (";" @ClassBodyDeclaration)? _ "}"
 
 EnumeratorList
-	= { @Enumerator ("," @Enumerator)* ","? #List }
+	= { @Enumerator ("," @Enumerator)* #List }
 
 Enumerator
-	= Name {@ "=" @ConstantExpression}?
+	= { @Annotation* @Name @{ "(" addArgumentExpressionList ")" #List }? ClassBody? #Enumerator }
 
 
 // Block, Statement
