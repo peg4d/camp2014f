@@ -270,40 +270,50 @@ PrimaryExpression
 
 //Statement
 //==========
+Block
+	[example:{var a = 0;}]
+	= { "{" (@Statement)* "}" #Block }
+
 Statement
     [example:var a = 0;]
-		[example:if(1 + 1){var a = 0;}else{var a = 0;}]
+		[example:break;]
+		[example:if(1 + 1){var a = 0;}]
+		[example:switch(1 + 1){case 1: break;}]
+		[example:while(1 + 1){var a = 0;}]
+		[example:do{var a = 0;}while(1 + 1)]
+		[example:for(;;){}]
     = 'var a = 0;'
 		/ Block
 		/ { "if" "(" @Expression ")" @Statement ("else" @Statement)? #If }
-		/ { "switch" "(" @Expression ")" @CaseBlock }
-		/ { "while" }
-		/ { "do" }
-		/ { "for" }
-		/ { "goto" }
-		/ { "continue"}
-		/ { "break" EOS #Break}
+		/ { "switch" "(" @Expression ")" "{" @CaseBlock (@DefaultBlock)? "}" #Switch }
+		/ { "while" "(" @Expression ")" @Statement #While }
+		/ { "do" @Statement "while" "(" @Expression ")" #DoWhile }
+		/ { "for" "(" (@Expression)? ";" (@Expression)? ";" (@Expression)? ")" @Statement #For }
+		/ { "continue" @LabelledStatement}
 		/ { "return"}
 		/ { "const"}
 		/ { "debugger"}
 		/ { "import"}
 		/ { "export"}
 		/ { "function"}
-		/ { "label"}
 		/ { "let"}
 		/ { "throw"}
 		/ { "try"}
-		/ { "var"}
+		/ { "break" EOS #Break }
+		/ { "var" @Name ("=" @Expression)? ("," @Name ("=" @Expression)?)* EOS}
 		/ { "with"}
 		/ { "yield"}
 
-Block
-	[example:{var a = 0;}]
-	= { "{" (@Statement / @Declaration)* "}" #Block }
-
 CaseBlock
 	= 'case 1: break;'
-	= { "case" ":" @ConstantExpression}
+	/ { "case" @ConstantExpression ":" @Statement #CaseBlock}
+
+DefaultBlock
+	= 'default: break;'
+	/ { "default" ":" @Statement #DefaultBlock}
+
+LabelledStatement
+	= { "label"}
 
 //Literal
 //==========
