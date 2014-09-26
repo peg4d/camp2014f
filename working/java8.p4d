@@ -478,7 +478,23 @@ PrimaryExpression
 	/ CString
 	/ "(" Expression ")"
 	/ Name
-	
+
+LambdaExpression
+	= { @LambdaParameters _ '->' _ @LambdaBody #LambdaExpression }
+
+LambdaParameters
+	= { @Name
+		/ '(' _ @addArgumentExpressionList? _ ')'
+		/ '(' _ @InferredFormalParameterList _ ')'
+		#LambdaParameters }
+
+InferredFormalParameterList
+	= { @Name ( _ ',' _ @Name)* #InferredFormalParameterList }
+
+LambdaBody
+	= { @Expression / @Block #LambdaBody }
+
+
 //Literal
 //=======
 
