@@ -77,19 +77,12 @@ KEYWORD
 "-"   = '-' !('-' / [=>]) _
 "~"   = '~' _
 "!"    = '!' !'=' _
-"void"      = 'void'     !W
 "char"      = 'char'     !W
 "short"     = 'short'    !W
 "int"       = 'int'      !W
 "long"      = 'long'     !W
 "float"     = 'float'    !W
 "double"    = 'double'   !W
-"signed"    = 'signed'   !W
-"unsigned"  = 'unsigned' !W
-"_Bool"      = '_Bool'    !W
-"_Complex"   = '_Complex' !W
-"struct"    = 'struct'   !W
-"union"     = 'union'    !W
 "{"     = '{' _
 "["      = '[' _
 "]"      = ']' _
@@ -113,9 +106,7 @@ KEYWORD
 "?"	= '?' _
 ";"	= (';' _ / EOL)  /* this is for debug */
 "}"	= '}' _
-"->"	= '->' _
 "enum"	= 'enum' !W
-"__asm"	= '__asm' !W
 "case"	= 'case' !W
 "default"	= 'default' !W
 "if"	= 'if' !W
@@ -140,26 +131,11 @@ KEYWORD
 "|="	= '|=' _
 "="	= '=' !'=' _
 "."	= '.' _
-"sizeof"	= 'sizeof' !W _
-"typedef"	= 'typedef' !W _
-"extern"	= 'extern' !W _
 "static"	= 'static' !W _
-"auto"	= 'auto' !W _
-"register"	= 'register' !W _
-"const"	= 'const' !W _
-"restrict"	= 'restrict' !W _
 "volatile"	= 'volatile' !W _
-"__declspec"	= '__declspec' !W _
-"inline"	= 'inline' !W _
-"_stdcall"	= '_stdcall' !W _
 
 "("	= '(' _
 ")"	= ')' _
-
-"#"	= '#' _
-"include"	= 'include' !W _
-"define"	= 'define' !W _
-
 
 EOT	= !.
 
