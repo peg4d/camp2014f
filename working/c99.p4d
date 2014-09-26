@@ -205,11 +205,11 @@ Annotation
 	/ "_stdcall"  { #KeyValue @{`stdcall` #Key } @{`true` #Value } } _
 
 FunctionParamList
-	= { _ 'void' _ #List }
-	/ { ( @FunctionParam ("," @FunctionParam)* )? ("," "...")? #List } 
+	= { ( @FunctionParam ("," @FunctionParam)* )? ("," "...")? #List } 
+	/ { _ 'void' _ #List }
 
 FunctionParam
-	= { @Type _ @VarName #Param} _
+	= { @Type _ (@VarName)? #Param} _
 	
 // Declaration
 //==============
@@ -254,7 +254,7 @@ Type
 
 TypeSuffix
 	= PrimaryType {@
-		POINTER_QUALIFIER? "*" #TConst
+		POINTER_QUALIFIER? "*" #TPointer
 		/ "*" POINTER_QUALIFIER? #TPointer
 		/ "[" (NAME / DIGIT*) "]" #TPointer
 		/ "(" _ "*" _ @Name _ ")" _  "(" @FunctionParamList ")" #TFunc
@@ -272,6 +272,7 @@ PrimaryType
 	/ { "float"       _   #TFloat } _
 	/ { "double"      _   #TFloat } _
 	/ { "long" _ "double" _ #TFloat } _
+	/ { "long" (_ SIGN)? (_ "long")? (_ "int")? #TInt } _
 	/ { SIGN? "long" (_ "long")? (_ "int")? #TInt } _
 	/ { "signed" `signed int` #TInt } _
 	/ { "unsigned" `unsigned int` #TInt } _
@@ -282,7 +283,7 @@ PrimaryType
 
 StructDeclaration
 	= { "struct" _ @Name addStructMember? #TStruct }
-	/ { "union"  _ @Name addStructMember?  #TUnion }
+	/ { "union"  _ @Name? addStructMember?  #TUnion }
 	/ { "enum"   _ @Name? "{" @EnumeratorList ","? "}" #TEnum }
 
 SIGN
