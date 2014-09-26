@@ -183,8 +183,8 @@ EOF
 "public" = 'public' !W __
 "static" = 'static' !W __
 "yield" = 'yield' !W __
-"get" = 'yield' !W __
-"set" = 'yield' !W __
+"get" = 'get' !W __
+"set" = 'set' !W __
 
 KEYWORD
     = "break" / "case" / "catch" / "continue" / "debugger" / "default" / "delete" / "do"
@@ -223,9 +223,9 @@ ArrayLiteral
     [example:[1,2,3]]
     [example:[1,2,3,]]
     [example:[,1,2,3,]]
-    = { "[" (addElisionList __)? "]" 
-      / "[" addElementList __ "]" 
-      / "[" addElementList addArrayDelimitor "]" #ArrayExpression }
+    = {( "[" (addElisionList __)? "]"  
+       / "[" addElementList __ "]"
+       / "[" addElementList addArrayDelimitor "]" ) #ArrayExpression }
 
 addArrayDelimitor
     = __ ',' __ (addElisionList __)?
@@ -258,13 +258,19 @@ PropertyName
     / StringLiteral
     / NumericLiteral
 
-NewExpressionWithArg
-    = { "new" __ @MemberExpression __ @Arguments #NewExpression }
+NewExpressionWithArgs
+    [example: new Klass()]
+    [example: new Klass(1)]
+    = { "new" @MemberExpression __ @Arguments #NewExpression }
 
 ReceiverExpression
+    [example: new Klass()]
     = PrimaryExpression / FunctionExpression / NewExpressionWithArgs
 
 MemberExpression
+    [example:a.b.c.d]
+    [example:a.b[0].c]
+    [example:a.b[0][1]]
     = ReceiverExpression {@ __ addMemberOperator }*
 
 addMemberOperator
@@ -274,10 +280,13 @@ NewExpression
     = MemberExpression / { "new" @NewExpression #NewExpression }
 
 CallExpression
-    = MemberExpression {@ __ (addApplyOperator / addMemberOperator) }*
-
-addApplyOperator
-    = @Arguments #Apply
+    [example:func()]
+    [example:func(1)]
+    [example:func(1,2,3)]
+    [example:func(1,2,3).a]
+    [example:func(1,2,3)[0]]
+    [example:func(1,2,3).a.b.c(2)[1].s]
+    = MemberExpression {@ __ (@Arguments #Apply / addMemberOperator) }*
 
 Arguments
     = { "(" (addArgumentList __)? ")" #List }
@@ -286,29 +295,29 @@ addArgumentList
     = @AssignmentExpression (__ "," @AssignmentExpression)*
 
 LeftHandSideExpression
-  = CallExpression
-  / NewExpression
-
+    = CallExpression
+    / NewExpression
+ 
 PostfixExpression
-  = { @LeftHandSideExpression _ addPostfixOperator }
-  / LeftHandSideExpression
+    = { @LeftHandSideExpression _ addPostfixOperator }
+    / LeftHandSideExpression
 
 addPostfixOperator
-  = "++" #Inc / "--" #Dec
+    = "++" #Inc / "--" #Dec
 
 UnaryExpression
-  = PostfixExpression / { addUnaryOperator @UnaryExpression }
+    = PostfixExpression / { addUnaryOperator @UnaryExpression }
 
 addUnaryOperator
-  = "delete" #Delete
-  / "void"   #Void
-  / "typeof" #TypeOf
-  / "++"     #PrefixInc
-  / "--"     #PrefixDec
-  / "+"      #Add
-  / "-"      #Sub
-  / "~"      #Compl
-  / "!"      #Not
+    = "delete" #Delete
+    / "void"   #Void
+    / "typeof" #TypeOf
+    / "++"     #PrefixInc
+    / "--"     #PrefixDec
+    / "+"      #Plus
+    / "-"      #Minus
+    / "~"      #Compl
+    / "!"      #Not
 
 MultiplicativeExpression
 	= UnaryExpression {@ ( "*" #Mul / "/" #Div / "%" #Mod ) @UnaryExpression }*
