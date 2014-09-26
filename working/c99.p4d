@@ -191,7 +191,7 @@ Directive
 
 
 FunctionDeclaration
-	= { @AnnotationList @Type @Name "(" @FunctionParamList ")" @Block #Function }
+	= { @AnnotationList @Type _ @Name _ "(" @FunctionParamList ")" _ (@Block _)? #Function }
 
 AnnotationList
 	= { (@Annotation)*  #List } _
@@ -324,9 +324,9 @@ Statement
 	/ { "for" "(" (@Expression)? ";" (@Expression)? ";" (@Expression)? ")" @Statement #For }
 	/ { "for" "(" @Declaration (@Expression)? ";" (@Expression)? ";" @Statement #For }
 	/ { "goto" @Name ";" #Goto }
-	/ { "continue" ";" #Continue }
-	/ { "break" ";" #Break }
-	/ { "return" (@Expression)?  ";" #Return }
+	/ { "continue" _ ";" #Continue }
+	/ { "break" _ ";" #Break }
+	/ { "return" _ (@Expression)?  ";" #Return }
 	/ { "case" @ConstantExpression ":" (!"case" !"default" @Statement)* #SwitchCase }
 	/ { "default" ":" (!"case" @Statement)* #SwitchDefault }
 	/ { @Name ":" #Label }
