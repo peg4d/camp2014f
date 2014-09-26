@@ -191,7 +191,7 @@ Directive
 
 
 FunctionDeclaration
-	= { @AnnotationList @Type _ @Name _ "(" @FunctionParamList ")" _ (@Block)? #Function }
+	= { @AnnotationList @Type _ @Name _ "(" @FunctionParamList ")" _ @Block #Function }
 
 AnnotationList
 	= { (@Annotation)*  #List } _
@@ -199,6 +199,7 @@ AnnotationList
 Annotation
 	= "extern"     { #KeyValue @{`extern` #Key } @{`true` #Value } } _
 	/ "static"     { #KeyValue @{`static` #Key } @{`true` #Value } } _
+	/ "inline"     { #KeyValue @{`inline` #Key } @{`true` #Value } } _
 	/ "auto"       { #KeyValue @{`auto` #Key } @{`true` #Value } } _
 	/ "register"   { #KeyValue @{`register` #Key } @{`true` #Value } } _
 	/ "volatile"   { #KeyValue @{`volatile` #Key } @{`true` #Value } } _
@@ -317,18 +318,18 @@ Block
 
 Statement
 	= Block
-	/ { "if"   "(" @Expression ")" @Statement ("else" @Statement)? #If }
-	/ { "switch" "(" @Expression ")" @Statement #Switch }
-	/ { "while"  "(" @Expression ")" @Statement #While }
-	/ { "do" @Statement "while" "(" @Expression ")" ";" #DoWhile }
-	/ { "for" "(" (@Expression)? ";" (@Expression)? ";" (@Expression)? ")" @Statement #For }
-	/ { "for" "(" @Declaration (@Expression)? ";" (@Expression)? ";" @Statement #For }
-	/ { "goto" @Name ";" #Goto }
+	/ { "if" _  "(" @Expression ")" @Statement ("else" @Statement)? #If }
+	/ { "switch" _ "(" @Expression ")" @Statement #Switch }
+	/ { "while" _ "(" @Expression ")" @Statement #While }
+	/ { "do" _ @Statement "while" _ "(" @Expression ")" ";" #DoWhile }
+	/ { "for" _ "(" (@Expression)? ";" (@Expression)? ";" (@Expression)? ")" @Statement #For }
+	/ { "for" _ "(" @Declaration (@Expression)? ";" (@Expression)? ";" @Statement #For }
+	/ { "goto" _ @Name ";" #Goto }
 	/ { "continue" _ ";" #Continue }
 	/ { "break" _ ";" #Break }
 	/ { "return" _ (@Expression)?  ";" #Return }
-	/ { "case" @ConstantExpression ":" (!"case" !"default" @Statement)* #SwitchCase }
-	/ { "default" ":" (!"case" @Statement)* #SwitchDefault }
+	/ { "case" _ @ConstantExpression ":" (!"case" !"default" @Statement)* #SwitchCase }
+	/ { "default" _ ":" (!"case" @Statement)* #SwitchDefault }
 	/ { @Name ":" #Label }
 	/ { @Expression ";" #ExpressionStatement }
 	/ { #Empty } ";"
