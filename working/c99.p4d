@@ -186,8 +186,8 @@ Declaration
 
 Directive
 	= "#" "include" { (!'\n' .)* #Include }
-	/ "#" "define"  { ((&'\\\n' / !'\n') .)* #Define }
-	/ "#" { (!'\n' .)* #TODO }
+	/ "#" "define"  { (&'\\\n' .. / !'\n' .)* #Define }
+	/ "#" { (&'\\\n' .. / !'\n' .)* #TODO }
 
 
 FunctionDeclaration
@@ -509,8 +509,7 @@ CChar
 
 STRING_CONTENT
 	= ESCAPE
-	/ ![\"\n\\] .
-
+	/ (&'\\\n' .. / ![\"\n\\] .)
 
 CHAR_CONTENT
 	= ESCAPE
