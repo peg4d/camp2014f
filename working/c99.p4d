@@ -188,7 +188,10 @@ Directive
 
 
 FunctionDeclaration
-	= { @AnnotationList @Type _ @Name _ "(" @FunctionParamList ")" (_ @Block / ";") #Function }
+	= { @AnnotationList @Type _ @Name _ "(" @FunctionParamList ")" (_ @Block / @Attribute ";" / ";") #Function }
+
+Attribute
+	= "__asm" _ "(" @CString ")"
 
 AnnotationList
 	= { (@Annotation)*  #List } _
@@ -205,17 +208,17 @@ Annotation
 	/ "_stdcall"  { #KeyValue @{`stdcall` #Key } @{`true` #Value } } _
 
 FunctionParamList
-	= { _ 'void' _ #List }
-	/ { ( @FunctionParam ("," @FunctionParam)* )? ("," "...")? #List } 
+	= { ( @FunctionParam ("," @FunctionParam)* )? ("," "...")? #List } 
+	/ { _ 'void' _ #List }
 
 FunctionParam
-	= { @Type _ @VarName #Param} _
+	= { @Type _ (@VarName)? #Param} _
 	
 // Declaration
 //==============
 
 TypeDef
-	= { "typedef" _ @Type (_ @Name)? ";" #TypeDeclaration }
+	= { "typedef" _ @Type (_ @VarName _/_ @Name _)? ";" #TypeDeclaration }
 
 VariableDeclaration
 	= { @AnnotationList @Type @InitDecl ("," @InitDecl)*  ATTRIBUTE? ";" #Declaration }
@@ -254,8 +257,7 @@ Type
 
 TypeSuffix
 	= PrimaryType {@
-		POINTER_QUALIFIER? "*" #TConst
-		/ "*" POINTER_QUALIFIER? #TPointer
+		POINTER_QUALIFIER? "*" POINTER_QUALIFIER? #TPointer
 		/ "[" (NAME / DIGIT*) "]" #TPointer
 		/ "(" _ "*" _ @Name _ ")" _  "(" @FunctionParamList ")" #TFunc
 	}*
@@ -272,6 +274,7 @@ PrimaryType
 	/ { "float"       _   #TFloat } _
 	/ { "double"      _   #TFloat } _
 	/ { "long" _ "double" _ #TFloat } _
+	/ { "long" (_ SIGN)? (_ "long")? (_ "int")? #TInt } _
 	/ { SIGN? "long" (_ "long")? (_ "int")? #TInt } _
 	/ { "signed" `signed int` #TInt } _
 	/ { "unsigned" `unsigned int` #TInt } _
@@ -282,7 +285,7 @@ PrimaryType
 
 StructDeclaration
 	= { "struct" _ @Name addStructMember? #TStruct }
-	/ { "union"  _ @Name addStructMember?  #TUnion }
+	/ { "union"  _ @Name? addStructMember?  #TUnion }
 	/ { "enum"   _ @Name? "{" @EnumeratorList ","? "}" #TEnum }
 
 SIGN
@@ -296,6 +299,7 @@ addStructMember
 
 StructMemberDeclaration
 	= { @AnnotationList @Type @StructMemberName  ("," @StructMemberName )* ";" _ #StructMemberDeclaration }
+	/ { @Type ";" _ #StructMemberDeclaration }
 
 StructMemberName
 	= VarName {@ ":" @ConstantExpression #Bit}*
