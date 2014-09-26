@@ -188,7 +188,10 @@ Directive
 
 
 FunctionDeclaration
-	= { @AnnotationList @Type _ @Name _ "(" @FunctionParamList ")" (_ @Block / ";") #Function }
+	= { @AnnotationList @Type _ @Name _ "(" @FunctionParamList ")" (_ @Block / @Attribute ";" / ";") #Function }
+
+Attribute
+	= "__asm" _ "(" @CString ")"
 
 AnnotationList
 	= { (@Annotation)*  #List } _
@@ -215,7 +218,7 @@ FunctionParam
 //==============
 
 TypeDef
-	= { "typedef" _ @Type (_ @Name)? ";" #TypeDeclaration }
+	= { "typedef" _ @Type (_ @VarName _/_ @Name _)? ";" #TypeDeclaration }
 
 VariableDeclaration
 	= { @AnnotationList @Type @InitDecl ("," @InitDecl)*  ATTRIBUTE? ";" #Declaration }
@@ -254,8 +257,7 @@ Type
 
 TypeSuffix
 	= PrimaryType {@
-		POINTER_QUALIFIER? "*" #TPointer
-		/ "*" POINTER_QUALIFIER? #TPointer
+		POINTER_QUALIFIER? "*" POINTER_QUALIFIER? #TPointer
 		/ "[" (NAME / DIGIT*) "]" #TPointer
 		/ "(" _ "*" _ @Name _ ")" _  "(" @FunctionParamList ")" #TFunc
 	}*
@@ -297,6 +299,7 @@ addStructMember
 
 StructMemberDeclaration
 	= { @AnnotationList @Type @StructMemberName  ("," @StructMemberName )* ";" _ #StructMemberDeclaration }
+	/ { @Type ";" _ #StructMemberDeclaration }
 
 StructMemberName
 	= VarName {@ ":" @ConstantExpression #Bit}*
