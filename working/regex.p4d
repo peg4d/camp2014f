@@ -22,39 +22,41 @@ COMMENT
 BREAK
 	= '\n' / '\r\n' / '\r'
 
-NL
-	= ';' / BREAK / !.
+//NL
+//	= ';' / BREAK / !.
 
-Digit
+IntDigit
 	= [0-9]
+
+HexDigit
+	= [0-9A-Fa-f]
 
 letter
 	= W / Escape MetaCharacter / Symbol / Unicode / ASCII
 
 W
-	= [a-zA-Z0-9]
+	= [a-zA-Z0-9] ;
 
 Escape
-	= '\'
+	= '\\'
 
 MetaCharacter
 	= '+' / '*' / '?' / '.' / '^'
 	/ '(' / ')' / '[' / ']' / '{' / '}'
-
-//	'$' / '|' / '\'
+	/ '$' / '|' / '\\'
 
 Symbol
-	= '#' / '%' / '&' / ',' / '-' / '/' / ':' / ';' / '<' / '>' / '='
-	/ '@' / '_' / '~' / '`'
+	= '&' / '/' / '@' / '_' 
+	/ '#' / '%' / ',' / '-' / ':' / ';' / '<' / '>' / '=' / '~' / '`'
 
 Unicode
-	= '\u' Digit Digit Digit Digit
+	= '\\u' HexDigit HexDigit HexDigit HexDigit
 
 ASCII
-	= '\x' Digit Digit
+	= '\\x' HexDigit HexDigit
 
 LRMatch
-	= { '^' _? @Block _? #'$' BiginEnd }
+	= { '^' _? @Block _? '$' #BiginEnd }
 	/ { '^' @Block #BiginWith }
 	/ { @Block '$' #EndWith }
 	/ Block
