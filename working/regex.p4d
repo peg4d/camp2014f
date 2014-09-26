@@ -8,7 +8,7 @@ Chunk
 	= TopLevel
 
 TopLevel
-	= _? Statement _?
+	= _ Statement _
 
 Statement
 	= { (@LRMatch)* #toplevel }
@@ -61,12 +61,12 @@ ASCII
 	= '\\x' HEXDIGIT HEXDIGIT
 
 LRMatch
-	= { '^' _? @ParenBlock (@Quantifier)? _? '$' #BiginEndStmt }
-	/ { '^' _? ( @Character / @Bracket ) (@Quantifier)? _? '$' #BiginEndChar }
-	/ { '^' _? @ParenBlock (@Quantifier)? #BiginWithStmt }
-	/ { '^' _? ( @Character / @Bracket ) (@Quantifier)? #BiginWithChar }
-	/ { @ParenBlock (@Quantifier)? _? '$' #EndWithStmt }
-	/ { ( @Character / @Bracket ) (@Quantifier)? _? '$' #EndWithChar }
+	= { '^' _ @ParenBlock (@Quantifier)? _ '$' #BiginEndStmt }
+	/ { '^' _ ( @Character / @Bracket ) (@Quantifier)? _ '$' #BiginEndChar }
+	/ { '^' _ @ParenBlock (@Quantifier)? #BiginWithStmt }
+	/ { '^' _ ( @Character / @Bracket ) (@Quantifier)? #BiginWithChar }
+	/ { @ParenBlock (@Quantifier)? _ '$' #EndWithStmt }
+	/ { ( @Character / @Bracket ) (@Quantifier)? _ '$' #EndWithChar }
 	/ { @ParenBlock (@Quantifier) #Stmt }
 	/ ParenBlock
 	/ { ( @Character / @Bracket ) (@Quantifier) #Char }
@@ -77,13 +77,13 @@ LRMatch
 
 Quantifier
 	= { '+?' #onemoreS }
-	/ { '+' #onemoreL }
+	/ { '+'  #onemoreL }
 	/ { '*?' #zeromoreS }
-	/ { '*' #zeromoreL }
-	/ { '?' #optional }
-	/ { '{' _? @AndMore _? ',' _? @AndFewer _? '}' #times }
-	/ { '{' _? @AndMore _? ',' _? '}' #times }
-	/ { '{' _? @Time? '}' #times }
+	/ { '*'  #zeromoreL }
+	/ { '?'  #optional }
+	/ { '{' _ @AndMore _ ',' _ @AndFewer _ '}' #times }
+	/ { '{' _ @AndMore _ ',' _ '}' #times }
+	/ { '{' _ @Time? '}' #times }
 
 AndMore
 	= { DECDIGIT+ #andmore }
@@ -95,14 +95,14 @@ Time
 	= { DECDIGIT+ #time }
 
 ParenBlock
-	= { _? '(' ( @String / @ParenBlock )')' _? #block }
+	= { _ '(' ( @String / @ParenBlock )')' _ #block }
 
 Bracket
 	= { '[^' (@Item)+ ']' #ExceptFor }
-	/ { '[' (@Item)+ ']' #OneOf }
+	/ { '['  (@Item)+ ']' #OneOf }
 
 Item
-	= { LETTER '-' LETTER #range }
+	= { @{LETTER #item} '-' @{LETTER #item} #range }
 	/ { LETTER #item }
 
 String
