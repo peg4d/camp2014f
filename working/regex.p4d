@@ -27,7 +27,7 @@ HEXDIGIT
 	= [0-9A-Fa-f]
 
 LETTER
-	= W / Escape MetaCharacter / Escape MetaLetter / Symbol / Unicode / ASCII
+	= W / ESCAPE METACHARACTER / ESCAPE METALETTER / SYMBOL / UNICODE / ASCII
 
 W
 	= [a-zA-Z0-9]
@@ -39,7 +39,7 @@ METACHARACTER
 	= '+' / '*' / '?' / '.' / '^' / '$' / '|' / '\\'
 	/ '(' / ')' / '[' / ']' / '{' / '}'
 
-MetaLetter
+METALETTER
 	= 'w' / 'W' / 'd' / 'D' / 's' / 'S' / 'b'
 
 SYMBOL
@@ -74,4 +74,4 @@ Statement
 	= String
 
 String
-	= { Letter+ #Str }
+	= { LETTER+ #Str }
