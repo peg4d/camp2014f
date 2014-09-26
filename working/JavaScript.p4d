@@ -14,13 +14,13 @@
 
 
 File
-  = Statement*
+    = SourceElement*
 
 Chunk
-  = Statement*
+    = SourceElement*
 
 WS
-  = [\t\v\f \u000B\u000C\u00A0\uFEFF]
+    = [\t\v\f \u000B\u000C\u00A0\uFEFF]
 //  / "\u00A0"
 //  / "\uFEFF"
 //  / Zs
@@ -58,7 +58,9 @@ IdentifierName
     = { IDENTIFIER_START IDENTIFIER_PART* #Name }
 
 IDENTIFIER_START
-    = W
+    = [a-zA-Z]
+    / UCHAR
+    / DIGIT
     / "$"
     / "_"
 
@@ -81,8 +83,8 @@ UCHAR
 HEX4
   = HEX HEX HEX HEX
 
-DIGIT
-  = [0-9]
+//DIGIT
+//  = [0-9]
 
 //Automatic Semicolon Insertion
 
@@ -112,8 +114,8 @@ EOF
 "("    = '(' __
 ")"    = ')' __
 "."    = '.' __
-","    = ',' __
-":"    = ':' ![>] __
+","    = __ ',' __
+":"    = __ ':' ![>] __
 "/"    = '/' !'=' __
 "%"    = '%' ![=>] __
 "<<"  = '<<' !'=' __
@@ -185,6 +187,9 @@ EOF
 "yield" = 'yield' !W __
 "get" = 'get' !W __
 "set" = 'set' !W __
+"null" = 'null' !W __
+"true" = 'true' !W __
+"false" = 'false' !W __
 
 KEYWORD
     = "break" / "case" / "catch" / "continue" / "debugger" / "default" / "delete" / "do"
@@ -192,30 +197,21 @@ KEYWORD
     / "return" / "switch" / "this" / "throw" / "try" / "typeof" / "var" / "void"
     / "while" / "with" / "class" / "enum" / "export" / "extends" / "import" / "super"
     / "implements" / "interface" / "let" / "package" / "private" / "protected" / "public"
-    / "static" / "yield"
+    / "static" / "yield" / "null" / "true" / "false"
 
 //Expression
 //==========
-
-FunctionExpression
-    = { "function(){}" #Function }
-StringLiteral
-    = { "'String'" #String }
-NumericLiteral
-    = { "1" #Number }
-Block
-    = { "{" (@Statement)* "}" #Block }
 
 ThisExpression
     = { "this" #This }
 
 PrimaryExpression
-  = ThisExpression __
+    = ThisExpression __
+    / Literal __
     / Identifier __
-  / Literal __
     / ArrayLiteral __
     / ObjectLiteral __
-  / "(" Expression ")"
+    / "(" Expression ")"
 
 ArrayLiteral
     [example:[]]
@@ -243,13 +239,13 @@ ObjectLiteral
     [example:{}]
     [example:{ a: 1, b: 2}]
     = "{" "}" { #ObjectExpression }
-    / { (  "{" addPropertyList __ "}" / "{" addPropertyList __ "," "}" ) #ObjectExpression }
+    / { (  "{" addPropertyList __ "}" / "{" addPropertyList "," "}" ) #ObjectExpression }
 
 addPropertyList
-    = @PropertyAssignment (__ ',' __ @PropertyAssignment)*
+    = @PropertyAssignment ("," @PropertyAssignment)*
 
 PropertyAssignment
-    = { @PropertyName __ ":" __ @AssignmentExpression #Property }
+    = { @PropertyName ":" @AssignmentExpression #Property }
     / { "get" @PropertyName __ "(" ")" @Block #Getter }
     / { "set" @PropertyName __ "(" @Identifier __ ")" @Block #Setter }
 
@@ -270,13 +266,15 @@ ReceiverExpression
 MemberExpression
     [example:a.b.c.d]
     [example:a.b[0].c]
-    [example:a.b[0][1]]
+    [example:a.b[0][0]]
     = ReceiverExpression {@ __ addMemberOperator }*
 
 addMemberOperator
-    = ("[" @Expression __ "]" / "." @IdentifierName) #MemberExpression
+    = "[" @Expression __ "]" #MemberExpression
+    / "." @IdentifierName #MemberExpression
 
 NewExpression
+    [example: new Klass]
     = MemberExpression / { "new" @NewExpression #NewExpression }
 
 CallExpression
@@ -286,13 +284,18 @@ CallExpression
     [example:func(1,2,3).a]
     [example:func(1,2,3)[0]]
     [example:func(1,2,3).a.b.c(2)[1].s]
-    = MemberExpression {@ __ (@Arguments #Apply / addMemberOperator) }*
+    = MemberExpression {@ __ addCallOrMemberOperator }*
+
+addCallOrMemberOperator
+    = @Arguments #Apply
+    / "[" @Expression __ "]" #MemberExpression
+    / "." @IdentifierName #MemberExpression
 
 Arguments
     = { "(" (addArgumentList __)? ")" #List }
 
 addArgumentList
-    = @AssignmentExpression (__ "," @AssignmentExpression)*
+    = @AssignmentExpression ("," @AssignmentExpression)*
 
 LeftHandSideExpression
     = CallExpression
@@ -306,6 +309,7 @@ addPostfixOperator
     = "++" #Inc / "--" #Dec
 
 UnaryExpression
+    [example: ++i]
     = PostfixExpression / { addUnaryOperator @UnaryExpression }
 
 addUnaryOperator
@@ -337,7 +341,7 @@ addRelationalOperator
     / "<" #LessThan
     / ">" #GreaterThan
     / "instanceof" #InstanceOf
-    / "in" #In
+    / <if InOperator> "in" #In
   
 EqualityExpression
     = RelationalExpression {@ addEqualityOperator @RelationalExpression }*
@@ -391,56 +395,165 @@ Expression
 
 //Statement
 //==========
-Block
-    [example:{var a = 0;}]
-    = { "{" (@Statement)* "}" #Block }
-
-Declaration
-    //[example:var a = 0, b, c = 1 + 3;]
-    = { "var" @Identifier ("=" @Expression)? ("," @InitDecl)* EOS}
-
-InitDecl
-    = {"var" @Identifier ("=" @Expression)? #VarDecl }
 
 Statement
-    [example:var a = 0;]
-    [example:break;]
+    = Block
+    / VariableStatement
+    / EmptyStatement
+    / ExpressionStatement
+    / IfStatement
+    / DoWhileStatement
+    / WhileStatement
+    / ForStatement
+    / ForEachStatement
+    / ContinueStatement
+    / BreakStatement
+    / ReturnStatement
+    / WithStatement
+    / LabelledStatement
+    / SwitchStatement
+    / ThrowStatement
+    / TryStatement
+    / DebuggerStatement
+
+Block
+    [example:{}]
+    [example:{;}]
+    = { "{" (@Statement __)* "}" #Block }
+
+VariableStatement
+    [example: var a = 0, b, c = 1 + 3;]
+    = "var" VariableDeclarationList EOS
+
+VariableDeclarationList
+    = { @VariableDeclaration ("," @VariableDeclaration)* #VarDeclList }
+
+VariableDeclaration
+    = { @Identifier (__ addInitialiser)? #VarDecl }
+
+addInitialiser
+    = "=" @AssignmentExpression
+
+EmptyStatement
+    = { ";" #Empty }
+
+ExpressionStatement
+    = !("{" / "function") Expression EOS
+
+IfStatement
     [example:if(1 + 1){var a = 0;}]
-    //[example:switch(a){case 1: break; default: a = 1+3;}]
-    [example:while(1){var a = 0;}]
+    = { "if" "(" @Expression ")" @Statement ("else" @Statement)? EOS #If }
+
+DoWhileStatement
     [example:do{var a = 0;}while(2 > 1)]
-    //[example:for(var i = 0;i < 5; i ++){ i += 1;}]
-    = 'var a = 0;'
-    / Block
-    / Declaration
-    / { "if" "(" @Expression ")" @Statement ("else" @Statement)? EOS #If }
-    / { "switch" "(" @Expression ")" "{" @CaseBlock (@DefaultBlock)? "}" EOS #Switch }
-    / { "while" "(" @Expression ")" @Statement EOS #While }
-    / { "do" @Statement "while" "(" @Expression ")" EOS #DoWhile }
-    / { "for" "(" (@Expression)? ";" (@Expression)? ";" (@Expression)? ")" @Statement EOS #For }
-    / { "for" "(" @Declaration? ";" (@Expression)? ";" (@Statement)? ";" EOS #For }
-    / { "continue" (@LabelledStatement)? EOS #Continue }
-    / { "return" (@Expression)? EOS #Return}
-    / { "const" @Identifier "=" @Expression ("," @Identifier "=" @Expression)? #const }
-    / { "debugger"}
-    / { "import"}
-    / { "export"}
-    / { "function"}
-    / { "let"}
-    / { "throw"}
-    / { "try"}
-    / { "break" EOS #Break }
-    / { "with"}
-    / { "yield"}
+    = { "do" @Statement "while" "(" @Expression ")" EOS #DoWhile }
+
+WhileStatement
+    [example:while(1){var a = 0;}]
+    = { "while" "(" @Expression ")" @Statement EOS #While }
+
+ForStatement
+    [example:for(;;);]
+    [example:for(i=0;i<5;);]
+    [example:for(;i<5;);]
+    [example:for(i=0;i<5;i++);]
+    [example:for(var i=0;i<5;i++);]
+    = { "for" "(" addForStatementPart ")" @[3]Statement EOS #For }
+
+addForStatementPart
+//    = <without InOperator "var" @VariableDeclarationList> ";" (@Expression)? ";" (@Expression)?
+//    / (<without InOperator @Expression>)? ";" (@Expression)? ";" (@Expression)?
+    = "var" @[0]VariableDeclarationList ";" (@[1]Expression)? ";" (@[2]Expression)?
+    / (@[0]Expression)? ";" (@[1]Expression)? ";" (@[2]Expression)?
+
+ForEachStatement
+    [example:for(k in array);]
+//    [example:for(var k in array){ i += 1;}]
+//    = { "for" "(" <without InOperator ("var" @VariableDeclarationList / @LeftHandSideExpression)> "in" @Expression ")" @Statement EOS #ForEach }
+    = { "for" "(" ("var" @VariableDeclarationList / @LeftHandSideExpression) "in" @Expression ")" @Statement EOS #ForEach }
+
+ContinueStatement
+    [example: continue;]
+    [example: continue label;]
+    = { "continue" (_ @Identifier)? EOS #Continue }
+
+BreakStatement
+    [example: break;]
+    [example: break label;]
+    = { "break" (_ @Identifier)? EOS #Break }
+
+ReturnStatement
+    [example: return;]
+    [example: return 1;]
+    = { "return" (@Expression)? EOS #Return }
+
+WithStatement
+    [example: with(a){ a.f(); }]
+    = { "with" "(" @Expression ")" @Statement EOS #With }
+
+SwitchStatement
+    = { "switch" "(" @Expression ")" @CaseBlock EOS #Switch }
 
 CaseBlock
-    = { "case" @ConstantExpression ":" @Statement #CaseBlock}
+    = { "{" (addCaseClauses)? __ "}" #CaseBlock }
 
-DefaultBlock
-    = { "default" ":" @Statement #DefaultBlock}
+addCaseClauses
+    = @CaseClause (__ @CaseClause)*
+
+CaseClause
+    [example: case 2: break;]
+    [example: default: break;]
+    = { "case" @Expression ":" (__ (@Statement __)*)? #CaseClause }
+    / { "default" ":" (__ (@Statement __)*)? #CaseClause }
 
 LabelledStatement
-    = { "label"}
+    [example: label: var a = 1;]
+    = { @Identifier ":" @Statement #LabelledStatement }
+
+ThrowStatement
+    [example: throw new Error()]
+    = { "throw" (@Expression)? EOS #Throw }
+
+TryStatement
+    [example: try{}finally{}]
+    [example: try{}catch(e){}]
+    [example: try{}catch(e){}finally{}]
+    = { (  "try" @[0]Block __ @[1]Catch __ @[2]Finally
+         / "try" @[0]Block __ @[1]Catch
+         / "try" @[0]Block __ @[2]Finally ) #TryStatement }
+
+Catch
+    [example: catch(e){}]
+    = { "catch" "(" @Identifier __ ")" @Block #Catch }
+
+Finally
+    [example: finally{}]
+    = { "finally" @Block #Finally }
+
+DebuggerStatement
+    = "debugger" EOS { #Debugger }
+
+//Program
+//==========
+
+FunctionDeclaration
+    = { "function" @[0]Identifier __ "(" @[1]FormalParameterList ")" "{" @[2]FunctionBody __ "}" #Function }
+
+FunctionExpression
+    = { "function" (@[0]Identifier __)? "(" @[1]FormalParameterList ")" "{" @[2]FunctionBody __ "}" #Function }
+
+FormalParameterList
+    = { (@Identifier ("," @Identifier)* __)? #List }
+
+FunctionBody
+    = { addSourceElements #Block }
+
+addSourceElements
+    = @SourceElement (__ @SourceElement)*
+
+SourceElement
+    = Statement
+    / FunctionDeclaration
 
 //Literal
 //==========
@@ -462,31 +575,31 @@ DecimalLiteral
     [example: 123]
     [example: +123]
     [example: -123]
-    = { SIGN? [1-9] DecimalDigit* #DecimalInteger }
+    = { SIGN? [1-9] DIGIT* #DecimalInteger }
 
 OctaIntegerLiteral
     [example: 0]
     [example: 012]
-    = { SIGN? '0' ( [1-7] OctaDigit* )? !. #OctaInteger }
+    = { SIGN? '0' ( [1-7] OCT* )? !. #OctaInteger }
 
 HexIntegerLiteral
     [example: 0xa12]
     [example: -0Xa12]
-    = { SIGN? '0' [xX] [1-9A-Fa-f] HexDigit* #HexInteger }
+    = { SIGN? '0' [xX] [1-9A-Fa-f] HEX* #HexInteger }
 
 FloatingPointLiteral
     [example: 12.456]
     [example: -0.12]
-    = { SIGN? ( '0' / [1-9] DecimalDigit* ) '.' [0-9]+ ( [eE] SIGN? [1-9] DecimalDigit* )? #FloatingPointNumber }
+    = { SIGN? ( '0' / [1-9] DIGIT* ) '.' [0-9]+ ( [eE] SIGN? [1-9] DIGIT* )? #FloatingPointNumber }
 
-DecimalDigit
-    = [0-9]
+//DIGIT
+//    = [0-9]
 
-OctaDigit
+OCT
     = [0-7]
 
-HexDigit
-    = [0-9a-fA-F]
+//HEX
+//    = [0-9a-fA-F]
 
 SIGN
     = ( '+' / '-' )
@@ -495,52 +608,53 @@ SOURCE
     = .
 
 StringLiteral
-    = '"' { DoubleStringCharacter* #String } '"' / "'" { SingleStringCharacter* #String } "'"
+    = '"' { DOUBLE_STRING_CHARACTER* #String } '"'
+    / "'" { SINGLE_STRING_CHARACTER* #String } "'"
 
-DoubleStringCharacter
-    = !( '"' / '\\' / LINE_TERMINATOR ) SOURCE / '\\' EscapeSequence / LineContinuation
+DOUBLE_STRING_CHARACTER
+    = !( '"' / '\\' / LINE_TERMINATOR ) SOURCE / '\\' ESCAPE_SEQUENCE
 
-SingleStringCharacter
-    = !( "'" / '\\' / LINE_TERMINATOR ) SOURCE / '\\' EscapeSequence / LineContinuation
+SINGLE_STRING_CHARACTER
+    = !( "'" / '\\' / LINE_TERMINATOR ) SOURCE / '\\' ESCAPE_SEQUENCE
 
-LineContinuation
+LINE_CONTINUATION
     = '\\' LINE_TERMINATOR_SEQUENCE
 
-EscapeSequence
-    = '\\' / "'" / '"' / [bfnrtv] / OctaEscapeSequence / HexEscapeSequence / UnicodeEscapeSequuence
+ESCAPE_SEQUENCE
+    = '\\' / "'" / '"' / [bfnrtv] / OCTA_ESCAPE_SEQUENCE / HEX_ESCAPE_SEQUENCE / UNICODE_ESCAPE_SEQUUENCE / LINE_TERMINATOR_SEQUENCE
 
-OctaEscapeSequence
-    = OctaDigit OctaDigit OctaDigit
+OCTA_ESCAPE_SEQUENCE
+    = OCT OCT OCT
 
-HexEscapeSequence
-    = [xX] HexDigit HexDigit
+HEX_ESCAPE_SEQUENCE
+    = [xX] HEX HEX
 
-UnicodeEscapeSequuence
-    = [uU] HexDigit HexDigit HexDigit HexDigit
+UNICODE_ESCAPE_SEQUUENCE
+    = [uU] HEX4
 
 RegularExpressionLiteral
-    = { '/' @RegularExpressionBody '/' @RegularExpressionFlags #RegularExp }
+    = { '/' REGEX_BODY '/' REGEX_FLAGS #RegularExp }
 
-RegularExpressionBody
-    = RegularExpressionFirstChar RegularExpressionChar*
+REGEX_BODY
+    = REGEX_FIRST_CHAR REGEX_CHAR*
 
-RegularExpressionFirstChar
-    = ![*\\/\x5b] RegularExpressionNonTerminator / RegularExpressionBackslashSequence / RegularExpressionClass
+REGEX_FIRST_CHAR
+    = ![*\\/\x5b] REGEX_NON_TERMINATOR / REGEX_BACKSLASH_SEQUENCE / REGEX_CLASS
 
-RegularExpressionChar
-    = ![*\\/\x5b] RegularExpressionNonTerminator / RegularExpressionBackslashSequence / RegularExpressionClass
+REGEX_CHAR
+    = ![*\\/\x5b] REGEX_NON_TERMINATOR / REGEX_BACKSLASH_SEQUENCE / REGEX_CLASS
 
-RegularExpressionBackslashSequence
-    = '\\' RegularExpressionNonTerminator
+REGEX_BACKSLASH_SEQUENCE
+    = '\\' REGEX_NON_TERMINATOR
 
-RegularExpressionNonTerminator
+REGEX_NON_TERMINATOR
     = !LINE_TERMINATOR SOURCE
 
-RegularExpressionClass
-    = '[' RegularExpressionClassChar* ']'
+REGEX_CLASS
+    = '[' REGEX_CLASS_CHAR* ']'
 
-RegularExpressionClassChar
-    = ![\x5d\\] RegularExpressionNonTerminator / RegularExpressionBackslashSequence
+REGEX_CLASS_CHAR
+    = ![\x5d\\] REGEX_NON_TERMINATOR / REGEX_BACKSLASH_SEQUENCE
 
-RegularExpressionFlags
-    = W*
+REGEX_FLAGS
+    = [igms]*
