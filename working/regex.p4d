@@ -1,0 +1,27 @@
+// PEG4d Regex file
+
+
+File
+	= _ { ( @TopLevel / _ )* #Source } EOT
+
+Chunk
+	= TopLevel
+
+S
+	= ([ \t] / COMMENT)
+
+_
+    = S*
+
+COMMENT
+	= '#' (!BREAK .)*
+
+BREAK
+   = '\n' / '\r\n' / '\r'
+
+NL
+	= ';' / BREAK / !.
+
+W
+	= [a-zA-Z0-9_]
+
