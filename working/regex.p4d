@@ -11,10 +11,10 @@ TopLevel
 	= _ Statement _
 
 Statement
-	= { (@LRMatch)* #toplevel }
+	= { (@Token)* #regex }
 
 S
-	= ([ \t] / COMMENT)
+	= ( [ \t] / COMMENT )
 
 _
 	= S*
@@ -60,20 +60,18 @@ UNICODE
 ASCII
 	= '\\x' HEXDIGIT HEXDIGIT
 
-LRMatch
+Token
 	= { '^' _ @ParenBlock (@Quantifier)? _ '$' #BiginEndStmt }
-	/ { '^' _ ( @Character / @Bracket ) (@Quantifier)? _ '$' #BiginEndChar }
+	/ { '^' _ ( @Character / @Bracket ) (@Quantifier)? _ '$' #BiginEndToken }
 	/ { '^' _ @ParenBlock (@Quantifier)? #BiginWithStmt }
-	/ { '^' _ ( @Character / @Bracket ) (@Quantifier)? #BiginWithChar }
+	/ { '^' _ ( @Character / @Bracket ) (@Quantifier)? #BiginWithToken }
 	/ { @ParenBlock (@Quantifier)? _ '$' #EndWithStmt }
-	/ { ( @Character / @Bracket ) (@Quantifier)? _ '$' #EndWithChar }
-	/ { @ParenBlock (@Quantifier) #Stmt }
+	/ { ( @Character / @Bracket ) (@Quantifier)? _ '$' #EndWithToken }
+	/ { @ParenBlock @Quantifier #Stmt }
 	/ ParenBlock
-	/ { ( @Character / @Bracket ) (@Quantifier) #Char }
-	/ String
-
-//Block
-//	= { ( @ParenBlock / @String ) (@Quantifier)? #term }
+	/ { ( @Character / @Bracket ) @Quantifier #Token }
+	/ Character
+	/ Bracket
 
 Quantifier
 	= { '+?' #onemoreS }
@@ -95,7 +93,7 @@ Time
 	= { DECDIGIT+ #time }
 
 ParenBlock
-	= { _ '(' ( @String / @ParenBlock )')' _ #block }
+	= { _ '(' ( @ParenBlock / @Character / @Bracket / _ )* ')' _ #block }
 
 Bracket
 	= { '[^' (@Item)+ ']' #ExceptFor }
@@ -105,8 +103,8 @@ Item
 	= { @{LETTER #item} '-' @{LETTER #item} #range }
 	/ { LETTER #item }
 
-String
-	= { ( @Character !'+' !'*' !'?' !'{' !'$' / @Bracket )+ #Str }
+//String
+//	= { ( @Character !'+' !'*' !'?' !'{' !'$' / @Bracket )+ #Str }
 
 Character
-	= { LETTER #Char / ESCAPELETTER #escape / '.' #WildCard }
+	= { LETTER #Char / ESCAPELETTER #EscapeChar / '.' #WildCard }
