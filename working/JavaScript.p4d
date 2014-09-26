@@ -1,0 +1,32 @@
+// PEG4d JavaScript Grammar
+
+// # Rule naming rule:
+// 1. The rule creating a object is named in UpperCamelCase
+//    ex) TheRule = { @OtherRule #TheTag }
+// 2. The rule not creating any object but contains # or @ is named in lowerCamelCase
+//    ex) theRule = '=' @OtherRule
+//    ex) theRule = DIGIT+ #Number
+// 3. Otherwise, it named in UPPER_CASE
+//    ex) DIGIT = [1-9][0-9]* / '0'
+//
+// # Tag naming rule
+// 1. Tags should be named in UpperCamelCase
+
+
+File
+	= Statement*
+
+Chunk
+	= Statement*
+
+Expression
+    [example:1 + 1]
+    = '1 + 1'
+
+Statement
+    [example:var a = 0;]
+    = 'var a = 0;'
+
+Literal
+    [example:1]
+    = '1'
