@@ -262,16 +262,22 @@ NewExpressionWithArg
     = { "new" __ @MemberExpression __ @Arguments #NewExpression }
 
 ReceiverExpression
-    = PrimaryExpression / FunctionExpression / NewExpressionWithArg
+    = PrimaryExpression / FunctionExpression / NewExpressionWithArgs
 
 MemberExpression
-    = ReceiverExpression {@ (__ "[" @Expression __ "]" / __ "." @IdentifierName) #MemberExpression }*
+    = ReceiverExpression {@ __ addMemberOperator }*
+
+addMemberOperator
+    = ("[" @Expression __ "]" / "." @IdentifierName) #MemberExpression
 
 NewExpression
     = MemberExpression / { "new" @NewExpression #NewExpression }
 
 CallExpression
-    = MemberExpression {@ __ @Arguments #Apply }*
+    = MemberExpression {@ __ (addApplyOperator / addMemberOperator) }*
+
+addApplyOperator
+    = @Arguments #Apply
 
 Arguments
     = { "(" (addArgumentList __)? ")" #List }
