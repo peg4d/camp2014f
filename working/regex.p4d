@@ -25,23 +25,52 @@ BREAK
 NL
 	= ';' / BREAK / !.
 
-W
-	= [a-zA-Z0-9_]
+Digit
+	= [0-9]
 
+letter
+	= W / Escape MetaCharacter / Symbol / Unicode / ASCII
+
+W
+	= [a-zA-Z0-9]
+
+Escape
+	= '\'
+
+MetaCharacter
+	= '+' / '*' / '?' / '.' / '^'
+	/ '(' / ')' / '[' / ']' / '{' / '}'
+
+//	'$' / '|' / '\'
+
+Symbol
+	= '#' / '%' / '&' / ',' / '-' / '/' / ':' / ';' / '<' / '>' / '='
+	/ '@' / '_' / '~' / '`'
+
+Unicode
+	= '\u' Digit Digit Digit Digit
+
+ASCII
+	= '\x' Digit Digit
 
 LRMatch
-	= { '\u005E' _? @Block _? '\u0024' #BiginEnd }
-	/ { '\u005E' @Block #BiginWith}
-	/ { @Block '\u0024' #EndWith }
+	= { '^' _? @Block _? #'$' BiginEnd }
+	/ { '^' @Block #BiginWith }
+	/ { @Block '$' #EndWith }
 	/ Block
 
 Block
-	= { Statement #block }
+	= Bracket 
+	/ Statement 
+
+Bracket
+	= { '[' (@Item)* ']' #OneOf }
+
+Item
+	= { letter #item }
 
 Statement
-	= @String
+	= String
 
 String
 	= { [A-Za-z0-9_]+ #Str }
-
-
