@@ -182,12 +182,12 @@ addAssignmentOperator
 	/ "<<=" #AssignLeftShift
 	/ ">>=" #AssignRightShift
 	/ "&="  #AssignBitwiseAnd
-	/ "^="  #AssignBitwiseXOr 
+	/ "^="  #AssignBitwiseXOr
 	/ "|="  #AssignBitwiseOr
 
 ConstantExpression
 	= ConditionalExpression
-	
+
 ConditionalExpression
 	= LogicalORExpression {@ "?"  @Expression ":" @LogicalORExpression #Trinary }*
 
@@ -208,16 +208,16 @@ ANDExpression
 
 EqualityExpression
 	= RelationalExpression {@ ( "==" #Equals / "!=" #NotEquals ) @RelationalExpression }*
-	
+
 RelationalExpression
 	= ShiftExpression {@ ( "<=" #LessThanEquals / ">=" #GreaterThanEquals / "<" #LessThan / ">" #GreaterThan ) @ShiftExpression }*
-	
+
 ShiftExpression
 	= AdditiveExpression {@ ( "<<" #LeftShift / ">>" #RightShift ) @AdditiveExpression }*
-	
+
 AdditiveExpression
 	= MultiplicativeExpression {@ ( "+" #Add / "-" #Sub ) @MultiplicativeExpression }*
-	
+
 MultiplicativeExpression
 	= CastExpression {@ ( "*" #Mul / "/" #Div / "%" #Mod ) @CastExpression }*
 
@@ -238,7 +238,7 @@ CastExpression
 	/ UnaryExpression
 
 PostfixExpression
-	= ( PrimaryExpression / { "(" @Type ")" "{" @{ (addInitializerList)* ","? #Initializer } "}" } ) 
+	= ( PrimaryExpression / { "(" @Type ")" "{" @{ (addInitializerList)* ","? #Initializer } "}" } )
 	{@ (addFunctionCall / addIndex / addField / addInc / addDec) }*
 
 addFunctionCall
@@ -277,6 +277,102 @@ Statement
 //Literal
 //==========
 Literal
-    [example:1]
-    = '1'
+    = NullLiteral / BooleanLiteral / NumericLiteral / StringLiteral / RegularExpressionLiteral
 
+NullLiteral
+		[example: null]
+		= { "null" #Null }
+
+BooleanLiteral
+		[example: true]
+		= { ( "true" / "false" ) #Bool }
+
+NumericLiteral
+		= OctalIntegerLiteral / HexIntegerLiteral / DecimalLiteral / FloatingPointLiteral
+
+DecimalLiteral
+		[example: 123]
+		[example: +123]
+		[example: -123]
+		= { SIGN? [1-9] DecimalDigit* #DecimalInteger }
+
+OctaIntegerLiteral
+		[example: 0]
+		[example: 012]
+		= { SIGN? '0' ( [1-7] OctaDigit* )? #OctaInteger }
+
+HexIntegerLiteral
+		[example: 0xa12]
+		[example: -0Xa12]
+		= { SIGN? '0' [xX] [1-9A-Fa-f] HexDigit* #HexInteger }
+
+FloatingPointLiteral
+		[example: 12.456]
+		[example: -0.12]
+		= { SIGN? ( '0' / [1-9] DecimalDigit* ) '.' [0-9]+ ( [eE] SIGN? [1-9] DecimalDigit* )? #FloatingPointNumber }
+
+DecimalDigit
+		= [0-9]
+
+OctaDigit
+		= [0-7]
+
+HexDigit
+		= [0-9a-fA-F]
+
+SIGN
+		= ( '+' / '-' )
+
+SOURCE
+		= .
+
+StringLiteral
+		= '"' { DoubleStringCharacter* #String } '"' / "'" { SingleStringCharacter* #String } "'"
+
+DoubleStringCharacter
+		= !( '"' / '\\' / LINE_TERMINATOR ) SOURCE / '\\' EscapeSequence / LineContinuation
+
+SingleStringCharacter
+		= !( "'" / '\\' / LINE_TERMINATOR ) SOURCE / '\\' EscapeSequence / LineContinuation
+
+LineContinuation
+		= '\\' LINE_TERMINATOR_SEQUENCE
+
+EscapeSequence
+		= '\\' / "'" / '"' / [bfnrtv] / OctaEscapeSequence / HexEscapeSequence / UnicodeEscapeSequuence
+
+OctaEscapeSequence
+		= OctaDigit OctaDigit OctaDigit
+
+HexEscapeSequence
+		= [xX] HexDigit HexDigit
+
+UnicodeEscapeSequuence
+		= [uU] HexDigit HexDigit HexDigit HexDigit
+
+RegularExpressionLiteral
+	= { '/' @RegularExpressionBody '/' @RegularExpressionFlags #RegularExp }
+
+RegularExpressionBody
+	= RegularExpressionFirstChar RegularExpressionChar*
+
+RegularExpressionFirstChar
+	= ![*\\/\x5b] RegularExpressionNonTerminator / RegularExpressionBackslashSequence / RegularExpressionClass
+
+RegularExpressionChar
+	= ![*\\/\x5b] RegularExpressionNonTerminator / RegularExpressionBackslashSequence / RegularExpressionClass
+
+RegularExpressionBackslashSequence
+	= '\\' RegularExpressionNonTerminator
+
+RegularExpressionNonTerminator
+	= !LINE_TERMINATOR SOURCE
+
+RegularExpressionClass
+	= '[' RegularExpressionClassChar* ']'
+	
+RegularExpressionClassChar
+	= ![\x5d\\] RegularExpressionNonTerminator / RegularExpressionBackslashSequence
+
+RegularExpressionFlags
+	= W*
