@@ -283,7 +283,7 @@ PrimaryType
 StructDeclaration
 	= { "struct" _ @Name addStructMember? #TStruct }
 	/ { "union"  _ @Name addStructMember?  #TUnion }
-	/ { "enum"   _ @Name "{" @EnumeratorList ","? "}" #TEnum }
+	/ { "enum"   _ @Name? "{" @EnumeratorList ","? "}" #TEnum }
 
 SIGN
 	= ("signed" / "unsigned" ) _
