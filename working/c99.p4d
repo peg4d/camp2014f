@@ -318,7 +318,7 @@ Block
 
 Statement
 	= Block
-	/ { "if" _  "(" @Expression ")" @Statement ("else" @Statement)? #If }
+	/ { "if" _  "(" @Expression ")" @Statement ("else" _ @Statement)? #If }
 	/ { "switch" _ "(" @Expression ")" @Statement #Switch }
 	/ { "while" _ "(" @Expression ")" @Statement #While }
 	/ { "do" _ @Statement "while" _ "(" @Expression ")" ";" #DoWhile }
