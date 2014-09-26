@@ -525,7 +525,7 @@ BINARY_EXPONENT
 	= [pP] [+\-]? DIGIT+
 
 FLOAT_SUFFIX
-	= [flFL]
+	= [fFdD]
 
 CInteger
 	= { ( DECIMAL / HEXICAL / OCTAL ) #Integer } INT_SUFFIX? _
