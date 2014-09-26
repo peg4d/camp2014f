@@ -22,34 +22,35 @@ COMMENT
 BREAK
 	= '\n' / '\r\n' / '\r'
 
-HexDigit
+
+HEXDIGIT
 	= [0-9A-Fa-f]
 
-Letter
+LETTER
 	= W / Escape MetaCharacter / Escape MetaLetter / Symbol / Unicode / ASCII
 
 W
-	= [a-zA-Z0-9] ;
+	= [a-zA-Z0-9]
 
-Escape
+ESCAPE
 	= '\\'
 
-MetaCharacter
+METACHARACTER
 	= '+' / '*' / '?' / '.' / '^' / '$' / '|' / '\\'
 	/ '(' / ')' / '[' / ']' / '{' / '}'
 
 MetaLetter
 	= 'w' / 'W' / 'd' / 'D' / 's' / 'S' / 'b'
 
-Symbol
+SYMBOL
 	= '&' / '/' / '@' / '_' / '#' / '%' / ',' / '-' 
 	/ ':' / ';' / '<' / '>' / '=' / '~' / '`'
 
-Unicode
-	= '\\u' HexDigit HexDigit HexDigit HexDigit
+UNICODE
+	= '\\u' HEXDIGIT HEXDIGIT HEXDIGIT HEXDIGIT
 
 ASCII
-	= '\\x' HexDigit HexDigit
+	= '\\x' HEXDIGIT HEXDIGIT
 
 LRMatch
 	= { '^' _? @Block _? '$' #BiginEnd }
@@ -66,8 +67,8 @@ Bracket
 	/ { '[' (@Item)+ ']' #OneOf }
 
 Item
-	= { Letter '-' Letter #range }
-	/ { Letter #item }
+	= { LETTER '-' LETTER #range }
+	/ { LETTER #item }
 
 Statement
 	= String
