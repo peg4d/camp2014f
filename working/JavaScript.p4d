@@ -23,9 +23,40 @@ Expression
     [example:1 + 1]
     = '1 + 1'
 
+Block
+	[example:{var a = 0;}]
+	= { "{" (@Statement / @Declaration)* "}" #Block }
+
 Statement
     [example:var a = 0;]
+		[example:if(1 + 1){var a = 0;}else{var a = 0;}]
     = 'var a = 0;'
+		/ Block
+		/ { "if" "(" @Expression ")" @Statement ("else" @Statement)? #If }
+		/ { "switch" "(" @Expression ")" @CaseBlock }
+		/ { "while" }
+		/ { "do" }
+		/ { "for" }
+		/ { "goto" }
+		/ { "continue"}
+		/ { "break" EOS #Break}
+		/ { "return"}
+		/ { "const"}
+		/ { "debugger"}
+		/ { "import"}
+		/ { "export"}
+		/ { "function"}
+		/ { "label"}
+		/ { "let"}
+		/ { "throw"}
+		/ { "try"}
+		/ { "var"}
+		/ { "with"}
+		/ { "yield"}
+
+CaseBlock
+	= 'case 1: break;'
+	= { "case" ":" @ConstantExpression}
 
 Literal
     [example:1]
