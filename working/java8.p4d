@@ -167,7 +167,7 @@ SingleTypeImportDeclaration
 	= 'import' _ { @TypeName #SingleTypeImportDeclaration } _ ";"
 
 TypeImportOnDemandDeclaration
-	= 'import' _ { @PackageOrTypeName  _ '.' _ '*' #TypeImportOnDemandDeclaration } _ ";"
+	= 'import' _ { @TypeName  _ '.' _ '*' #TypeImportOnDemandDeclaration } _ ";"
 
 SingleStaticImportDeclaration
 	= 'import' _ 'static'  _ { @TypeName _ '.' _ @Name #SingleStaticImportDeclaration } _ ';'
@@ -175,8 +175,8 @@ SingleStaticImportDeclaration
 StaticImportOnDemandDeclaration
 	= 'import' _ 'static' _ { @TypeName #StaticImportOnDemandDeclaration } _ '.' _ '*' _ ';'
 
-PackageOrTypeName
-	= { @Name ( _ '.' _ @Name #PackageOrTypeName) }
+TypeName
+	= { @Name ( _ '.' _ @Name #TypeName) }
 
 // annotation definition
 Annotation
@@ -449,7 +449,23 @@ PrimaryExpression
 	/ CString
 	/ "(" Expression ")"
 	/ Name
-	
+
+LambdaExpression
+	= { @LambdaParameters _ '->' _ @LambdaBody #LambdaExpression }
+
+LambdaParameters
+	= { @Name
+		/ '(' _ @addArgumentExpressionList? _ ')'
+		/ '(' _ @InferredFormalParameterList _ ')'
+		#LambdaParameters }
+
+InferredFormalParameterList
+	= { @Name ( _ ',' _ @Name)* #InferredFormalParameterList }
+
+LambdaBody
+	= { @Expression / @Block #LambdaBody }
+
+
 //Literal
 //=======
 
