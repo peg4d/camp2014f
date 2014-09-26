@@ -282,13 +282,22 @@ SuperClass
 SuperInterfaces
 	= { 'implements' _ @Type ("," @Type)* #SuperInterfaces }
 
+EnumBody
+	= '{' _ @EnumeratorList? ","? (";" @ClassBodyDeclaration)? _ "}"
+
+EnumeratorList
+	= { @Enumerator ("," @Enumerator)* #List }
+
+Enumerator
+	= { @Annotation* @Name @{ "(" addArgumentExpressionList ")" #List }? ClassBody? #Enumerator }
+
 ClassBody
 	= '{' _ (@ClassBodyDeclaration / _ )+ _ "}"
 
 ClassBodyDeclaration
 	= ClassMemberDeclaration
-//	/ InstanceInitializer
-//	/ StaticInitializer
+	/ { @Block #InstanceInisializer }
+	/ { 'static' _ @Block #StaticInitializer}
 //	/ ConstructorDeclaration
 
 ClassMemberDeclaration
@@ -331,14 +340,15 @@ MethodParamList
 MethodParam
 	= { @Type _ @VarName #Param} _
 
-EnumBody
-	= '{' _ @EnumeratorList? ","? (";" @ClassBodyDeclaration)? _ "}"
+//ConstructorDeclaration
+//	= { @ConstructorModifier* @Type "(" @MethodParamList ")" @Block #Constructor }
 
-EnumeratorList
-	= { @Enumerator ("," @Enumerator)* #List }
+ConstructorModifier
+	= Annotation
+	/ 'public'       _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ 'protected'    _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
+	/ 'private'      _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
 
-Enumerator
-	= { @Annotation* @Name @{ "(" addArgumentExpressionList ")" #List }? ClassBody? #Enumerator }
 
 
 // Block, Statement
