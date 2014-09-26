@@ -42,7 +42,7 @@ DIGIT
 	= [0-9]
 
 W
-	= [a-zA-Z0-9_]
+	= [a-zA-Z0-9_$]
 	/ UCHAR
 
 UCHAR
@@ -176,22 +176,74 @@ Directive
 	/ "#" "define"  { (!'\n' .)* #Define }
 	/ "#" { (!'\n' .)* #TODO }
 
+// package definition
+PackageDeclaration
+	= { (@PackageModifier)* _ 'package' _ @Name _ ( '.' _ @Name _ )* ";" #PackageDeclaration }
+
+PackageModifier
+	= Annotation
+
+// import definition
+ImportDeclaration
+	= TypeImportOnDemandDeclaration
+	/ SingleImportDeclaration
+	/ StaticImportOnDemandDeclaration
+	/ SingleStaticImportDeclaration
+
+SingleTypeImportDeclaration
+	= 'import' _ { @TypeName #SingleTypeImportDeclaration } _ ";"
+
+TypeImportOnDemandDeclaration
+	= 'import' _ { @PackageOrTypeName  _ '.' _ '*' #TypeImportOnDemandDeclaration } _ ";"
+
+SingleStaticImportDeclaration
+	= 'import' _ 'static'  _ { @TypeName _ '.' _ @Name #SingleStaticImportDeclaration } _ ';'
+
+StaticImportOnDemandDeclaration
+	= 'import' _ 'static' _ { @TypeName #StaticImportOnDemandDeclaration } _ '.' _ '*' _ ';'
+
+PackageOrTypeName
+	= { @Name ( _ '.' _ @Name #PackageOrTypeName) }
+
+// annotation definition
+Annotation
+	= NormalAnnotation
+	/ SingleElementAnnotation
+	/ MarkerAnnotation
+
+AnnotationList
+	= { (@Annotation)+ #AnnotationList }
+
+NormalAnnotation
+	= '@' _ { @TypeName _ '(' _ @ElementValuePairList? _ ')' #NormalAnnotation }
+
+MarkerAnnotation
+	= '@' _ { @TypeName #MarkerAnnotation }
+
+SingleElementAnnotation
+	= '@' _ { @TypeName _ '(' _ @ElementValue _ ')' #SingleElementAnnotation }
+
+ElementValuePairList
+	= { @ElementValuePair ( _ ',' _ @ElementValuePair)* #ElementValuePairList }
+
+ElementValuePair
+	= { @Name _ '=' _ @ElementValue #ElementValuePair }
+
+ElementValue
+	= ElementValueArrayInitializer
+//	/ conditionalExpression
+	/ Annotation
+
+ElementValueArrayInitializer
+	= '{' _ { @ElementValueList? #ElementValueArrayInitializer } _ ','? _ '}'
+
+ElementValueList
+	= { @ElementValue ( _ ',' _ @ElementValue)* #ElementValueList}
+
 
 FunctionDeclaration
 	= { @AnnotationList @Type @Name "(" @FunctionParamList ")" @Block #Function }
 
-AnnotationList
-	= { (@Annotation)*  #List } _
-
-Annotation
-	= "extern"     { #KeyValue @{`extern` #Key } @{`true` #Value } } _
-	/ "static"     { #KeyValue @{`static` #Key } @{`true` #Value } } _
-	/ "auto"       { #KeyValue @{`auto` #Key } @{`true` #Value } } _
-	/ "register"   { #KeyValue @{`register` #Key } @{`true` #Value } } _
-	/ "volatile"   { #KeyValue @{`volatile` #Key } @{`true` #Value } } _
-	/ "__declspec" "(" { #KeyValue @{`volatile` #Key } @(Name #Value) } _ ")" _
-	/ "inline"  { #KeyValue @{`inline` #Key } @{`true` #Value } } _
-	/ "_stdcall"  { #KeyValue @{`stdcall` #Key } @{`true` #Value } } _
 
 FunctionParamList
 	= { _ 'void' _ #List }
