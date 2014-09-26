@@ -53,14 +53,13 @@ ASCII
 	= '\\x' HEXDIGIT HEXDIGIT
 
 LRMatch
-	= { '^' _? @Block _? '$' #BiginEnd }
-	/ { '^' _? @Block #BiginWith }
-	/ { @Block _? '$' #EndWith }
+	= { '^' _? (@Block)+ _? '$' #BiginEnd }
+	/ { '^' _? (@Block)+ #BiginWith }
+	/ { (@Block)+ _? '$' #EndWith }
 	/ Block
 
 Block
-	= Bracket 
-	/ Statement 
+	= String
 
 Bracket
 	= { '[^' (@Item)+ ']' #ExceptFor }
@@ -70,8 +69,8 @@ Item
 	= { LETTER '-' LETTER #range }
 	/ { LETTER #item }
 
-Statement
-	= String
-
 String
-	= { LETTER+ #Str }
+	= { ( @Character / @Bracket )+ #Str }
+
+Character
+	= { LETTER #Char / '.' #WildCard }
