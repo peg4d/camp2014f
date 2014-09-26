@@ -7,21 +7,41 @@ File
 Chunk
 	= TopLevel
 
+TopLevel
+	= LRMatch
+
 S
 	= ([ \t] / COMMENT)
 
 _
-    = S*
+	= S*
 
 COMMENT
 	= '#' (!BREAK .)*
 
 BREAK
-   = '\n' / '\r\n' / '\r'
+	= '\n' / '\r\n' / '\r'
 
 NL
 	= ';' / BREAK / !.
 
 W
 	= [a-zA-Z0-9_]
+
+
+LRMatch
+	= { '\u005E' _? @Block _? '\u0024' #BiginEnd }
+	/ { '\u005E' @Block #BiginWith}
+	/ { @Block '\u0024' #EndWith }
+	/ Block
+
+Block
+	= { Statement #block }
+
+Statement
+	= @String
+
+String
+	= { [A-Za-z0-9_]+ #Str }
+
 
