@@ -2,7 +2,7 @@
 
 
 File
-	= { ( @COMMENT? BREAK / @TopLevel / _ )* #File } '\u0004'?
+	= { ( @COMMENT? BREAK / @TopLevel / _  / BREAK )* #File } ( '\u0003' / '\u0004' )*
 
 Chunk
 	= TopLevel
@@ -11,7 +11,7 @@ TopLevel
 	= _ Statement _
 
 Statement
-	= { (@Token)* #regex }
+	= { (@OR)+ #regex }
 
 _
 	= [ \t]*
@@ -90,7 +90,7 @@ Time
 	= { DECDIGIT+ #time }
 
 ParenBlock
-	= { _ '(' ( @ParenBlock / @Character / @Bracket / _ )* ')' _ #block }
+	= { _ '(' ( @OR / @ParenBlock / @Character / @Bracket / _ )* ')' _ #block }
 
 Bracket
 	= { '[^' (@Item)+ ']' #ExceptFor }
@@ -99,6 +99,10 @@ Bracket
 Item
 	= { @{LETTER #item} '-' @{LETTER #item} #range }
 	/ { LETTER #item }
+
+OR
+	= { @{ (@Token)* #item } _ ( '|' @{ (@Token)* #item } )+ #OR }
+	/ Token
 
 Character
 	= { LETTER #Char / ESCAPELETTER #EscapeChar / '.' #WildCard }
