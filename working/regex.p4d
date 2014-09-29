@@ -11,7 +11,7 @@ TopLevel
 	= _ Statement _
 
 Statement
-	= { (@OR)+ #regex }
+	= { (@LogOp)+ #regex }
 
 _
 	= [ \t]*
@@ -48,7 +48,7 @@ METALETTER
 	= 'w' / 'W' / 'd' / 'D' / 's' / 'S' / 'b' / 't' / 'n' / 'r'
 
 SYMBOL
-	= '&' / '/' / '@' / '_' / '#' / '%' / ',' / '-' 
+	= '&' !'&' / '/' / '@' / '_' / '#' / '%' / ',' / '-' 
 	/ ':' / ';' / '<' / '>' / '=' / '~' / '`'
 
 UNICODE
@@ -90,7 +90,7 @@ Time
 	= { DECDIGIT+ #time }
 
 ParenBlock
-	= { _ '(' ( @OR / @ParenBlock / @Character / @Bracket / _ )* ')' _ #block }
+	= { _ '(' ( @LogOp / @ParenBlock / @Character / @Bracket / _ )* ')' _ #block }
 
 Bracket
 	= { '[^' (@Item)+ ']' #ExceptFor }
@@ -100,8 +100,8 @@ Item
 	= { @{LETTER #item} '-' @{LETTER #item} #range }
 	/ { LETTER #item }
 
-OR
-	= { @{ (@Token)* #item } _ ( '|' @{ (@Token)* #item } )+ #OR }
+LogOp
+	= { (@Token)+ #item } _ {@ ( '&&' #and / '|' #or ) _ @{ (@Token)+ #item } }+
 	/ Token
 
 Character
