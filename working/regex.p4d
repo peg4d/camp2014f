@@ -2,7 +2,7 @@
 
 
 File
-	= _ { ( @TopLevel / _ )* #Source } ( BREAK / EOT )
+	= { ( @COMMENT? BREAK / @TopLevel / _ )* #Source } '\u0004'?
 
 Chunk
 	= TopLevel
@@ -13,14 +13,11 @@ TopLevel
 Statement
 	= { (@Token)* #regex }
 
-S
-	= ( [ \t] / COMMENT )
-
 _
-	= S*
+	= [ \t]*
 
 COMMENT
-	= '//' (!BREAK .)*
+	= '#' _ { (!BREAK .)* #comment }
 
 BREAK
 	= '\n' / '\r\n' / '\r'
@@ -48,7 +45,7 @@ METACHARACTER
 	/ '(' / ')' / '[' / ']' / '{' / '}'
 
 METALETTER
-	= 'w' / 'W' / 'd' / 'D' / 's' / 'S' / 'b'
+	= 'w' / 'W' / 'd' / 'D' / 's' / 'S' / 'b' / 't' / 'n' / 'r'
 
 SYMBOL
 	= '&' / '/' / '@' / '_' / '#' / '%' / ',' / '-' 
@@ -102,9 +99,6 @@ Bracket
 Item
 	= { @{LETTER #item} '-' @{LETTER #item} #range }
 	/ { LETTER #item }
-
-//String
-//	= { ( @Character !'+' !'*' !'?' !'{' !'$' / @Bracket )+ #Str }
 
 Character
 	= { LETTER #Char / ESCAPELETTER #EscapeChar / '.' #WildCard }
