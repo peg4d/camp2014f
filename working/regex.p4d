@@ -75,11 +75,12 @@ Quantifier
 	/ { '+'  #onemoreL }
 	/ { '*?' #zeromoreS }
 	/ { '*'  #zeromoreL }
-	/ { '?'  #optional }
-	/ { '{' _ @AndMore _ ',' _ @AndFewer _ '}' #times }
-	/ { '{' _ @AndMore _ ',' _ '}' #times }
-	/ { '{' _ ',' _ @AndFewer _ '}' #times }
-	/ { '{' _ @Time? '}' #times }
+	/ { '??'  #optionalS }
+	/ { '?' '+'?  #optionalL }
+	/ { '{' _ @AndMore _ ',' _ @AndFewer _ '}' '?'? #times }
+	/ { '{' _ @AndMore _ ',' _ '}' '?'? #times }
+	/ { '{' _ ',' _ @AndFewer _ '}' '?'? #times }
+	/ { '{' _ @Time? '}' '?'? #times }
 
 AndMore
 	= { DECDIGIT+ #andmore }
