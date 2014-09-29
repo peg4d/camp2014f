@@ -98,7 +98,7 @@ ParenBlock
 
 EXTOPERATOR
 	= '<=' #LookBehind
-	/ '<!' #NegLokBehind
+	/ '<!' #NegLookBehind
 	/ '='  #LookAhead
 	/ '!'  #NegLookAhead
 
