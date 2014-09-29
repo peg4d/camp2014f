@@ -8,7 +8,7 @@ Chunk
 	= TopLevel
 
 TopLevel
-	= _ Statement _
+	= _ Statement? _
 
 Statement
 	= { (@LogOp)+ #regex }
@@ -93,8 +93,8 @@ Time
 
 ParenBlock
 	= _ '(' _ '?#' _ { (!')' .)* #comment } ')'
-	/ { _ '(' _ '?' EXTOPERATOR _ ( @LogOp / @ParenBlock / @Character / @Bracket )* ')' _ }
-	/ { _ '(' ( @LogOp / @ParenBlock / @Character / @Bracket / _ )* ')' _ #block }
+	/ { _ '(' _ '?' EXTOPERATOR _ ( @LogOp / @ParenBlock / @Character / @Bracket )+ ')' _ }
+	/ { _ '(' ( @LogOp / @ParenBlock / @Character / @Bracket / _ )+ ')' _ #block }
 
 EXTOPERATOR
 	= '<=' #LookBehind
