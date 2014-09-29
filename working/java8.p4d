@@ -182,7 +182,7 @@ Annotation
 	/ MarkerAnnotation
 
 NormalAnnotation
-	= '@' _ { @TypeName _ '(' _ @ElementValuePairList? _ ')' #NormalAnnotation }
+	= '@' _ { @TypeName _ '(' _ (@ElementValuePairList)? _ ')' #NormalAnnotation }
 
 MarkerAnnotation
 	= '@' _ { @TypeName #MarkerAnnotation }
@@ -202,7 +202,7 @@ ElementValue
 	/ Annotation
 
 ElementValueArrayInitializer
-	= '{' _ { @ElementValueList? #ElementValueArrayInitializer } _ ','? _ '}'
+	= '{' _ { (@ElementValueList)? #ElementValueArrayInitializer } _ ','? _ '}'
 
 ElementValueList
 	= { @ElementValue ( _ ',' _ @ElementValue)* #ElementValueList}
@@ -213,7 +213,7 @@ ElementValueList
 //==============
 
 VariableDeclaration
-	= { @Annotation* Type @InitDecl ("," @InitDecl)*  ";" #Declaration }
+	= { (@Annotation)* @Type @InitDecl ("," @InitDecl)*  ";" #Declaration }
 
 InitDecl
 	= { @VarName ("=" @Initializer)? #VarDecl } _
@@ -244,10 +244,10 @@ Designator
 //====
 
 Type
-	= (PrimaryType / { @PrimaryType @TGenerics #TGenerics }) {@ "[" _? "]" #TArray }*
+	= ({ @PrimaryType @TGenerics #TGenerics } / PrimaryType) {@ "[" _? "]" #TArray }*
 
 TGenerics
-	= { '<' @Type ("," @Type)* '>' #Generics }
+	= { '<' @Type ("," @Type)* '>' #Generics } _
 
 PrimaryType
 	= { "byte"         #TInt } _
@@ -262,8 +262,8 @@ PrimaryType
 
 //class
 ClassDeclaration
-	= { @ClassModifier* "class" @Name @{ TGenerics } @SuperClass? @SuperInterfaces* ClassBody #TClass }
-	/ { @ClassModifier* "enum" @Name @SuperInterfaces* EnumBody #TEnum }
+	= { (@ClassModifier)* "class" @Name (@TGenerics)? (@SuperClass)? (@SuperInterfaces)* @ClassBody #TClass } _
+	/ { (@ClassModifier)* "enum" @Name (@SuperInterfaces)* @EnumBody #TEnum } _
 
 ClassModifier
 	= Annotation
@@ -271,32 +271,32 @@ ClassModifier
 	/ 'protected' _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
 	/ 'private'   _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
 	/ 'abstract'  _ { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } } _
-	/ 'final'     _ { #KeyValue @{`abstraction` #Key } @(`final` #Value) } _
+	/ 'final'     _ { #KeyValue @{`abstraction` #Key } @{`final` #Value } } _
 	/ 'static'    _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
 	/ 'strictfp'  _ { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
 
 SuperClass
-	= { 'extends' _ Type #SuperClass }
+	= { 'extends' _ @Type #SuperClass } _
 
 SuperInterfaces
-	= { 'implements' _ Type ("," Type)* #SuperInterfaces }
+	= { 'implements' _ @Type ("," @Type)* #SuperInterfaces } _
 
 EnumBody
-	= '{' _ @EnumeratorList? ","? (";" @ClassBodyDeclaration)? _ "}"
+	= '{' _ { (@EnumeratorList)? ","? ";" (@ClassBodyDeclaration)? #EnumBody } _ "}"
 
 EnumeratorList
 	= { @Enumerator ("," @Enumerator)* #List }
 
 Enumerator
-	= { @Annotation* @Name @{ "(" addArgumentExpressionList ")" #List }? ClassBody? #Enumerator }
+	= { (@Annotation)* @Name (@{ "(" addArgumentExpressionList ")" #List })? (@ClassBody)? #Enumerator }
 
 ClassBody
-	= '{' _ (@ClassBodyDeclaration / _ )+ _ "}"
+	= '{' _ { (@ClassBodyDeclaration)+ #ClassBody } "}"
 
 ClassBodyDeclaration
 	= ClassMemberDeclaration
-	/ { @Block #InstanceInisializer }
-	/ { 'static' _ @Block #StaticInitializer}
+	/ { @Block #InstanceInisializer } _
+	/ 'static' _ { @Block #StaticInitializer } _
 //	/ ConstructorDeclaration
 
 ClassMemberDeclaration
@@ -306,20 +306,20 @@ ClassMemberDeclaration
 //	/ InterfaceDeclaration
 
 FieldDeclaration
-	= { @FieldModifier* Type @InitDecl ("," @InitDecl)*  ";" #Field }
+	= { (@FieldModifier)* @Type @InitDecl ("," @InitDecl)*  ";" #Field } _
 
 FieldModifier
 	= Annotation
 	/ 'public'    _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
 	/ 'protected' _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
 	/ 'private'   _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
-	/ 'final'     _ { #KeyValue @{`final` #Key } @(`true` #Value) } _
+	/ 'final'     _ { #KeyValue @{`final` #Key } @{`true` #Value } } _
 	/ 'static'    _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
 	/ 'transient' _ { #KeyValue @{`transient` #Key } @{`true` #Value } } _
 	/ 'volatile'  _ { #KeyValue @{`volatile` #Key } @{`true` #Value } } _
 
 MethodDeclaration
-	= { @MethodModifier* Type @Name "(" @MethodParamList ")" (@Block / ";") #Method }
+	= { (@MethodModifier)* @Type @Name "(" @MethodParamList ")" (@Block / ";") #Method } _
 
 MethodModifier
 	= Annotation
@@ -327,7 +327,7 @@ MethodModifier
 	/ 'protected'    _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
 	/ 'private'      _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
 	/ 'abstract'     _ { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } } _
-	/ 'final'        _ { #KeyValue @{`abstraction` #Key } @(`final` #Value) } _
+	/ 'final'        _ { #KeyValue @{`abstraction` #Key } @{`final` #Value } } _
 	/ 'static'       _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
 	/ 'synchronized' _ { #KeyValue @{`synchronized` #Key } @{`true` #Value } } _
 	/ 'native'       _ { #KeyValue @{`native` #Key } @{`true` #Value } } _
@@ -337,10 +337,10 @@ MethodParamList
 	= { ( @MethodParam ("," @MethodParam)* )? ("," "...")? #List } 
 
 MethodParam
-	= { Type _ @VarName #Param} _
+	= { @Type _ @VarName #Param} _
 
-//ConstructorDeclaration
-//	= { @ConstructorModifier* Type "(" @MethodParamList ")" @Block #Constructor }
+ConstructorDeclaration
+	= { (@ConstructorModifier)* @Type "(" @MethodParamList ")" @Block #Constructor } _
 
 ConstructorModifier
 	= Annotation
@@ -348,6 +348,11 @@ ConstructorModifier
 	/ 'protected'    _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
 	/ 'private'      _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
 
+//ExplicitConstructorInvocation
+//	= @{ 'this' _ @{ "(" addArgumentExpressionList ")" #List } #ConstructorInvocation  } ";"
+//	/ @{ 'super' _ @{ "(" addArgumentExpressionList ")" #List } #ConstructorInvocation  } ";"
+//	/ @{ 'super' _ @{ "(" addArgumentExpressionList ")" #List } #ConstructorInvocation  } ";"
+//	/ @{ 'super' _ @{ "(" addArgumentExpressionList ")" #List } #ConstructorInvocation  } ";"
 
 
 // Block, Statement
@@ -444,14 +449,14 @@ UnaryExpression
 	/ { "-"  @CastExpression #Minus }
 	/ { "~"  @CastExpression #Compl }
 	/ { "!"   @CastExpression #Not }
-	/ { "sizeof"  ( @UnaryExpression / "(" Type ")" ) #SizeOf }
+	/ { "sizeof"  ( @UnaryExpression / "(" @Type ")" ) #SizeOf }
 
 CastExpression
-	= { "(" Type ")" @CastExpression #Cast }
+	= { "(" @Type ")" @CastExpression #Cast }
 	/ UnaryExpression
 
 PostfixExpression
-	= ( PrimaryExpression / { "(" Type ")" "{" @{ (addInitializerList)* ","? #Initializer } "}" } ) 
+	= ( PrimaryExpression / { "(" @Type ")" "{" @{ (addInitializerList)* ","? #Initializer } "}" } ) 
 	{@ (addFunctionCall / addIndex / addField / addInc / addDec) }*
 
 addFunctionCall
@@ -486,9 +491,9 @@ LambdaExpression
 
 LambdaParameters
 	= { @Name
-		/ '(' _ @addArgumentExpressionList? _ ')'
+		/ '(' _ (@addArgumentExpressionList)? _ ')'
 		/ '(' _ @InferredFormalParameterList _ ')'
-		#LambdaParameters }
+		 #LambdaParameters }
 
 InferredFormalParameterList
 	= { @Name ( _ ',' _ @Name)* #InferredFormalParameterList }
