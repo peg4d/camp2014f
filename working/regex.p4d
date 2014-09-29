@@ -2,7 +2,7 @@
 
 
 File
-	= { ( @COMMENT? BREAK / @TopLevel / _ )* #Source } '\u0004'?
+	= { ( @COMMENT? BREAK / @TopLevel / _ )* #File } '\u0004'?
 
 Chunk
 	= TopLevel
