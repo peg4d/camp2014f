@@ -92,7 +92,15 @@ Time
 	= { DECDIGIT+ #time }
 
 ParenBlock
-	= { _ '(' ( @LogOp / @ParenBlock / @Character / @Bracket / _ )* ')' _ #block }
+	= { _ '(' _ '?' EXTOPERATOR _ ( @LogOp / @ParenBlock / @Character / @Bracket )* ')' }
+	/ { _ '(' ( @LogOp / @ParenBlock / @Character / @Bracket / _ )* ')' _ #block }
+
+EXTOPERATOR
+	= '<#' #comment
+	/ '<=' #LookBehind
+	/ '<!' #NegLokBehind
+	/ '='  #LookAhead
+	/ '!'  #NegLookAhead
 
 Bracket
 	= { '[^' (@Item)+ ']' #ExceptFor }
