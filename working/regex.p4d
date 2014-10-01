@@ -32,7 +32,7 @@ LETTER
 	= W / SYMBOL / UNICODE / ASCII
 
 ESCAPELETTER
-	= ESCAPE METACHARACTER / ESCAPE METALETTER
+	= ESCAPE METACHARACTER #symbol / ESCAPE @METALETTER
 
 GROUP
 	= ESCAPE { DECDIGIT+ #BlockNum }
@@ -48,7 +48,22 @@ METACHARACTER
 	/ '(' / ')' / '[' / ']' / '{' / '}'
 
 METALETTER
-	= 'A' / 'z' / 'Z' / 'b' / 'B' / 'w' / 'W' / 'd' / 'D' / 's' / 'S' / 'b' / 't' / 'n' / 'r'
+	= 'A' #TopOfString 
+	/ 'z' #EndOfStringWithoutEOL 
+	/ 'Z' #EndOfString 
+	/ 'b' #WordBoundary					//	BackSpace??
+	/ 'y' #WordBoundary
+	/ 'B' #NonWordBoundary
+	/ 'Y' #NonWordBoundary
+	/ 'w' #Character
+	/ 'W' #NonCharacter
+	/ 'd' #DecNumber
+	/ 'D' #NonDecNumber
+	/ 's' #Space
+	/ 'S' #NonSpace
+	/ 't' #tab
+	/ 'n' #LF
+	/ 'r' #CR
 
 SYMBOL
 	= '&' !'&' / '/' / '@' / '_' / '#' / '%' / ',' / '-' 
@@ -118,4 +133,4 @@ LogOp
 	/ Token
 
 Character
-	= { @GROUP #BlockReference / LETTER #Char / ESCAPELETTER #EscapeChar / '.' #WildCard }
+	= { @GROUP #BlockReference / LETTER #Char / ESCAPELETTER / '.' #WildCard }
