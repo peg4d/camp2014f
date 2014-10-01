@@ -189,7 +189,7 @@ PrimaryExpression
     / Literal
     / ArrayLiteral
     / ObjectLiteral
-    / "(" __ <with InOperator1 (<with InOperator2 (<with InOperator3 (Expression)>)>)> __ ')'
+    / "(" __ <with InOperator Expression> __ ')'
 
 ArrayLiteral
     [example:[]]
@@ -320,7 +320,7 @@ addRelationalOperator
     / "<" #LessThan
     / ">" #GreaterThan
     / "instanceof" #InstanceOf
-    / (<if InOperator1> / <if InOperator2> / <if InOperator3>) "in" #In
+    / <if InOperator> "in" #In
   
 EqualityExpression
     = RelationalExpression {@ __ addEqualityOperator __ @RelationalExpression }*
@@ -438,13 +438,13 @@ ForStatement
     = { "for" __ "(" __ addForStatementPart __ ")" __ @[3]Statement #For }
 
 addForStatementPart
-    = "var" __ <without InOperator1 @[0]VariableDeclarationList > __ ";" __ (@[1]Expression)? __ ";" __ (@[2]Expression)?
-    / <without InOperator2 @[0]Expression >? __ ";" __ (@[1]Expression)? __ ";" __ (@[2]Expression)?
+    = "var" __ <without InOperator @[0]VariableDeclarationList > __ ";" __ (@[1]Expression)? __ ";" __ (@[2]Expression)?
+    / <without InOperator @[0]Expression >? __ ";" __ (@[1]Expression)? __ ";" __ (@[2]Expression)?
 
 ForEachStatement
     [example:for(k in array);]
     [example:for(var k in array){ i += 1;}]
-    = { "for" __ "(" __ <without InOperator3 "var" __ @VariableDeclarationList / @LeftHandSideExpression > __ "in" __ @Expression __ ")" __ @Statement #ForEach }
+    = { "for" __ "(" __ <without InOperator "var" __ @VariableDeclarationList / @LeftHandSideExpression > __ "in" __ @Expression __ ")" __ @Statement #ForEach }
 
 ContinueStatement
     [example: continue;]
