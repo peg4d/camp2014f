@@ -32,7 +32,7 @@ LETTER
 	= W / SYMBOL / UNICODE / ASCII
 
 ESCAPELETTER
-	= ESCAPE METACHARACTER #symbol / ESCAPE METALETTER
+	= ESCAPE ( METACHARACTER #EscapedSymbol / METACLASS / METALETTER  #EscapedLetter )
 
 GROUP
 	= ESCAPE { DECDIGIT #BlockNum }
@@ -47,26 +47,28 @@ METACHARACTER
 	= '+' / '*' / '?' / '.' / '^' / '$' / '|' / '\\'
 	/ '(' / ')' / '[' / ']' / '{' / '}'
 
-METALETTER
+METACLASS
 	= 'p' '{' _ ('In' / 'Is')? ( @{CLASSNAME #class} / @{ UNICODECLASSNAME #unicodeclass} ) _ '}' #CharClass
 	/ 'P' '{' _ ('In' / 'Is')? ( @{CLASSNAME #class} / @{ UNICODECLASSNAME #unicodeclass} ) _ '}' #CharClass
-	/ 'C' #1Byte
-	/ 'A' #TopOfString 
-	/ 'z' #EndOfStringWithoutEOL 
-	/ 'Z' #EndOfString 
-	/ 'b' #WordBoundary					//	BackSpace??
-	/ 'y' #WordBoundary
-	/ 'B' #NonWordBoundary
-	/ 'Y' #NonWordBoundary
-	/ 'w' #Character
-	/ 'W' #NonCharacter
-	/ 'd' #DecNumber
-	/ 'D' #NonDecNumber
-	/ 's' #Space
-	/ 'S' #NonSpace
-	/ 't' #tab
-	/ 'n' #LF
-	/ 'r' #CR
+
+METALETTER
+	= 'C' // 1Byte
+	/ 'A' // TopOfString 
+	/ 'z' // EndOfStringWithoutEOL 
+	/ 'Z' // EndOfString 
+	/ 'b' // WordBoundary or BackSpace
+	/ 'y' // WordBoundary
+	/ 'B' // NonWordBoundary
+	/ 'Y' // NonWordBoundary
+	/ 'w' // Character
+	/ 'W' // NonCharacter
+	/ 'd' // DecNumber
+	/ 'D' // NonDecNumber
+	/ 's' // Space
+	/ 'S' // NonSpace
+	/ 't' // tab
+	/ 'n' // LF
+	/ 'r' // CR
 
 SYMBOL
 	= '&' !'&' / '/' / '@' / '_' / '#' / '%' / ',' / '-' 
