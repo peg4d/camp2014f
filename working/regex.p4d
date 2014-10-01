@@ -157,7 +157,7 @@ CLASSNAME
 // Unicode 7.0.0
 // http://www.unicode.org/Public/UNIDATA/Blocks.txt
 UNICODECLASSNAME
-	= ('Basic' / 'basic' ) _ ('Latin' / 'latin')
+	= ('Basic' / 'basic') _ ('Latin' / 'latin')
 	/ ('Latin' / 'latin') _ '-1' _ ('Supplement' / 'supplement')
 	/ ('Latin' / 'latin') _ ('Extended' / 'extended') _ '-'? _ ('A' / 'a')
 	/ ('Latin' / 'latin') _ ('Extended' / 'extended') _ '-'? _ ('B' / 'b')
