@@ -34,6 +34,9 @@ LETTER
 ESCAPELETTER
 	= ESCAPE METACHARACTER / ESCAPE METALETTER
 
+GROUP
+	= ESCAPE { DECDIGIT+ #BlockNum }
+
 W
 	= [a-zA-Z0-9]
 
@@ -115,4 +118,4 @@ LogOp
 	/ Token
 
 Character
-	= { LETTER #Char / ESCAPELETTER #EscapeChar / '.' #WildCard }
+	= { @GROUP #BlockReference / LETTER #Char / ESCAPELETTER #EscapeChar / '.' #WildCard }
