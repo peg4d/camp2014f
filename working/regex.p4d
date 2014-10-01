@@ -84,12 +84,12 @@ ASCII
 	= '\\x' HEXDIGIT HEXDIGIT
 
 Token
-	= { '^' _ @ParenBlock (@Quantifier)? _ '$' #BiginEndStmt }
-	/ { '^' _ ( @Character / @Bracket ) (@Quantifier)? _ '$' #BiginEndToken }
+	= { '^' _ @ParenBlock (@Quantifier)? _ '$' !DECDIGIT #BiginEndStmt }
+	/ { '^' _ ( @Character / @Bracket ) (@Quantifier)? _ '$' !DECDIGIT #BiginEndToken }
 	/ { '^' _ @ParenBlock (@Quantifier)? #BiginWithStmt }
 	/ { '^' _ ( @Character / @Bracket ) (@Quantifier)? #BiginWithToken }
-	/ { @ParenBlock (@Quantifier)? _ '$' #EndWithStmt }
-	/ { ( @Character / @Bracket ) (@Quantifier)? _ '$' #EndWithToken }
+	/ { @ParenBlock (@Quantifier)? _ '$' !DECDIGIT #EndWithStmt }
+	/ { ( @Character / @Bracket ) (@Quantifier)? _ '$' !DECDIGIT #EndWithToken }
 	/ { @ParenBlock @Quantifier #Stmt }
 	/ ParenBlock
 	/ { ( @Character / @Bracket ) @Quantifier #Token }
