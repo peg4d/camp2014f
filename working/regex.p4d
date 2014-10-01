@@ -126,7 +126,7 @@ EXTOPERATOR
 Bracket
 	= { '[[:' @{CLASSNAME #class} ':]]' #CharClass }
 	/ { '[^' (@Item)+ ']' #ExceptFor }
-	/ { '['  (Item)+ ']' #OneOf }
+	/ { '['  (@Item)+ ']' #OneOf }
 
 Item
 	= { @{LETTER #item} '-' @{LETTER #item} #range }
