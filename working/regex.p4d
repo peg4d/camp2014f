@@ -50,7 +50,7 @@ METACHARACTER
 	= '+' / '*' / '?' / '.' / '^' / '$' / '|' / '\\'
 	/ '(' / ')' / '[' / ']' / '{' / '}'
 
-METACLASS
+METACLASS	// Perl
 	= 'p' '{' _ ('In' / 'Is')? ( @{CLASSNAME #Class} / @{ UNICODECLASSNAME #UnicodeClass} ) _ '}' #CharClass
 	/ 'P' '{' _ ('In' / 'Is')? ( @{CLASSNAME #Class} / @{ UNICODECLASSNAME #UnicodeClass} ) _ '}' #CharClass
 
