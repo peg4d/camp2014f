@@ -48,8 +48,8 @@ METACHARACTER
 	/ '(' / ')' / '[' / ']' / '{' / '}'
 
 METACLASS
-	= 'p' '{' _ ('In' / 'Is')? ( @{CLASSNAME #class} / @{ UNICODECLASSNAME #unicodeclass} ) _ '}' #CharClass
-	/ 'P' '{' _ ('In' / 'Is')? ( @{CLASSNAME #class} / @{ UNICODECLASSNAME #unicodeclass} ) _ '}' #CharClass
+	= 'p' '{' _ ('In' / 'Is')? ( @{CLASSNAME #Class} / @{ UNICODECLASSNAME #UnicodeClass} ) _ '}' #CharClass
+	/ 'P' '{' _ ('In' / 'Is')? ( @{CLASSNAME #Class} / @{ UNICODECLASSNAME #UnicodeClass} ) _ '}' #CharClass
 
 METALETTER
 	= 'C' // 1Byte
@@ -106,13 +106,13 @@ Quantifier
 	/ { '{' _ @Time? '}' '?'? #times }
 
 AndMore
-	= { DECDIGIT+ #andmore }
+	= { DECDIGIT+ #AndMore }
 
 AndFewer
-	= { DECDIGIT+ #andfewer }
+	= { DECDIGIT+ #AndFewer }
 
 Time
-	= { DECDIGIT+ #time }
+	= { DECDIGIT+ #Time }
 
 ParenBlock
 	= _ '(' _ '?#' _ { (!')' .)* #comment } ')'
@@ -126,7 +126,7 @@ EXTOPERATOR
 	/ '!'  #NegLookAhead
 
 Bracket
-	= { '[[:' @{CLASSNAME #class} ':]]' #CharClass }
+	= { '[[:' @{CLASSNAME #Class} ':]]' #CharClass }
 	/ { '[^' (@Item)+ ']' #ExceptFor }
 	/ { '['  (@Item)+ ']' #OneOf }
 
