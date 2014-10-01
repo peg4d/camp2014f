@@ -121,11 +121,9 @@ EXTOPERATOR
 	/ '!'  #NegLookAhead
 
 Bracket
-	= { '[^' (@CLASS / @Item)+ ']' #ExceptFor }
-	/ { '['  (@CLASS / @Item)+ ']' #OneOf }
-
-CLASS
-	= { '[:' @CLASSNAME ':]' #CharClass }
+	= { '[[:' @CLASSNAME ':]]' #CharClass }
+	/ { '[^' (@Item)+ ']' #ExceptFor }
+	/ { '['  (Item)+ ']' #OneOf }
 
 CLASSNAME
 	= { 'alnum'  #AlphabetAndDecDigit }
