@@ -128,7 +128,18 @@ CLASS
 	= { '[:' @CLASSNAME ':]' #CharClass }
 
 CLASSNAME
-	= { 'alnum' #AlphabetAndDecNum }
+	= { 'alnum'  #AlphabetAndDecDigit }
+	/ { 'alpha'  #Alphabet }
+	/ { 'blank'  #SpaceChar }
+	/ { 'cntrl'  #CtrChar }
+	/ { 'digit'  #DecDigit }
+	/ { 'graph'  #PrintableAndDisplayableChar }
+	/ { 'lower'  #LowerAlphabet }
+	/ { 'upper'  #UpperAlphabet }
+	/ { 'print'  #PrintableChar }
+	/ { 'space'  #SpaceAndNewLineChar }
+	/ { 'punct'  #PunctuationMark }
+	/ { 'xdigit' #HexDigit }
 
 Item
 	= { @{LETTER #item} '-' @{LETTER #item} #range }
