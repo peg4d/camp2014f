@@ -48,7 +48,10 @@ METACHARACTER
 	/ '(' / ')' / '[' / ']' / '{' / '}'
 
 METALETTER
-	= 'A' #TopOfString 
+	= 'p' '{' _ @CLASSNAME _ '}' #CharClass
+	/ 'P' '{' _ @CLASSNAME _ '}' #CharClass
+	/ 'C' #1Byte
+	/ 'A' #TopOfString 
 	/ 'z' #EndOfStringWithoutEOL 
 	/ 'Z' #EndOfString 
 	/ 'b' #WordBoundary					//	BackSpace??
@@ -126,18 +129,19 @@ Bracket
 	/ { '['  (Item)+ ']' #OneOf }
 
 CLASSNAME
-	= { 'alnum'  #AlphabetAndDecDigit }
-	/ { 'alpha'  #Alphabet }
-	/ { 'blank'  #SpaceChar }
-	/ { 'cntrl'  #CtrChar }
-	/ { 'digit'  #DecDigit }
-	/ { 'graph'  #PrintableAndDisplayableChar }
-	/ { 'lower'  #LowerAlphabet }
-	/ { 'upper'  #UpperAlphabet }
-	/ { 'print'  #PrintableChar }
-	/ { 'space'  #SpaceAndNewLineChar }
-	/ { 'punct'  #PunctuationMark }
-	/ { 'xdigit' #HexDigit }
+	= { ('ascii'  / 'ASCII' )  #ASCII }
+	/ { ('alnum'  / 'Alnum' )  #AlphabetAndDecDigit }
+	/ { ('alpha'  / 'Alpha' )  #Alphabet }
+	/ { ('blank'  / 'Blank' )  #SpaceChar }
+	/ { ('cntrl'  / 'Cntrl' )  #CtrChar }
+	/ { ('digit'  / 'Digit' )  #DecDigit }
+	/ { ('graph'  / 'Graph' )  #PrintableAndDisplayableChar }
+	/ { ('lower'  / 'Lower' )  #LowerAlphabet }
+	/ { ('upper'  / 'Upper' )  #UpperAlphabet }
+	/ { ('print'  / 'Print' )  #PrintableChar }
+	/ { ('space'  / 'Space' )  #SpaceAndNewLineChar }
+	/ { ('punct'  / 'Punct' )  #PunctuationMark }
+	/ { ('xdigit' / 'XDigit') #HexDigit }
 
 Item
 	= { @{LETTER #item} '-' @{LETTER #item} #range }
