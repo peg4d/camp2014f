@@ -36,6 +36,9 @@ ESCAPELETTER
 
 GROUP
 	= ESCAPE { DECDIGIT #BlockNum }
+	/ '$' { DECDIGIT #BlockNum }
+	/ ESCAPE 'g' { DECDIGIT #BlockNum }	//Python
+	/ '${' { DECDIGIT #BlockNum } '}'	//Perl
 
 W
 	= [a-zA-Z0-9]
