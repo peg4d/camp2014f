@@ -32,7 +32,7 @@ LETTER
 	= W / SYMBOL / UNICODE / ASCII
 
 ESCAPELETTER
-	= ESCAPE ( METACHARACTER #EscapedSymbol / METACLASS / METALETTER  #EscapedLetter )
+	= ESCAPE ( METACHARACTER #EscapedSymbol / METACLASS #CharClass / METALETTER  #EscapedLetter )
 
 GROUP
 	= ESCAPE { DECDIGIT #BlockNum }
@@ -51,8 +51,8 @@ METACHARACTER
 	/ '(' / ')' / '[' / ']' / '{' / '}'
 
 METACLASS	// Perl
-	= 'p' '{' _ ('In' / 'Is')? ( @{CLASSNAME #Class} / @{ UNICODECLASSNAME #UnicodeClass} ) _ '}' #CharClass
-	/ 'P' '{' _ ('In' / 'Is')? ( @{CLASSNAME #Class} / @{ UNICODECLASSNAME #UnicodeClass} ) _ '}' #CharClass
+	= 'p' '{' _ ('In' / 'Is')? ( @{CLASSNAME #Class} / @{ UNICODECLASSNAME #UnicodeClass} ) _ '}'
+	/ 'P' '{' _ ('In' / 'Is')? ( @{CLASSNAME #Class} / @{ UNICODECLASSNAME #UnicodeClass} ) _ '}'
 
 METALETTER
 	= 'C' // 1Byte
