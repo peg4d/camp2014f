@@ -189,7 +189,7 @@ PrimaryExpression
     / Literal
     / ArrayLiteral
     / ObjectLiteral
-    / "(" __ <with InOperator Expression> __ ')'
+    / '(' __ Expression __ ')'
 
 ArrayLiteral
     [example:[]]
@@ -198,9 +198,9 @@ ArrayLiteral
     [example:[1,2,3,]]
     [example:[,1,2,3,]]
     [example:[, 1 , 2 , 3 ,]]
-    = {( "[" __ (addElisionList __)? ']'  
-       / "[" __ addElementList __ ']'
-       / "[" __ addElementList addArrayDelimitor __ ']' ) #Array }
+    = {( '[' __ (addElisionList __)? ']'  
+       / '[' __ addElementList __ ']'
+       / '[' __ addElementList addArrayDelimitor __ ']' ) #Array }
 
 addArrayDelimitor
     = __ ',' __ (addElisionList __)?
@@ -217,16 +217,20 @@ ElisionExpression
 ObjectLiteral
     [example:{}]
     [example:{ a: 1, b: 2}]
-    = "{" __ '}' { #Object }
-    / { "{" __ addPropertyList __ ("," __)? '}' #Object }
+    = '{' __ '}' { #Object }
+    / { '{' __ addPropertyList __ (',' __)? '}' #Object }
 
 addPropertyList
-    = @PropertyAssignment (__ "," __ @PropertyAssignment)*
+    = @PropertyAssignment (__ ',' __ @PropertyAssignment)*
 
 PropertyAssignment
-    = { @PropertyName __ ":" __ @AssignmentExpression #Property }
-    / { "get" __ @PropertyName __ "(" __ ")" __ "{" __ @FunctionBody __ '}' #Getter }
-    / { "set" __ @PropertyName __ "(" @Identifier __ ")" __ "{" __ @FunctionBody __ '}' #Setter }
+    [example: a: 1]
+    [example: count: function(){ return n; }]
+    [example: get a(){ return _a; }]
+    [example: set a(val){ _a = val; }]
+    = { @PropertyName __ ':' __ @AssignmentExpression #Property }
+    / { "get" __ @PropertyName __ '(' __ ')' __ @FunctionBody #Getter }
+    / { "set" __ @PropertyName __ '(' __ @Identifier __ ')' __ @FunctionBody #Setter }
 
 PropertyName
     = IdentifierName
@@ -249,8 +253,8 @@ MemberExpression
     = ReceiverExpression {@ __ addMemberOperator }*
 
 addMemberOperator
-    = "[" __ @Expression __ ']' #Index
-    / "." __ @IdentifierName #Field
+    = '[' __ @Expression __ ']' #Index
+    / '.' __ @IdentifierName #Field
 
 NewExpression
     [example: new Klass]
@@ -267,14 +271,14 @@ CallExpression
 
 addCallOrMemberOperator
     = @Arguments #Apply
-    / "[" __ @Expression __ ']' #Index
-    / "." __ @IdentifierName #Field
+    / '[' __ @Expression __ ']' #Index
+    / '.' __ @IdentifierName #Field
 
 Arguments
-    = { "(" __ (addArgumentList __)? ')' #List }
+    = { '(' __ (addArgumentList __)? ')' #List }
 
 addArgumentList
-    = @AssignmentExpression (__ "," __ @AssignmentExpression)*
+    = @AssignmentExpression (__ ',' __ @AssignmentExpression)*
 
 LeftHandSideExpression
     = CallExpression
@@ -292,15 +296,15 @@ UnaryExpression
     = PostfixExpression / { addUnaryOperator _ @UnaryExpression }
 
 addUnaryOperator
-    = "delete" #Delete
-    / "void"   #Void
-    / "typeof" #TypeOf
-    / "++"     #PrefixInc
+    = "++"     #PrefixInc
     / "--"     #PrefixDec
     / "+"      #Plus
     / "-"      #Minus
     / "~"      #Compl
     / "!"      #Not
+    / "delete" #Delete
+    / "void"   #Void
+    / "typeof" #TypeOf
 
 MultiplicativeExpression
     = UnaryExpression {@ __ ( "*" #Mul / "/" #Div / "%" #Mod ) __ @UnaryExpression }*
@@ -309,7 +313,7 @@ AdditiveExpression
     = MultiplicativeExpression {@ __ ( "+" #Add / "-" #Sub ) __ @MultiplicativeExpression }*
   
 ShiftExpression
-    = AdditiveExpression {@ __ ( "<<" #LeftShift / ">>" #RightShift ) __ @AdditiveExpression }*
+    = <with InOperator AdditiveExpression {@ __ ( "<<" #LeftShift / ">>" #RightShift ) __ @AdditiveExpression }* >
   
 RelationalExpression
     = ShiftExpression {@ __ addRelationalOperator __ @ShiftExpression }*
@@ -347,10 +351,10 @@ LogicalORExpression
     = LogicalANDExpression {@ __ "||" __ @LogicalANDExpression #Or }*
   
 ConditionalExpression
-    = LogicalORExpression {@ __ "?" __ @AssignmentExpression __ ":" __ @AssignmentExpression #Trinary }*
+    = LogicalORExpression {@ __ '?' __ <with InOperator @AssignmentExpression> __ ':' __ @AssignmentExpression #Trinary }*
 
 AssignmentExpression
-    = { @LeftHandSideExpression __ addAssignmentOperator __ @AssignmentExpression }
+    = { <with InOperator @LeftHandSideExpression> __ addAssignmentOperator __ @AssignmentExpression }
     / ConditionalExpression
 
 addAssignmentOperator
@@ -367,7 +371,7 @@ addAssignmentOperator
     / "|="  #AssignBitwiseOr
 
 Expression
-    = AssignmentExpression {@ __ "," __ @AssignmentExpression #Expression }*
+    = AssignmentExpression {@ __ ',' __ @AssignmentExpression #Expression }*
 
 //Statement
 //==========
@@ -395,14 +399,14 @@ Statement
 Block
     [example:{}]
     [example:{;}]
-    = { "{" __ (@Statement __)* '}' #Block }
+    = { '{' __ (@Statement __)* '}' #Block }
 
 VariableStatement
     [example: var a = 0, b, c = 1 + 3;]
     = "var" __ VariableDeclarationList EOS
 
 VariableDeclarationList
-    = { @VariableDeclaration (__ "," __ @VariableDeclaration)* #VarDeclList }
+    = { @VariableDeclaration (__ ',' __ @VariableDeclaration)* #VarDeclList }
 
 VariableDeclaration
     = { @Identifier (__ addInitialiser)? #VarDecl }
@@ -419,15 +423,18 @@ ExpressionStatement
 
 IfStatement
     [example:if(1 + 1){;}]
-    = { "if" __ "(" __ @Expression __ ")" __ @Statement (__ "else" __ @Statement)? #If }
+    = { "if" __ addCondition __ @Statement (__ "else" __ @Statement)? #If }
 
 DoWhileStatement
     [example:do{;}while(2 > 1)]
-    = { "do" __ @Statement __ "while" __ "(" __ @Expression __ ')' EOS #DoWhile }
+    = { "do" __ @Statement __ "while" __ addCondition EOS #DoWhile }
 
 WhileStatement
     [example:while(1){;}]
-    = { "while" __ "(" __ @Expression __ ")" __ @Statement #While }
+    = { "while" __ addCondition __ @Statement #While }
+
+addCondition
+    = '(' __ @Expression __ ')'
 
 ForStatement
     [example:for(;;);]
@@ -435,16 +442,20 @@ ForStatement
     [example:for(;i<5;);]
     [example:for(i=0;i<5;i++);]
     [example:for(var i=0;i<5;i++);]
-    = { "for" __ "(" __ addForStatementPart __ ")" __ @[3]Statement #For }
+    = { "for" __ '(' __ addForStatementPart __ ')' __ @[3]Statement #For }
 
 addForStatementPart
-    = "var" __ <without InOperator @[0]VariableDeclarationList > __ ";" __ (@[1]Expression)? __ ";" __ (@[2]Expression)?
-    / <without InOperator @[0]Expression >? __ ";" __ (@[1]Expression)? __ ";" __ (@[2]Expression)?
+    = "var" __ <without InOperator @[0]VariableDeclarationList > __ ';' __ (@[1]Expression)? __ ';' __ (@[2]Expression)?
+    / <without InOperator @[0]Expression >? __ ';' __ (@[1]Expression)? __ ';' __ (@[2]Expression)?
 
 ForEachStatement
     [example:for(k in array);]
     [example:for(var k in array){ i += 1;}]
-    = { "for" __ "(" __ <without InOperator "var" __ @VariableDeclarationList / @LeftHandSideExpression > __ "in" __ @Expression __ ")" __ @Statement #ForEach }
+    = { "for" __ '(' __ addForEachPart __ ')' __ @Statement #ForEach }
+
+addForEachPart
+    = "var" __ <without InOperator @VariableDeclarationList> __ "in" __ @Expression
+    / @LeftHandSideExpression __ "in" __ @Expression
 
 ContinueStatement
     [example: continue;]
@@ -462,15 +473,15 @@ ReturnStatement
     = { "return" (_ @Expression)? EOS #Return }
 
 WithStatement
-    [example: with(a){ a.f(); }]
-    = { "with" __ "(" __ @Expression __ ")" @Statement #With }
+    [example: with(a) { a.f(); }]
+    = { "with" __ addCondition __ @Statement #With }
 
 SwitchStatement
-    [example: switch(n){ case 0: break; case 1: return 0; default: throw 0; }]
-    = { "switch" __ "(" __ @Expression __ ")" @CaseBlock #Switch }
+    [example: switch(n) { case 0: break; case 1: return 0; default: throw 0; }]
+    = { "switch" __ addCondition __ @CaseBlock #Switch }
 
 CaseBlock
-    = { "{" __ addCaseClauses? __ '}' #CaseBlock }
+    = { '{' __ addCaseClauses? __ '}' #CaseBlock }
 
 addCaseClauses
     = @CaseClause (__ @CaseClause)*
@@ -478,12 +489,12 @@ addCaseClauses
 CaseClause
     [example: case 2: break;]
     [example: default: break;]
-    = { "case" __ @Expression __ ":" __ (@Statement __)* #CaseClause }
-    / { "default" __ ":" __ (@Statement __)* #CaseClause }
+    = { "case" __ @Expression __ ':' __ (@Statement __)* #CaseClause }
+    / { "default" __ ':' __ (@Statement __)* #CaseClause }
 
 LabelledStatement
     [example: label: var a = 1;]
-    = { @Identifier __ ":" __ @Statement #Label }
+    = { @Identifier __ ':' __ @Statement #Label }
 
 ThrowStatement
     [example: throw new Error()]
@@ -499,7 +510,7 @@ TryStatement
 
 Catch
     [example: catch(e){}]
-    = { "catch" __ "(" __ @Identifier __ ")" __ @Block #Catch }
+    = { "catch" __ '(' __ @Identifier __ ')' __ @Block #Catch }
 
 Finally
     [example: finally{}]
@@ -514,18 +525,18 @@ DebuggerStatement
 FunctionDeclaration
     [example: function func(){}]
     [example: function func(n){ return n+1; }]
-    = { "function" __ @[0]Identifier __ "(" __ @[1]FormalParameterList __ ")" __ "{" __ @[2]FunctionBody __ '}' #Function }
+    = { "function" __ @[0]Identifier __ @[1]FormalParameterList __ @[2]FunctionBody #Function }
 
 FunctionExpression
     [example: function func(){}]
     [example: function (){}]
-    = { "function" __ (@[0]Identifier __)? "(" __ @[1]FormalParameterList __ ")" __ "{" __ @[2]FunctionBody __ '}' #Function }
+    = { "function" __ (@[0]Identifier __)? @[1]FormalParameterList __ @[2]FunctionBody #Function }
 
 FormalParameterList
-    = { ( @Identifier (__ "," __ @Identifier)* )? #List }
+    = '(' __ { ( @Identifier (__ ',' __ @Identifier)* )? #List } __ ')'
 
 FunctionBody
-    = { addSourceElements? #Block }
+    = '{' __ { addSourceElements? #Block } __ '}'
 
 addSourceElements
     = @SourceElement (__ @SourceElement)*
@@ -606,20 +617,20 @@ SOURCE
     = .
 
 StringLiteral
-    = '"' { DOUBLE_STRING_CHARACTER* #String } '"'
-    / "'" { SINGLE_STRING_CHARACTER* #String } "'"
+    = ["] { DOUBLE_STRING_CHARACTER* #String } ["]
+    / ['] { SINGLE_STRING_CHARACTER* #String } [']
 
 DOUBLE_STRING_CHARACTER
-    = !( '"' / '\\' / LINE_TERMINATOR ) SOURCE / '\\' ESCAPE_SEQUENCE / LINE_CONTINUATION
+    = !( ["] / '\\' / LINE_TERMINATOR ) SOURCE / '\\' ESCAPE_SEQUENCE / LINE_CONTINUATION
 
 SINGLE_STRING_CHARACTER
-    = !( "'" / '\\' / LINE_TERMINATOR ) SOURCE / '\\' ESCAPE_SEQUENCE / LINE_CONTINUATION
+    = !( ['] / '\\' / LINE_TERMINATOR ) SOURCE / '\\' ESCAPE_SEQUENCE / LINE_CONTINUATION
 
 LINE_CONTINUATION
     = '\\' LINE_TERMINATOR_SEQUENCE
 
 ESCAPE_SEQUENCE
-    = '\\' / "'" / '"' / [bfnrtv] / OCTA_ESCAPE_SEQUENCE / HEX_ESCAPE_SEQUENCE / UNICODE_ESCAPE_SEQUUENCE / LINE_TERMINATOR_SEQUENCE
+    = '\\' / ["'bfnrtv] / OCTA_ESCAPE_SEQUENCE / HEX_ESCAPE_SEQUENCE / UNICODE_ESCAPE_SEQUUENCE / LINE_TERMINATOR_SEQUENCE
 
 OCTA_ESCAPE_SEQUENCE
     = OCT OCT OCT
