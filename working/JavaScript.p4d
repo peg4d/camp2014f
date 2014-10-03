@@ -379,9 +379,8 @@ Expression
 
 Statement
     = Block
-    / VariableStatement
     / EmptyStatement
-    / ExpressionStatement
+    / VariableStatement
     / IfStatement
     / DoWhileStatement
     / WhileStatement
@@ -396,6 +395,7 @@ Statement
     / ThrowStatement
     / TryStatement
     / DebuggerStatement
+    / ExpressionStatement
 
 Block
     [example:{}]
