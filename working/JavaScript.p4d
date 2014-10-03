@@ -107,7 +107,7 @@ EOF
 "/"    = '/' !'='
 "%"    = '%' ![=>]
 "<<"  = '<<' !'='
-">>"  = '>>' !'='
+">>"  = '>>' ![=>]
 "<"    = '<' ![=]
 ">"    = '>' ![=]
 "=="  = '==' ![=]
@@ -158,7 +158,7 @@ EOF
 "yield" = 'yield' !W
 "get" = 'get' !W
 "set" = 'set' !W
-"undefined" = 'undefined' !W
+//"undefined" = 'undefined' !W
 "null" = 'null' !W
 "true" = 'true' !W
 "false" = 'false' !W
@@ -171,7 +171,7 @@ KEYWORD
     / "return" / "switch" / "this" / "throw" / "try" / "typeof" / "var" / "void"
     / "while" / "with" / "class" / "enum" / "export" / "extends" / "import" / "super"
     / "implements" / "interface" / "let" / "package" / "private" / "protected" / "public"
-    / "static" / "yield" / "undefined" / "null" / "true" / "false" / "Infinity" / "NaN"
+    / "static" / "yield" / "null" / "true" / "false" / "Infinity" / "NaN"
 
 //Expression
 //==========
@@ -179,12 +179,8 @@ KEYWORD
 ThisExpression
     = { "this" #This }
 
-UndefinedExpression
-    = { "undefined" #Undefined }
-
 PrimaryExpression
     = ThisExpression
-    / UndefinedExpression
     / Identifier
     / Literal
     / ArrayLiteral
@@ -313,8 +309,13 @@ AdditiveExpression
     = MultiplicativeExpression {@ __ ( "+" #Add / "-" #Sub ) __ @MultiplicativeExpression }*
   
 ShiftExpression
-    = <with InOperator AdditiveExpression {@ __ ( "<<" #LeftShift / ">>" #RightShift ) __ @AdditiveExpression }* >
-  
+    = <with InOperator AdditiveExpression {@ __ addShiftOperator __ @AdditiveExpression }* >
+
+addShiftOperator
+    = "<<" #LeftShift 
+    / ">>" #RightShift 
+    / ">>>" #LogicalRightShift 
+
 RelationalExpression
     = ShiftExpression {@ __ addRelationalOperator __ @ShiftExpression }*
 
@@ -536,10 +537,7 @@ FormalParameterList
     = '(' __ { ( @Identifier (__ ',' __ @Identifier)* )? #List } __ ')'
 
 FunctionBody
-    = '{' __ { addSourceElements? #Block } __ '}'
-
-addSourceElements
-    = @SourceElement (__ @SourceElement)*
+    = '{' { (__ @SourceElement)* #Block } __ '}'
 
 SourceElement
     = FunctionDeclaration
@@ -576,7 +574,7 @@ OctaIntegerLiteral
 
 HexIntegerLiteral
     [example: 0xa12]
-    = { '0' [xX] [1-9A-Fa-f] HEX* #HexInteger }
+    = { '0' [xX] HEX* #HexInteger }
 
 FloatingPointLiteral
     [example: 12.456]
@@ -621,13 +619,10 @@ StringLiteral
     / ['] { SINGLE_STRING_CHARACTER* #String } [']
 
 DOUBLE_STRING_CHARACTER
-    = !( ["] / '\\' / LINE_TERMINATOR ) SOURCE / '\\' ESCAPE_SEQUENCE / LINE_CONTINUATION
+    = !( ["] / '\\' / LINE_TERMINATOR ) SOURCE / '\\' ESCAPE_SEQUENCE
 
 SINGLE_STRING_CHARACTER
-    = !( ['] / '\\' / LINE_TERMINATOR ) SOURCE / '\\' ESCAPE_SEQUENCE / LINE_CONTINUATION
-
-LINE_CONTINUATION
-    = '\\' LINE_TERMINATOR_SEQUENCE
+    = !( ['] / '\\' / LINE_TERMINATOR ) SOURCE / '\\' ESCAPE_SEQUENCE
 
 ESCAPE_SEQUENCE
     = '\\' / ["'bfnrtv] / OCTA_ESCAPE_SEQUENCE / HEX_ESCAPE_SEQUENCE / UNICODE_ESCAPE_SEQUUENCE / LINE_TERMINATOR_SEQUENCE
