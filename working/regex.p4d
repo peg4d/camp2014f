@@ -112,11 +112,14 @@ Time
 
 ParenBlock
 	= _ '(' _ '?#' _ { (!')' .)* #comment } ')'
-	/ { _ '(' _ '?<=' #LookBehind _ ( @LogOp / @ParenBlock / @Character / @Bracket )+ ')' _ }
-	/ { _ '(' _ '?<!' #NegLookBehind _ ( @LogOp / @ParenBlock / @Character / @Bracket )+ ')' _ }
-	/ { _ '(' _ '?='  #LookAhead _ ( @LogOp / @ParenBlock / @Character / @Bracket )+ ')' _ }
-	/ { _ '(' _ '?!'  #NegLookAhead _ ( @LogOp / @ParenBlock / @Character / @Bracket )+ ')' _ }
+	/ { _ '(' _ addEXTOPERATOR _ ( @LogOp / @ParenBlock / @Character / @Bracket )+ ')' _ }
 	/ { _ '(' ( @LogOp / @ParenBlock / @Character / @Bracket / _ )+ ')' _ #block }
+
+addEXTOPERATOR
+	= '<=' #LookBehind
+	/ '<!' #NegLookBehind
+	/ '=' #LookAhead
+	/ '!' #NegLookAhead
 
 Bracket
 	= { '[[:' @{CLASSNAME #Class} ':]]' #CharClass }
