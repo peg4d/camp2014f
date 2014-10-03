@@ -2,13 +2,13 @@
 
 
 File
-	= ( ( COMMENT? BREAK ) / TopLevel / _ )* ( '\u0003' / '\u0004' )*
+	= { ( ('#' _ @Comment BREAK? ) / @TopLevel BREAK? / _ BREAK? )* #Source } !.
 
 Chunk
-	= TopLevel
+	= Statement
 
 TopLevel
-	= _ Statement? _
+	= _ Statement _
 
 Statement
 	= { (@LogOp)+ #regex }
@@ -16,8 +16,8 @@ Statement
 _
 	= [ \t]*
 
-COMMENT
-	= '#' _ { (!BREAK .)* #comment }
+Comment
+	= { (!BREAK .)* #comment }
 
 BREAK
 	= '\n' / '\r\n' / '\r'
@@ -31,14 +31,11 @@ HEXDIGIT
 LETTER
 	= W / SYMBOL / UNICODE / ASCII
 
-ESCAPELETTER
-	= ESCAPE ( METACHARACTER #EscapedSymbol / METACLASS #CharClass / METALETTER #EscapedLetter )
-
-GROUP
-	= ESCAPE { DECDIGIT #BlockNum }
-	/ '$' { DECDIGIT #BlockNum }
-	/ ESCAPE 'g' { DECDIGIT #BlockNum }	//Python
-	/ '${' { DECDIGIT #BlockNum } '}'	//Perl
+EscapeLetter
+	= { ESCAPE METACHARACTER #EscapedSymbol }
+	/ { ESCAPE 'p' '{' _ ('In' / 'Is')? ( @{CLASSNAME #Class} / @{UNICODECLASSNAME #UnicodeClass} ) _ '}' #CharClass }	//Perl
+	/ { ESCAPE 'P' '{' _ ('In' / 'Is')? ( @{CLASSNAME #Class} / @{UNICODECLASSNAME #UnicodeClass} ) _ '}' #CharClass }	//Perl
+	/ { METALETTER #EscapedLetter }
 
 W
 	= [a-zA-Z0-9]
@@ -49,10 +46,6 @@ ESCAPE
 METACHARACTER
 	= '+' / '*' / '?' / '.' / '^' / '$' / '|' / '\\'
 	/ '(' / ')' / '[' / ']' / '{' / '}'
-
-METACLASS	// Perl
-	= 'p' '{' _ ('In' / 'Is')? ( @{CLASSNAME #Class} / @{UNICODECLASSNAME #UnicodeClass} ) _ '}'
-	/ 'P' '{' _ ('In' / 'Is')? ( @{CLASSNAME #Class} / @{UNICODECLASSNAME #UnicodeClass} ) _ '}'
 
 METALETTER
 	= 'C' // 1Byte
@@ -84,12 +77,12 @@ ASCII
 	= '\\x' HEXDIGIT HEXDIGIT
 
 Token
-	= { '^' _ @ParenBlock (@Quantifier)? _ '$' !DECDIGIT #BiginEndStmt }
-	/ { '^' _ ( @Character / @Bracket ) (@Quantifier)? _ '$' !DECDIGIT #BiginEndToken }
+	= { '^' _ @ParenBlock (@Quantifier)? _ '$' !DECDIGIT !'{' #BiginEndStmt }
+	/ { '^' _ ( @Character / @Bracket ) (@Quantifier)? _ '$' !DECDIGIT !'{' #BiginEndToken }
 	/ { '^' _ @ParenBlock (@Quantifier)? #BiginWithStmt }
 	/ { '^' _ ( @Character / @Bracket ) (@Quantifier)? #BiginWithToken }
-	/ { @ParenBlock (@Quantifier)? _ '$' !DECDIGIT #EndWithStmt }
-	/ { ( @Character / @Bracket ) (@Quantifier)? _ '$' !DECDIGIT #EndWithToken }
+	/ { @ParenBlock (@Quantifier)? _ '$' !DECDIGIT !'{' #EndWithStmt }
+	/ { ( @Character / @Bracket ) (@Quantifier)? _ '$' !DECDIGIT !'{' #EndWithToken }
 	/ { @ParenBlock @Quantifier #Stmt }
 	/ ParenBlock
 	/ { ( @Character / @Bracket ) @Quantifier #Token }
@@ -119,14 +112,11 @@ Time
 
 ParenBlock
 	= _ '(' _ '?#' _ { (!')' .)* #comment } ')'
-	/ { _ '(' _ '?' EXTOPERATOR _ ( @LogOp / @ParenBlock / @Character / @Bracket )+ ')' _ }
+	/ { _ '(' _ '?<=' #LookBehind _ ( @LogOp / @ParenBlock / @Character / @Bracket )+ ')' _ }
+	/ { _ '(' _ '?<!' #NegLookBehind _ ( @LogOp / @ParenBlock / @Character / @Bracket )+ ')' _ }
+	/ { _ '(' _ '?='  #LookAhead _ ( @LogOp / @ParenBlock / @Character / @Bracket )+ ')' _ }
+	/ { _ '(' _ '?!'  #NegLookAhead _ ( @LogOp / @ParenBlock / @Character / @Bracket )+ ')' _ }
 	/ { _ '(' ( @LogOp / @ParenBlock / @Character / @Bracket / _ )+ ')' _ #block }
-
-EXTOPERATOR
-	= '<=' #LookBehind
-	/ '<!' #NegLookBehind
-	/ '='  #LookAhead
-	/ '!'  #NegLookAhead
 
 Bracket
 	= { '[[:' @{CLASSNAME #Class} ':]]' #CharClass }
@@ -142,7 +132,13 @@ LogOp
 	/ Token
 
 Character
-	= { @GROUP #BlockReference / LETTER #Char / ESCAPELETTER / '.' #WildCard }
+	= { ESCAPE @{ DECDIGIT #BlockNum } #BlockReference }
+	/ { '$' @{ DECDIGIT #BlockNum } #BlockReference }
+	/ { ESCAPE 'g' @{ DECDIGIT #BlockNum } #BlockReference }		//Python
+	/ { '${' @{ DECDIGIT #BlockNum } '}' #BlockReference }			//Perl
+	/ { LETTER #Char }
+	/ { @EscapeLetter #Char }
+	/ { '.' #WildCard }
 
 CLASSNAME
 	= 'ascii'  / 'ASCII'
