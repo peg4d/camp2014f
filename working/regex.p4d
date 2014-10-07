@@ -112,7 +112,7 @@ Time
 
 ParenBlock
 	= _ '(' _ '?#' _ { (!')' .)* #comment } ')'
-	/ { _ '(' _ addEXTOPERATOR _ ( @LogOp / @ParenBlock / @Character / @Bracket )+ ')' _ }
+	/ { _ '(' _  '?' addEXTOPERATOR _ ( @LogOp / @ParenBlock / @Character / @Bracket )+ ')' _ }
 	/ { _ '(' ( @LogOp / @ParenBlock / @Character / @Bracket / _ )+ ')' _ #block }
 
 addEXTOPERATOR
