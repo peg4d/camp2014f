@@ -271,8 +271,8 @@ ClassModifier
 	/ 'public'    _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
 	/ 'protected' _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
 	/ 'private'   _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
-	/ 'abstruct'  _ { #KeyValue @{`abstruction` #Key } @{`abstruct` #Value } } _
-	/ 'final'     _ { #KeyValue @{`abstruction` #Key } @(`final` #Value) } _
+	/ 'abstract'  _ { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } } _
+	/ 'final'     _ { #KeyValue @{`abstraction` #Key } @(`final` #Value) } _
 	/ 'static'    _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
 	/ 'strictfp'  _ { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
 
@@ -327,8 +327,8 @@ MethodModifier
 	/ 'public'       _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
 	/ 'protected'    _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
 	/ 'private'      _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
-	/ 'abstruct'     _ { #KeyValue @{`abstruction` #Key } @{`abstruct` #Value } } _
-	/ 'final'        _ { #KeyValue @{`abstruction` #Key } @(`final` #Value) } _
+	/ 'abstract'     _ { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } } _
+	/ 'final'        _ { #KeyValue @{`abstraction` #Key } @(`final` #Value) } _
 	/ 'static'       _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
 	/ 'synchronized' _ { #KeyValue @{`synchronized` #Key } @{`true` #Value } } _
 	/ 'native'       _ { #KeyValue @{`native` #Key } @{`true` #Value } } _
