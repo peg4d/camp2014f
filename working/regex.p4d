@@ -29,12 +29,14 @@ HEXDIGIT
 	= [0-9A-Fa-f]
 
 LETTER
-	= W / SYMBOL / UNICODE / ASCII
+	= W / SYMBOL
 
 EscapeLetter
-	= { ESCAPE METACHARACTER #EscapedSymbol }
+	= { UNICODE #Unicode }
+	/ { ASCII #ASCII }
+	/ { ESCAPE METACHARACTER #Symbol }
 	/ { ESCAPE ('p' / 'P') '{' _ ('In' / 'Is')? ( @{CLASSNAME #Class} / @{UNICODECLASSNAME #UnicodeClass} ) _ '}' #CharClass }	//Perl
-	/ { METALETTER #EscapedLetter }
+	/ { ESCAPE METALETTER #Letter }
 
 W
 	= [a-zA-Z0-9]
@@ -125,12 +127,12 @@ LogOp
 	/ Token
 
 Character
-	= { ESCAPE @{ DECDIGIT #BlockNum } #BlockReference }
-	/ { '$' @{ DECDIGIT #BlockNum } #BlockReference }
-	/ { ESCAPE 'g' @{ DECDIGIT #BlockNum } #BlockReference }		//Python
+	= { ESCAPE @{ DECDIGIT #BlockNum } !DECDIGIT #BlockReference }
+	/ { '$' @{ DECDIGIT #BlockNum } !DECDIGIT #BlockReference }
+	/ { ESCAPE 'g' @{ DECDIGIT #BlockNum } !DECDIGIT #BlockReference }		//Python
 	/ { '${' @{ DECDIGIT #BlockNum } '}' #BlockReference }			//Perl
 	/ { LETTER #Char }
-	/ { @EscapeLetter #Char }
+	/ { @EscapeLetter #EscapedChar }
 	/ { '.' #WildCard }
 
 CLASSNAME
