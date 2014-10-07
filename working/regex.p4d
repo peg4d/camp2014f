@@ -33,8 +33,7 @@ LETTER
 
 EscapeLetter
 	= { ESCAPE METACHARACTER #EscapedSymbol }
-	/ { ESCAPE 'p' '{' _ ('In' / 'Is')? ( @{CLASSNAME #Class} / @{UNICODECLASSNAME #UnicodeClass} ) _ '}' #CharClass }	//Perl
-	/ { ESCAPE 'P' '{' _ ('In' / 'Is')? ( @{CLASSNAME #Class} / @{UNICODECLASSNAME #UnicodeClass} ) _ '}' #CharClass }	//Perl
+	/ { ESCAPE ('p' / 'P') '{' _ ('In' / 'Is')? ( @{CLASSNAME #Class} / @{UNICODECLASSNAME #UnicodeClass} ) _ '}' #CharClass }	//Perl
 	/ { METALETTER #EscapedLetter }
 
 W
@@ -96,19 +95,10 @@ Quantifier
 	/ { '*'  #zeromoreL }
 	/ { '??'  #optionalS }
 	/ { '?' '+'?  #optionalL }
-	/ { '{' _ @AndMore _ ',' _ @AndFewer _ '}' '?'? #times }
-	/ { '{' _ @AndMore _ ',' _ '}' '?'? #times }
-	/ { '{' _ ',' _ @AndFewer _ '}' '?'? #times }
-	/ { '{' _ @Time '}' '?'? #times }
-
-AndMore
-	= { DECDIGIT+ #AndMore }
-
-AndFewer
-	= { DECDIGIT+ #AndFewer }
-
-Time
-	= { DECDIGIT+ #Time }
+	/ { '{' _ @{ DECDIGIT+ #AndMore } _ ',' _ @{ DECDIGIT+ #AndFewer } _ '}' '?'? #times }
+	/ { '{' _ @{ DECDIGIT+ #AndMore } _ ',' _ '}' '?'? #times }
+	/ { '{' _ ',' _ @{ DECDIGIT+ #AndFewer } _ '}' '?'? #times }
+	/ { '{' _ @{ DECDIGIT+ #Time } _ '}' '?'? #times }
 
 ParenBlock
 	= _ '(' _ '?#' _ { (!')' .)* #comment } ')'
