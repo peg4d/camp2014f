@@ -213,7 +213,7 @@ ElementValueList
 //==============
 
 VariableDeclaration
-	= { @Annotation* @Type @InitDecl ("," @InitDecl)*  ";" #Declaration }
+	= { @Annotation* Type @InitDecl ("," @InitDecl)*  ";" #Declaration }
 
 InitDecl
 	= { @VarName ("=" @Initializer)? #VarDecl } _
@@ -244,11 +244,10 @@ Designator
 //====
 
 Type
-	= PrimaryType {@ TGenerics }?
-	{@ "[" _? "]" #TArray }*
+	= (PrimaryType / { @PrimaryType @TGenerics #TGenerics }) {@ "[" _? "]" #TArray }*
 
 TGenerics
-	= '<' @Type ("," @Type)* '>' #TGenerics
+	= { '<' @Type ("," @Type)* '>' #Generics }
 
 PrimaryType
 	= { "byte"         #TInt } _
@@ -277,10 +276,10 @@ ClassModifier
 	/ 'strictfp'  _ { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
 
 SuperClass
-	= { 'extends' _ @Type #SuperClass }
+	= { 'extends' _ Type #SuperClass }
 
 SuperInterfaces
-	= { 'implements' _ @Type ("," @Type)* #SuperInterfaces }
+	= { 'implements' _ Type ("," Type)* #SuperInterfaces }
 
 EnumBody
 	= '{' _ @EnumeratorList? ","? (";" @ClassBodyDeclaration)? _ "}"
@@ -307,7 +306,7 @@ ClassMemberDeclaration
 //	/ InterfaceDeclaration
 
 FieldDeclaration
-	= { @FieldModifier* @Type @InitDecl ("," @InitDecl)*  ";" #Field }
+	= { @FieldModifier* Type @InitDecl ("," @InitDecl)*  ";" #Field }
 
 FieldModifier
 	= Annotation
@@ -320,7 +319,7 @@ FieldModifier
 	/ 'volatile'  _ { #KeyValue @{`volatile` #Key } @{`true` #Value } } _
 
 MethodDeclaration
-	= { @MethodModifier* @Type @Name "(" @MethodParamList ")" (@Block / ";") #Method }
+	= { @MethodModifier* Type @Name "(" @MethodParamList ")" (@Block / ";") #Method }
 
 MethodModifier
 	= Annotation
@@ -338,10 +337,10 @@ MethodParamList
 	= { ( @MethodParam ("," @MethodParam)* )? ("," "...")? #List } 
 
 MethodParam
-	= { @Type _ @VarName #Param} _
+	= { Type _ @VarName #Param} _
 
 //ConstructorDeclaration
-//	= { @ConstructorModifier* @Type "(" @MethodParamList ")" @Block #Constructor }
+//	= { @ConstructorModifier* Type "(" @MethodParamList ")" @Block #Constructor }
 
 ConstructorModifier
 	= Annotation
@@ -445,14 +444,14 @@ UnaryExpression
 	/ { "-"  @CastExpression #Minus }
 	/ { "~"  @CastExpression #Compl }
 	/ { "!"   @CastExpression #Not }
-	/ { "sizeof"  ( @UnaryExpression / "(" @Type ")" ) #SizeOf }
+	/ { "sizeof"  ( @UnaryExpression / "(" Type ")" ) #SizeOf }
 
 CastExpression
-	= { "(" @Type ")" @CastExpression #Cast }
+	= { "(" Type ")" @CastExpression #Cast }
 	/ UnaryExpression
 
 PostfixExpression
-	= ( PrimaryExpression / { "(" @Type ")" "{" @{ (addInitializerList)* ","? #Initializer } "}" } ) 
+	= ( PrimaryExpression / { "(" Type ")" "{" @{ (addInitializerList)* ","? #Initializer } "}" } ) 
 	{@ (addFunctionCall / addIndex / addField / addInc / addDec) }*
 
 addFunctionCall
