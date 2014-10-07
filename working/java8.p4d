@@ -74,14 +74,7 @@ KEYWORD
 "-"   = '-' !('-' / [=>]) _
 "~"   = '~' _
 "!"    = '!' !'=' _
-"char"      = 'char'     !W
-"short"     = 'short'    !W
-"int"       = 'int'      !W
-"long"      = 'long'     !W
-"float"     = 'float'    !W
-"double"    = 'double'   !W
-"boolean"   = 'boolean'  !W
-"byte"      = 'byte'     !W
+
 "{"     = '{' _
 "["      = '[' _
 "]"      = ']' _
@@ -105,19 +98,7 @@ KEYWORD
 "?"	= '?' _
 ";"	= (';' _ / EOL)  /* this is for debug */
 "}"	= '}' _
-"enum"	= 'enum' !W
-"case"	= 'case' !W
-"default"	= 'default' !W
-"if"	= 'if' !W
-"else"	= 'else' !W
-"switch"	= 'switch' !W
-"while"	= 'while' !W
-"do"	= 'do' !W
-"for"	= 'for' !W
-"goto"	= 'goto' !W
-"continue"	= 'continue' !W
-"break"	= 'break' !W
-"return"	= 'return' !W
+
 "*="	= '*=' _
 "/="	= '/=' _
 "%="	= '%=' _
@@ -130,13 +111,65 @@ KEYWORD
 "|="	= '|=' _
 "="	= '=' !'=' _
 "."	= '.' _
-"static"	= 'static' !W _
-"volatile"	= 'volatile' !W _
-
-
 
 "("	= '(' _
 ")"	= ')' _
+
+// reserved keyword
+"abstract"          = 'abstract'          !W _
+"assert"            = 'assert'            !W _
+"boolean"           = 'boolean'           !W _
+"break"             = 'break'             !W _
+"byte"              = 'byte'              !W _
+"case"              = 'case'              !W _
+"catch"             = 'catch'             !W _
+"char"              = 'char'              !W _
+"class"             = 'class'             !W _
+"const"             = 'const'             !W _
+"continue"          = 'continue'          !W _
+"default"           = 'default'           !W _
+"do"                = 'do'                !W _
+"double"            = 'double'            !W _
+"else"              = 'else'              !W _
+"enum"              = 'enum'              !W _
+"extends"           = 'extends'           !W _
+"false"             = 'false'             !W _
+"final"             = 'final'             !W _
+"finally"           = 'finally'           !W _
+"float"             = 'float'             !W _
+"for"               = 'for'               !W _
+"goto"              = 'goto'              !W _
+"if"                = 'if'                !W _
+"implements"        = 'implements'        !W _
+"import"            = 'import'            !W _
+"instanceof"        = 'instanceof'        !W _
+"int"               = 'int'               !W _
+"interface"         = 'interface'         !W _
+"long"              = 'long'              !W _
+"native"            = 'native'            !W _
+"new"               = 'new'               !W _
+"null"              = 'null'              !W _
+"package"           = 'package'           !W _
+"private"           = 'private'           !W _
+"protected"         = 'protected'         !W _
+"public"            = 'public'            !W _
+"return"            = 'return'            !W _
+"short"             = 'short'             !W _
+"static"            = 'static'            !W _
+"strictfp"          = 'strictfp'          !W _
+"super"             = 'super'             !W _
+"switch"            = 'switch'            !W _
+"synchronized"      = 'synchronized'      !W _
+"this"              = 'this'              !W _
+"throw"             = 'throw'             !W _
+"throws"            = 'throws'            !W _
+"transient"         = 'transient'         !W _
+"true"              = 'true'              !W _
+"try"               = 'try'               !W _
+"void"              = 'void'              !W _
+"volatile"          = 'volatile'          !W _
+"while"             = 'while'             !W _
+
 
 EOT	= !.
 
@@ -267,19 +300,19 @@ ClassDeclaration
 
 ClassModifier
 	= Annotation
-	/ 'public'    _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
-	/ 'protected' _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
-	/ 'private'   _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
-	/ 'abstract'  _ { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } } _
-	/ 'final'     _ { #KeyValue @{`abstraction` #Key } @{`final` #Value } } _
-	/ 'static'    _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
-	/ 'strictfp'  _ { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
+	/ "public"    _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ "protected" _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
+	/ "private"   _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
+	/ "abstract"  _ { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } } _
+	/ "final"     _ { #KeyValue @{`abstraction` #Key } @{`final` #Value } } _
+	/ "static"    _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
+	/ "strictfp"  _ { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
 
 SuperClass
-	= { 'extends' _ @Type #SuperClass } _
+	= { "extends" _ @Type #SuperClass } _
 
 SuperInterfaces
-	= { 'implements' _ @Type ("," @Type)* #SuperInterfaces } _
+	= { "implements" _ @Type ("," @Type)* #SuperInterfaces } _
 
 EnumBody
 	= '{' _ { (@EnumeratorList)? ","? ";" (@ClassBodyDeclaration)? #EnumBody } _ "}"
@@ -310,28 +343,28 @@ FieldDeclaration
 
 FieldModifier
 	= Annotation
-	/ 'public'    _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
-	/ 'protected' _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
-	/ 'private'   _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
-	/ 'final'     _ { #KeyValue @{`final` #Key } @{`true` #Value } } _
-	/ 'static'    _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
-	/ 'transient' _ { #KeyValue @{`transient` #Key } @{`true` #Value } } _
-	/ 'volatile'  _ { #KeyValue @{`volatile` #Key } @{`true` #Value } } _
+	/ "public"    _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ "protected" _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
+	/ "private"   _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
+	/ "final"     _ { #KeyValue @{`final` #Key } @{`true` #Value } } _
+	/ "static"    _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
+	/ "transient" _ { #KeyValue @{`transient` #Key } @{`true` #Value } } _
+	/ "volatile"  _ { #KeyValue @{`volatile` #Key } @{`true` #Value } } _
 
 MethodDeclaration
 	= { (@MethodModifier)* @Type @Name "(" @MethodParamList ")" (@Block / ";") #Method } _
 
 MethodModifier
 	= Annotation
-	/ 'public'       _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
-	/ 'protected'    _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
-	/ 'private'      _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
-	/ 'abstract'     _ { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } } _
-	/ 'final'        _ { #KeyValue @{`abstraction` #Key } @{`final` #Value } } _
-	/ 'static'       _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
-	/ 'synchronized' _ { #KeyValue @{`synchronized` #Key } @{`true` #Value } } _
-	/ 'native'       _ { #KeyValue @{`native` #Key } @{`true` #Value } } _
-	/ 'strictfp'     _ { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
+	/ "public"       _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ "protected"    _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
+	/ "private"      _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
+	/ "abstract"     _ { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } } _
+	/ "final"        _ { #KeyValue @{`abstraction` #Key } @{`final` #Value } } _
+	/ "static"       _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
+	/ "synchronized" _ { #KeyValue @{`synchronized` #Key } @{`true` #Value } } _
+	/ "native"       _ { #KeyValue @{`native` #Key } @{`true` #Value } } _
+	/ "strictfp"     _ { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
 
 MethodParamList
 	= { ( @MethodParam ("," @MethodParam)* )? ("," "...")? #List } 
@@ -344,15 +377,15 @@ ConstructorDeclaration
 
 ConstructorModifier
 	= Annotation
-	/ 'public'       _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
-	/ 'protected'    _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
-	/ 'private'      _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
+	/ "public"       _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ "protected"    _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
+	/ "private"      _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
 
 //ExplicitConstructorInvocation
-//	= @{ 'this' _ @{ "(" addArgumentExpressionList ")" #List } #ConstructorInvocation  } ";"
-//	/ @{ 'super' _ @{ "(" addArgumentExpressionList ")" #List } #ConstructorInvocation  } ";"
-//	/ @{ 'super' _ @{ "(" addArgumentExpressionList ")" #List } #ConstructorInvocation  } ";"
-//	/ @{ 'super' _ @{ "(" addArgumentExpressionList ")" #List } #ConstructorInvocation  } ";"
+//	= @{ "this" _ @{ "(" addArgumentExpressionList ")" #List } #ConstructorInvocation  } ";"
+//	/ @{ "super" _ @{ "(" addArgumentExpressionList ")" #List } #ConstructorInvocation  } ";"
+//	/ @{ "super" _ @{ "(" addArgumentExpressionList ")" #List } #ConstructorInvocation  } ";"
+//	/ @{ "super" _ @{ "(" addArgumentExpressionList ")" #List } #ConstructorInvocation  } ";"
 
 
 // Block, Statement
@@ -449,7 +482,6 @@ UnaryExpression
 	/ { "-"  @CastExpression #Minus }
 	/ { "~"  @CastExpression #Compl }
 	/ { "!"   @CastExpression #Not }
-	/ { "sizeof"  ( @UnaryExpression / "(" @Type ")" ) #SizeOf }
 
 CastExpression
 	= { "(" @Type ")" @CastExpression #Cast }
