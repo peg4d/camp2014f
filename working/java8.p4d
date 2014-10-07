@@ -280,8 +280,11 @@ Designator
 Type
 	= ({ @PrimaryType @TGenerics #TGenerics } / PrimaryType) {@ "[" _? "]" #TArray }*
 
+TypeList
+	= { @Type ("," @Type)* #TypeList }
+
 TGenerics
-	= { "<" @Type ("," @Type)* ">" #Generics } _
+	= { "<" @TypeList ">" #Generics } _
 
 PrimaryType
 	= { "byte"         #TInt } _
@@ -313,7 +316,7 @@ SuperClass
 	= { "extends" _ @Type #SuperClass } _
 
 SuperInterfaces
-	= { "implements" _ @Type ("," @Type)* #SuperInterfaces } _
+	= { "implements" _ @TypeList #SuperInterfaces } _
 
 EnumBody
 	= "{" { (@EnumeratorList)? ","? ";" (@ClassBodyDeclaration)? #EnumBody } _ "}"
@@ -353,7 +356,7 @@ FieldModifier
 	/ "volatile"  { #KeyValue @{`volatile` #Key } @{`true` #Value } } _
 
 MethodDeclaration
-	= { (@MethodModifier)* @Type @Name "(" @MethodParamList ")" (@Block / ";") #Method } _
+	= { (@MethodModifier)* @Type @Name "(" @MethodParamList ")" ("throws" @TypeList)? (@Block / ";") #Method } _
 
 MethodModifier
 	= Annotation
@@ -374,7 +377,7 @@ MethodParam
 	= { @Type _ @VarName #Param} _
 
 ConstructorDeclaration
-	= { (@ConstructorModifier)* @Type "(" @MethodParamList ")" @Block #Constructor } _
+	= { (@ConstructorModifier)* @Type "(" @MethodParamList ")" ("throws" @TypeList)? @ConstructorBody #Constructor } _
 
 ConstructorModifier
 	= Annotation
@@ -382,11 +385,14 @@ ConstructorModifier
 	/ "protected"     { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
 	/ "private"       { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
 
-//ExplicitConstructorInvocation
-//	= @{ "this"    @{ "(" addArgumentExpressionList ")" #List } #ConstructorInvocation  } ";"
-//	/ @{ "super"   @{ "(" addArgumentExpressionList ")" #List } #ConstructorInvocation  } ";"
-//	/ @{ "super"   @{ "(" addArgumentExpressionList ")" #List } #ConstructorInvocation  } ";"
-//	/ @{ "super"   @{ "(" addArgumentExpressionList ")" #List } #ConstructorInvocation  } ";"
+ConstructorBody
+	= { "{" (@ExplicitConstructorInvocation)? (@Statement / @Declaration)* "}" #Block }
+
+ExplicitConstructorInvocation
+	= { "this"    @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
+	/ { "super"   @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
+//	/ { "super"   @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
+//	/ { "super"   @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
 
 
 // Block, Statement
@@ -524,7 +530,7 @@ LambdaExpression
 
 LambdaParameters
 	= { @Name
-		/ "(" (@addArgumentExpressionList)? _ ")"
+		/ @{ "(" addArgumentExpressionList? _ ")" #AddArgumentExpressionList }
 		/ "(" @InferredFormalParameterList _ ")"
 		 #LambdaParameters }
 
