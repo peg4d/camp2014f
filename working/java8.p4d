@@ -4,10 +4,7 @@
 export
 	= Statement
 	/ Expression
-	/ CInteger
-	/ CFloat
-	/ CString
-	/ CChar
+	/ Constant
 
 File
 	= _ { ( @TopLevel / _ )* #Source } EOT
@@ -521,7 +518,6 @@ addDec
 
 PrimaryExpression
 	= Constant
-	/ CString
 	/ "(" Expression ")"
 	/ Name
 
@@ -545,14 +541,16 @@ LambdaBody
 //=======
 
 Constant
-	= CFloat
-	/ CInteger
-	/ CChar
+	= JavaFloat
+	/ JavaInteger
+	/ JavaString
+	/ JavaChar
+	/ JavaNull
 
-CFloat
-	= { ( DECIMAL_FLOAT / HEX_FLOAT )  #Float } FLOAT_SUFFIX? _
+JavaFloat
+	= { FLOAT #Float } FLOAT_SUFFIX? _
 
-DECIMAL_FLOAT
+FLOAT
 	= FRACTION EXPONENT?
 	/ DIGIT+ EXPONENT
 
@@ -563,24 +561,10 @@ FRACTION
 EXPONENT
 	= [eE] [+\-]? DIGIT+
 
-HEX_FLOAT
-	= HEX_PREFIX HEX_FRACTION BINARY_EXPONENT?
-	/ HEX_PREFIX HEX+ BINARY_EXPONENT
-
-HEX_PREFIX
-	= '0' [xX]
-
-HEX_FRACTION
-	= HEX* '.' HEX+
-	/ HEX+ '.'
-
-BINARY_EXPONENT
-	= [pP] [+\-]? DIGIT+
-
 FLOAT_SUFFIX
 	= [fFdD]
 
-CInteger
+JavaInteger
 	= { ( DECIMAL / HEXICAL / OCTAL ) #Integer } INT_SUFFIX? _
 
 DECIMAL
@@ -589,28 +573,24 @@ DECIMAL
 HEXICAL
 	= HEX_PREFIX HEX+
 
+HEX_PREFIX
+	= '0' [xX]
+
 OCTAL
 	= '0' [0-7]*
 
 INT_SUFFIX
-	= [uU] LONG_SUFFIX?
-	/ LONG_SUFFIX [uU]?
+	= [lL]
 
-LONG_SUFFIX
-	= 'll'
-	/ 'LL'
-	/ [lL]
+JavaString
+	= '"' { STRING_CONTENT* #String } '"' _
 
-CString
-	=  'L'? ('"' { STRING_CONTENT* #String } '"' _)+
-
-CChar
-	= 'L'? "'" { CHAR_CONTENT* #Character } "'" _
+JavaChar
+	= "'" { CHAR_CONTENT* #Character } "'" _
 
 STRING_CONTENT
 	= ESCAPE
 	/ ![\"\n\\] .
-
 
 CHAR_CONTENT
 	= ESCAPE
@@ -623,10 +603,13 @@ ESCAPE
 	/ UCHAR
 
 SIMPLE_ESCAPE
-	= '\\' ['\"?\\abfnrtv]
+	= '\\' ['\"\\bfnrt]
 	
 OCTAL_ESCAPE
-	= '\\' [0-7] [0-7]? [0-7]?
+	= '\\' [0-3] [0-7]? [0-7]?
 	
 HEX_ESCAPE
-	= '\\x' HEX+
+	= '\\' 'u'+ HEX HEX HEX HEX
+
+JavaNull
+	= { 'null' #Null }
