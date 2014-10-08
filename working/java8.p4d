@@ -555,29 +555,35 @@ FLOAT
 	/ DIGIT+ EXPONENT
 
 FRACTION
-	= DIGIT* '.' DIGIT+
-	/ DIGIT+ '.'
+	= !'_' ('_'* DIGIT)* '.' DIGIT ('_'* DIGIT)*
+	/ DIGIT ('_'* DIGIT)* '.'
 
 EXPONENT
-	= [eE] [+\-]? DIGIT+
+	= [eE] [+\-]? DIGIT ('_'* DIGIT)*
 
 FLOAT_SUFFIX
 	= [fFdD]
 
 JavaInteger
-	= { ( DECIMAL / HEXICAL / OCTAL ) #Integer } INT_SUFFIX? _
+	= { ( BINARY / DECIMAL / HEXADECIMAL / OCTAL ) #Integer } INT_SUFFIX? _
+
+BINARY
+	= BIN_PREFIX [01] ('_'* [01])*
+
+BIN_PREFIX
+	= '0' [bB]
 
 DECIMAL
-	= [1-9] DIGIT*
+	= [1-9] ('_'* DIGIT)*
 
-HEXICAL
-	= HEX_PREFIX HEX+
+HEXADECIMAL
+	= HEX_PREFIX HEX ('_'* HEX)*
 
 HEX_PREFIX
 	= '0' [xX]
 
 OCTAL
-	= '0' [0-7]*
+	= '0' ('_'* [0-7])*
 
 INT_SUFFIX
 	= [lL]
