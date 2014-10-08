@@ -47,8 +47,7 @@ ATTRIBUTE
 	/ '__asm' !W _ '(' (!')' .)* ')' _
 
 ATTRIBUTECONTENT
-	= '__format__' !W _ '(' (!')' .)* _')' _
-	/ NAME _ '(' ('"' STRING_CONTENT* '"' / (!')' .)* ) _ ')'_
+	= NAME _ '(' ('"' STRING_CONTENT* '"' / (!')' .)* ) _ ')'_
 	/ _ (!'))' .)* _
 
 
