@@ -80,9 +80,6 @@ ASCII
 Token
 	= { ( @{ '^' #BiginWith })? _ @ParenBlock (@Quantifier)? _ ( @{ '$' !DECDIGIT !'{' #EndWith })? #Stmt }
 	/ { ( @{ '^' #BiginWith })? _ ( @Character / @Bracket ) (@Quantifier)? _ ( @{ '$' !DECDIGIT !'{' #EndWith })? #Token }
-	/ ParenBlock
-	/ Character
-	/ Bracket
 
 Quantifier
 	= { '+?' #onemoreS }
@@ -108,12 +105,12 @@ addEXTOPERATOR
 	/ '!' #NegLookAhead
 
 Bracket
-	= { '[[:' @{CLASSNAME #Class} ':]]' #CharClass }
-	/ { '[^' (@Item)+ ']' #ExceptFor }
+	= { '[^' (@Item)+ ']' #ExceptFor }
 	/ { '['  (@Item)+ ']' #OneOf }
 
 Item
-	= { @{LETTER #item} '-' @{LETTER #item} #range }
+	= { '[:' @{CLASSNAME #Class} ':]' #class} 
+	/ { @{LETTER #item} '-' @{LETTER #item} #range }
 	/ { LETTER #item }
 
 LogOp
