@@ -31,7 +31,7 @@ Chunk
 	/ Expression
 	/ Type
 _
-	= (S / BLOCKCOMMENT / LINECOMMENT )*
+	= (S / BLOCKCOMMENT / LINECOMMENT / ATTRIBUTE)*
 
 S
 	= [ \n\r\t\u000B\u000C]
@@ -43,7 +43,14 @@ LINECOMMENT
 	= '//' (!'\n' .)*
 
 ATTRIBUTE
-	= '__attribute__' !W _ '((' (!'))' .)* '))' _
+	= '__attribute__' !W _ '((' ATTRIBUTECONTENT '))' _
+	/ '__asm' !W _ '(' (!')' .)* ')' _
+
+ATTRIBUTECONTENT
+	= '__format__' !W _ '(' (!')' .)* _')' _
+	/ NAME _ '(' ('"' STRING_CONTENT* '"' / (!')' .)* ) _ ')'_
+	/ _ (!'))' .)* _
+
 
 EOL
 	= ('\r'? '\n' / !.)
@@ -188,10 +195,7 @@ Directive
 
 
 FunctionDeclaration
-	= { @AnnotationList @Type _ @Name _ "(" @FunctionParamList ")" (_ @Block / @Attribute ";" / ";") #Function }
-
-Attribute
-	= "__asm" _ "(" @CString ")"
+	= { @AnnotationList @Type _ @Name _ "(" @FunctionParamList ")" (_ @Block /_ ";") #Function }
 
 AnnotationList
 	= { (@Annotation)*  #List } _
@@ -264,7 +268,7 @@ TypeSuffix
 	}*
 
 addFuncType
-	= "(" _ "*" _ @Name _ ")" _  "(" @FunctionParamList ")" #TFunc
+	= "(" _ "*" _ (@Name)? _ ")" _  "(" @FunctionParamList ")" #TFunc
 
 POINTER_QUALIFIER
 	= "const" / "restrict"
@@ -289,8 +293,8 @@ PrimaryType
 
 StructDeclaration
 	= { "struct" _ @Name addStructMember? #TStruct }
-	/ { "union"  _ @Name? addStructMember?  #TUnion }
-	/ { "enum"   _ @Name? ("{" @EnumeratorList ","? "}")? #TEnum }
+	/ { "union"  _ (@Name)? addStructMember?  #TUnion }
+	/ { "enum"   _ (@Name)? ("{" @EnumeratorList ","? "}")? #TEnum }
 
 SIGN
 	= ("signed" / "unsigned" ) _
