@@ -204,6 +204,7 @@ Annotation
 	= "extern"     { #KeyValue @{`extern` #Key } @{`true` #Value } } _
 	/ "static"     { #KeyValue @{`static` #Key } @{`true` #Value } } _
 	/ "inline"     { #KeyValue @{`inline` #Key } @{`true` #Value } } _
+	/ "__inline"   { #KeyValue @{`__inline` #Key } @{`true` #Value } } _
 	/ "auto"       { #KeyValue @{`auto` #Key } @{`true` #Value } } _
 	/ "register"   { #KeyValue @{`register` #Key } @{`true` #Value } } _
 	/ "volatile"   { #KeyValue @{`volatile` #Key } @{`true` #Value } } _
@@ -297,7 +298,7 @@ StructDeclaration
 	/ { "enum"   _ (@Name)? ("{" @EnumeratorList ","? "}")? #TEnum }
 
 SIGN
-	= ("signed" / "unsigned" ) _
+	= ("signed" / "unsigned" / "__signed") _
 
 NAME_T
 	= !DIGIT (!('_t' !W)  W )+ '_t' !W
