@@ -105,13 +105,17 @@ addEXTOPERATOR
 	/ '!' #NegLookAhead
 
 Bracket
-	= { '[^' (@Item)+ ']' #ExceptFor }
-	/ { '['  (@Item)+ ']' #OneOf }
+	= { '[^' (@Items)+ ']' #ExceptFor }
+	/ { '['  (@Items)+ ']' #OneOf }
+
+Items
+	= { ( '&&' #and / '-' #minus ) _ (@Bracket)+ }
+	/ Item
 
 Item
 	= { '[:' @{CLASSNAME #Class} ':]' #class} 
-	/ { @{LETTER #item} '-' @{LETTER #item} #range }
-	/ { LETTER #item }
+	/ { @{@Character #from} '-' @{@Character #to} #range }
+	/ Character
 
 LogOp
 	= { (@Token)+ #item } _ {@ ( '&&' #and / '|' #or ) _ @{ (@Token)+ #item } }+
