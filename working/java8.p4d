@@ -331,7 +331,7 @@ FieldModifier
 
 //method
 MethodDeclaration
-	= { (@MethodModifier)* @Result @Name "(" @MethodParamList ")" (@Throws)? (@Block / ";") #Method } _
+	= { (@MethodModifier)* (@TGenerics (@Annotation)*)? @Result @Name "(" @MethodParamList ")" (@Throws)? (@Block / ";") #Method } _
 
 Result
 	= { "void" #TVoid } _
@@ -372,10 +372,10 @@ ConstructorBody
 	= { "{" (@ExplicitConstructorInvocation)? (@Statement / @LocalDeclaration)* "}" #Block }
 
 ExplicitConstructorInvocation
-	= { "this"    @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
-	/ { "super"   @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
-//	/ { "super"   @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
-//	/ { "super"   @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
+	= { (@TGenerics)? "this"  @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
+	/ { (@TGenerics)? "super" @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
+//	/ { '.' (@TGenerics)? "super" @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
+//	/ { '.' (@TGenerics)? "super" @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
 
 
 //Type
