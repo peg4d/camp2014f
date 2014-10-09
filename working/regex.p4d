@@ -150,7 +150,7 @@ CLASSNAME
 // http://www.unicode.org/Public/UNIDATA/Blocks.txt
 UNICODECLASSNAME
 	= ('Basic' / 'basic') _ ('Latin' / 'latin')
-	/ ('Latin' / 'latin') _ '-1' _ ('Supplement' / 'supplement')
+	/ ('Latin' / 'latin') _ '-'? _ '1' _ ('Supplement' / 'supplement')
 	/ ('Latin' / 'latin') _ ('Extended' / 'extended') _ '-'? _ ('A' / 'a')
 	/ ('Latin' / 'latin') _ ('Extended' / 'extended') _ '-'? _ ('B' / 'b')
 	/ ('IPA' / 'ipa') _ ('Extensions' / 'extensions')
