@@ -271,8 +271,8 @@ Designator
 
 //class, enum
 ClassDeclaration
-	= { (@ClassModifier)* "class" @Name (@TGenerics)? (@SuperClass)? (@SuperInterfaces)* @ClassBody #TClass } _
-	/ { (@ClassModifier)* "enum" @Name (@SuperInterfaces)* @EnumBody #TEnum } _
+	= { (@ClassModifier)* "class" @Name (@TGenerics)? (@SuperClass)? (@SuperInterfaces)* @ClassBody #ClassDeclaration } _
+	/ { (@ClassModifier)* "enum" @Name (@SuperInterfaces)* @EnumBody #EnumDeclaration } _
 
 ClassModifier
 	= Annotation
