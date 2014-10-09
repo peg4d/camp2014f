@@ -187,7 +187,7 @@ PackageModifier
 // import definition
 ImportDeclaration
 	= TypeImportOnDemandDeclaration
-	/ SingleImportDeclaration
+	/ SingleTypeImportDeclaration
 	/ StaticImportOnDemandDeclaration
 	/ SingleStaticImportDeclaration
 
@@ -238,7 +238,6 @@ ElementValueArrayInitializer
 ElementValueList
 	= { @ElementValue ( _ "," @ElementValue)* #ElementValueList}
 
-
 	
 // Declaration
 //==============
@@ -270,6 +269,114 @@ Designator
 	= "[" ConstantExpression "]"
 	/ "." Name _
 
+//class, enum
+ClassDeclaration
+	= { (@ClassModifier)* "class" @Name (@TGenerics)? (@SuperClass)? (@SuperInterfaces)* @ClassBody #TClass } _
+	/ { (@ClassModifier)* "enum" @Name (@SuperInterfaces)* @EnumBody #TEnum } _
+
+ClassModifier
+	= Annotation
+	/ "public"    _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ "protected" _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
+	/ "private"   _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
+	/ "abstract"  _ { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } } _
+	/ "final"     _ { #KeyValue @{`abstraction` #Key } @{`final` #Value } } _
+	/ "static"    _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
+	/ "strictfp"  _ { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
+
+SuperClass
+	= { "extends" _ @Type #SuperClass } _
+
+SuperInterfaces
+	= { "implements" _ @TypeList #SuperInterfaces } _
+
+EnumBody
+	= "{" { (@EnumeratorList)? ","? ";" (@ClassBodyDeclaration)+ #EnumBody } _ "}"
+	/ "{" { (@EnumeratorList)? ","? ";"? #EnumBody } _ "}"
+
+EnumeratorList
+	= { @Enumerator ("," @Enumerator)* #List }
+
+Enumerator
+	= { (@Annotation)* @Name (@{ "(" addArgumentExpressionList ")" #List })? (@ClassBody)? #Enumerator }
+
+ClassBody
+	= "{" { (@ClassBodyDeclaration)* #ClassBody } "}"
+
+ClassBodyDeclaration
+	= ClassMemberDeclaration
+	/ { @Block #InstanceInisializer } _
+	/ 'static' _ { @Block #StaticInitializer } _
+//	/ ConstructorDeclaration
+
+ClassMemberDeclaration
+	= FieldDeclaration
+	/ MethodDeclaration
+	/ ClassDeclaration
+//	/ InterfaceDeclaration
+
+//field
+FieldDeclaration
+	= { (@FieldModifier)* @Type @InitDecl ("," @InitDecl)*  ";" #Field } _
+
+FieldModifier
+	= Annotation
+	/ "public"    { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ "protected" { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
+	/ "private"   { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
+	/ "final"     { #KeyValue @{`final` #Key } @{`true` #Value } } _
+	/ "static"    { #KeyValue @{`static` #Key } @{`true` #Value } } _
+	/ "transient" { #KeyValue @{`transient` #Key } @{`true` #Value } } _
+	/ "volatile"  { #KeyValue @{`volatile` #Key } @{`true` #Value } } _
+
+//method
+MethodDeclaration
+	= { (@MethodModifier)* @Result @Name "(" @MethodParamList ")" (@Throws)? (@Block / ";") #Method } _
+
+Result
+	= { "void" #TVoid } _
+	/ Type
+
+MethodModifier
+	= Annotation
+	/ "public"        { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ "protected"     { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
+	/ "private"       { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
+	/ "abstract"      { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } } _
+	/ "final"         { #KeyValue @{`abstraction` #Key } @{`final` #Value } } _
+	/ "static"        { #KeyValue @{`static` #Key } @{`true` #Value } } _
+	/ "synchronized"  { #KeyValue @{`synchronized` #Key } @{`true` #Value } } _
+	/ "native"        { #KeyValue @{`native` #Key } @{`true` #Value } } _
+	/ "strictfp"      { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
+
+MethodParamList
+	= { ( @MethodParam ("," @MethodParam)* )? ("," "...")? #List } 
+
+MethodParam
+	= { @Type _ @VarName #Param} _
+
+Throws
+	= "throws" { @TypeList #Throws } _
+
+//Constructor
+ConstructorDeclaration
+	= { (@ConstructorModifier)* @Type "(" @MethodParamList ")" (@Throws)? @ConstructorBody #Constructor } _
+
+ConstructorModifier
+	= Annotation
+	/ "public"        { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ "protected"     { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
+	/ "private"       { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
+
+ConstructorBody
+	= { "{" (@ExplicitConstructorInvocation)? (@Statement / @LocalDeclaration)* "}" #Block }
+
+ExplicitConstructorInvocation
+	= { "this"    @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
+	/ { "super"   @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
+//	/ { "super"   @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
+//	/ { "super"   @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
+
 
 //Type
 //====
@@ -294,109 +401,12 @@ PrimaryType
 	/ { "boolean"      #TBoolean } _
 	/ { NAME   #Name } _
 
-//class
-ClassDeclaration
-	= { (@ClassModifier)* "class" @Name (@TGenerics)? (@SuperClass)? (@SuperInterfaces)* @ClassBody #TClass } _
-	/ { (@ClassModifier)* "enum" @Name (@SuperInterfaces)* @EnumBody #TEnum } _
-
-ClassModifier
-	= Annotation
-	/ "public"    _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
-	/ "protected" _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
-	/ "private"   _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
-	/ "abstract"  _ { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } } _
-	/ "final"     _ { #KeyValue @{`abstraction` #Key } @{`final` #Value } } _
-	/ "static"    _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
-	/ "strictfp"  _ { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
-
-SuperClass
-	= { "extends" _ @Type #SuperClass } _
-
-SuperInterfaces
-	= { "implements" _ @TypeList #SuperInterfaces } _
-
-EnumBody
-	= "{" { (@EnumeratorList)? ","? ";" (@ClassBodyDeclaration)? #EnumBody } _ "}"
-
-EnumeratorList
-	= { @Enumerator ("," @Enumerator)* #List }
-
-Enumerator
-	= { (@Annotation)* @Name (@{ "(" addArgumentExpressionList ")" #List })? (@ClassBody)? #Enumerator }
-
-ClassBody
-	= "{" { (@ClassBodyDeclaration)+ #ClassBody } "}"
-
-ClassBodyDeclaration
-	= ClassMemberDeclaration
-	/ { @Block #InstanceInisializer } _
-	/ 'static' _ { @Block #StaticInitializer } _
-//	/ ConstructorDeclaration
-
-ClassMemberDeclaration
-	= FieldDeclaration
-	/ MethodDeclaration
-	/ ClassDeclaration
-//	/ InterfaceDeclaration
-
-FieldDeclaration
-	= { (@FieldModifier)* @Type @InitDecl ("," @InitDecl)*  ";" #Field } _
-
-FieldModifier
-	= Annotation
-	/ "public"    { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
-	/ "protected" { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
-	/ "private"   { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
-	/ "final"     { #KeyValue @{`final` #Key } @{`true` #Value } } _
-	/ "static"    { #KeyValue @{`static` #Key } @{`true` #Value } } _
-	/ "transient" { #KeyValue @{`transient` #Key } @{`true` #Value } } _
-	/ "volatile"  { #KeyValue @{`volatile` #Key } @{`true` #Value } } _
-
-MethodDeclaration
-	= { (@MethodModifier)* @Type @Name "(" @MethodParamList ")" ("throws" @TypeList)? (@Block / ";") #Method } _
-
-MethodModifier
-	= Annotation
-	/ "public"        { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
-	/ "protected"     { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
-	/ "private"       { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
-	/ "abstract"      { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } } _
-	/ "final"         { #KeyValue @{`abstraction` #Key } @{`final` #Value } } _
-	/ "static"        { #KeyValue @{`static` #Key } @{`true` #Value } } _
-	/ "synchronized"  { #KeyValue @{`synchronized` #Key } @{`true` #Value } } _
-	/ "native"        { #KeyValue @{`native` #Key } @{`true` #Value } } _
-	/ "strictfp"      { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
-
-MethodParamList
-	= { ( @MethodParam ("," @MethodParam)* )? ("," "...")? #List } 
-
-MethodParam
-	= { @Type _ @VarName #Param} _
-
-ConstructorDeclaration
-	= { (@ConstructorModifier)* @Type "(" @MethodParamList ")" ("throws" @TypeList)? @ConstructorBody #Constructor } _
-
-ConstructorModifier
-	= Annotation
-	/ "public"        { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
-	/ "protected"     { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
-	/ "private"       { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
-
-ConstructorBody
-	= { "{" (@ExplicitConstructorInvocation)? (@Statement / @Declaration)* "}" #Block }
-
-ExplicitConstructorInvocation
-	= { "this"    @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
-	/ { "super"   @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
-//	/ { "super"   @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
-//	/ { "super"   @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
-
 
 // Block, Statement
 //===================
 
 Block
-	= { "{" (@Statement / @Declaration)* "}" #Block }
+	= { "{" (@Statement / @LocalDeclaration)* "}" #Block }
 
 Statement
 	= Block
@@ -405,7 +415,7 @@ Statement
 	/ { "while"  "(" @Expression ")" @Statement #While }
 	/ { "do" @Statement "while" "(" @Expression ")" ";" #DoWhile }
 	/ { "for" "(" (@Expression)? ";" (@Expression)? ";" (@Expression)? ")" @Statement #For }
-	/ { "for" "(" @Declaration (@Expression)? ";" (@Expression)? ";" @Statement #For }
+	/ { "for" "(" @VariableDeclaration (@Expression)? ";" (@Expression)? ";" @Statement #For }
 	/ { "goto" @Name ";" #Goto }
 	/ { "continue" ";" #Continue }
 	/ { "break" ";" #Break }
@@ -415,6 +425,10 @@ Statement
 	/ { @Name ":" #Label }
 	/ { @Expression ";" #ExpressionStatement }
 	/ { #Empty } ";"
+
+LocalDeclaration
+	= VariableDeclaration
+	/ ClassDeclaration
 
 
 //Expression
