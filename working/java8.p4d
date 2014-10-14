@@ -309,7 +309,7 @@ ClassBodyDeclaration
 	= ClassMemberDeclaration
 	/ { @Block #InstanceInisializer } _
 	/ 'static' _ { @Block #StaticInitializer } _
-//	/ ConstructorDeclaration
+	/ ConstructorDeclaration
 
 ClassMemberDeclaration
 	= FieldDeclaration
@@ -374,8 +374,8 @@ ConstructorBody
 	= { "{" (@ExplicitConstructorInvocation)? (@Statement / @LocalDeclaration)* "}" #Block }
 
 ExplicitConstructorInvocation
-	= { (@TGenerics)? "this"  @{ "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
-	/ { (@TGenerics)? "super" @{ "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
+	= { (@TGenerics)? @{ "this"  "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
+	/ { (@TGenerics)? @{ "super" "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
 //	/ { '.' (@TGenerics)? "super" @{ "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
 //	/ { '.' (@TGenerics)? "super" @{ "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
 
