@@ -1,0 +1,9 @@
+# left-hand match
+^a
+
+# right-hand match
+a$
+
+# combination
+^a$
+^abc$

@@ -1,0 +1,9 @@
+# string
+abc
+
+#oneof
+[abc]
+a[bcd]e
+
+#exceptfor
+a[^bc]
