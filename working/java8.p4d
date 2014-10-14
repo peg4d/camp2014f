@@ -79,7 +79,8 @@ KEYWORD
 "/"      = '/' !'=' _
 "%"      = '%' ![=>] _
 "<<"     = '<<' !'=' _
-">>"     = '>>' !'=' _
+">>"     = '>>' ![=>] _
+">>>"    = '>>>' !'=' _
 "<="     = '<=' _
 ">="     = '>=' _
 "<"      = '<' ![=] _
@@ -101,6 +102,7 @@ KEYWORD
 "-="     = '-=' _
 "<<="    = '<<=' _
 ">>="    = '>>=' _
+">>>="   = '>>>=' _
 "&="     = '&=' _
 "^="     = '^=' _
 "|="     = '|=' _
@@ -298,7 +300,7 @@ EnumeratorList
 	= { @Enumerator ("," @Enumerator)* #List }
 
 Enumerator
-	= { (@Annotation)* @Name (@{ "(" addArgumentExpressionList ")" #List })? (@ClassBody)? #Enumerator }
+	= { (@Annotation)* @Name (@{ "(" addArgumentExpressionList? ")" #List })? (@ClassBody)? #Enumerator }
 
 ClassBody
 	= "{" { (@ClassBodyDeclaration)* #ClassBody } "}"
@@ -372,10 +374,10 @@ ConstructorBody
 	= { "{" (@ExplicitConstructorInvocation)? (@Statement / @LocalDeclaration)* "}" #Block }
 
 ExplicitConstructorInvocation
-	= { (@TGenerics)? "this"  @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
-	/ { (@TGenerics)? "super" @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
-//	/ { '.' (@TGenerics)? "super" @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
-//	/ { '.' (@TGenerics)? "super" @{ "(" addArgumentExpressionList ")" #List } #ExplicitConstructorInvocation  } ";"
+	= { (@TGenerics)? "this"  @{ "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
+	/ { (@TGenerics)? "super" @{ "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
+//	/ { '.' (@TGenerics)? "super" @{ "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
+//	/ { '.' (@TGenerics)? "super" @{ "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
 
 
 //Type
@@ -442,17 +444,18 @@ AssignmentExpression
 	/ ConditionalExpression
 
 addAssignmentOperator
-	= "="        #Assign
-	/ "*="    #AssignMul
-	/ "/="     #AssignDiv
-	/ "%="     #AssignMod
-	/ "+="    #AssignAdd
+	= "="    #Assign
+	/ "*="   #AssignMul
+	/ "/="   #AssignDiv
+	/ "%="   #AssignMod
+	/ "+="   #AssignAdd
 	/ "-="   #AssignSub
-	/ "<<="    #AssignLeftShift
-	/ ">>="   #AssignRightShift
-	/ "&="     #AssignBitwiseAnd
-	/ "^="     #AssignBitwiseXOr 
-	/ "|="      #AssignBitwiseOr
+	/ "<<="  #AssignLeftShift
+	/ ">>="  #AssignArithmeticRightShift
+	/ ">>>=" #AssignLogicalRightShift
+	/ "&="   #AssignBitwiseAnd
+	/ "^="   #AssignBitwiseXOr
+	/ "|="   #AssignBitwiseOr
 
 ConstantExpression
 	= ConditionalExpression
@@ -477,37 +480,45 @@ ANDExpression
 
 EqualityExpression
 	= RelationalExpression {@ ( "==" #Equals / "!=" #NotEquals ) @RelationalExpression }*
-	
+
+relationalOperator
+	= "<=" #LessThanEquals
+	/ ">=" #GreaterThanEquals
+	/ "<" #LessThan
+	/ ">" #GreaterThan
+
 RelationalExpression
-	= ShiftExpression {@ ( "<=" #LessThanEquals / ">=" #GreaterThanEquals / "<" #LessThan / ">" #GreaterThan ) @ShiftExpression }*
+	= ShiftExpression {@ ( relationalOperator @ShiftExpression / "instanceof" @Type #InstanceOf ) }*
 	
 ShiftExpression
-	= AdditiveExpression {@ ( "<<" #LeftShift / ">>" #RightShift ) @AdditiveExpression }*
+	= AdditiveExpression {@ ( "<<" #LeftShift / ">>" #ArithmeticRightShift / ">>>" #LogicalRightShift ) @AdditiveExpression }*
 	
 AdditiveExpression
 	= MultiplicativeExpression {@ ( "+" #Add / "-" #Sub ) @MultiplicativeExpression }*
 	
 MultiplicativeExpression
-	= CastExpression {@ ( "*" #Mul / "/" #Div / "%" #Mod ) @CastExpression }*
+	= CastNewExpression {@ ( "*" #Mul / "/" #Div / "%" #Mod ) @CastNewExpression }*
 
 UnaryExpression
 	= PostfixExpression
-	/ { "++"    @UnaryExpression #PrefixInc }
-	/ { "--"    @UnaryExpression #PrefixDec }
-	/ { "&"    @CastExpression #Address }
-	/ { "*"   @CastExpression #Star }
-	/ { "+"   @CastExpression #Plus }
-	/ { "-"  @CastExpression #Minus }
-	/ { "~"  @CastExpression #Compl }
-	/ { "!"   @CastExpression #Not }
+	/ { "++" @UnaryExpression #PrefixInc }
+	/ { "--" @UnaryExpression #PrefixDec }
+	/ { "+"  @CastNewExpression #Plus }
+	/ { "-"  @CastNewExpression #Minus }
+	/ { "~"  @CastNewExpression #Compl }
+	/ { "!"  @CastNewExpression #Not }
 
-CastExpression
-	= { "(" @Type ")" @CastExpression #Cast }
+CastNewExpression
+	= { "(" @Type ")" @CastNewExpression #Cast }
+	/ InstanceCreationExpression
 	/ UnaryExpression
 
-PostfixExpression
-	= ( PrimaryExpression / { "(" @Type ")" "{" @{ (addInitializerList)* ","? #Initializer } "}" } ) 
+InstanceCreationExpression
+	= { "new" (@TGenerics)? (@Annotation)* @Type @{ "(" addArgumentExpressionList? ")" #List } #InstanceCreation }
 	{@ (addFunctionCall / addIndex / addField / addInc / addDec) }*
+
+PostfixExpression
+	= PrimaryExpression {@ (addFunctionCall / addIndex / addField / addInc / addDec) }*
 
 addFunctionCall
 	= @{ "(" addArgumentExpressionList? ")" #List} #Apply
@@ -520,9 +531,6 @@ addIndex
 
 addField
 	= "." @Name #Field
-
-addPointerField
-	= "->" @Name #PointerField
 
 addInc
 	= "++" #Inc
