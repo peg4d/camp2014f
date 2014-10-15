@@ -244,8 +244,13 @@ ElementValueList
 // Declaration
 //==============
 
+//local variable
 VariableDeclaration
-	= { (@Annotation)* @Type @InitDecl ("," @InitDecl)*  ";" #Declaration }
+	= { (@VariableModifier)* @Type @InitDecl ("," @InitDecl)*  ";" #Declaration }
+
+VariableModifier
+	= Annotation
+	/ "final"     _ { #KeyValue @{`abstraction` #Key } @{`final` #Value } } _
 
 InitDecl
 	= { @VarName ("=" @Initializer)? #VarDecl } _
@@ -254,8 +259,7 @@ InitDeclAssign
 	= { @VarName "=" @Initializer #VarDecl } _
 
 VarName
-	= { "*" @VarName #PointerName } _
-	/ Name {@ "[" (@ConstantExpression)? "]" #ArrayName}*
+	= Name {@ "[" (@ConstantExpression)? "]" #ArrayName}*
 
 Initializer
 	= AssignmentExpression
@@ -271,7 +275,7 @@ Designator
 	= "[" ConstantExpression "]"
 	/ "." Name _
 
-//class, enum
+//class type, enum type
 ClassDeclaration
 	= { (@ClassModifier)* "class" @Name (@TGenerics)? (@SuperClass)? (@SuperInterfaces)* @ClassBody #ClassDeclaration } _
 	/ { (@ClassModifier)* "enum" @Name (@SuperInterfaces)* @EnumBody #EnumDeclaration } _
@@ -315,9 +319,35 @@ ClassMemberDeclaration
 	= FieldDeclaration
 	/ MethodDeclaration
 	/ ClassDeclaration
-//	/ InterfaceDeclaration
+	/ InterfaceDeclaration
 
-//field
+//interface, annotation type
+InterfaceDeclaration
+	= { (@InterfaceModifier)* "interface" @Name (@TGenerics)? (@ExtendsInterfaces)* @InterfaceBody #InterfaceDeclaration } _
+//(annotation)
+
+InterfaceModifier
+	= Annotation
+	/ "public"    _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ "protected" _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
+	/ "private"   _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
+	/ "abstract"  _ { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } } _
+	/ "static"    _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
+	/ "strictfp"  _ { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
+
+ExtendsInterfaces
+	= { "extends" _ @TypeList #ExtendsInterfaces } _
+
+InterfaceBody
+	= "{" { (@InterfaceMemberDeclaration)* #InterfaceBody } "}"
+
+InterfaceMemberDeclaration
+	= ConstantDeclaration
+	/ InterfaceMethodDeclaration
+	/ ClassDeclaration
+	/ InterfaceDeclaration
+
+//field, constant
 FieldDeclaration
 	= { (@FieldModifier)* @Type @InitDecl ("," @InitDecl)*  ";" #Field } _
 
@@ -331,13 +361,18 @@ FieldModifier
 	/ "transient" { #KeyValue @{`transient` #Key } @{`true` #Value } } _
 	/ "volatile"  { #KeyValue @{`volatile` #Key } @{`true` #Value } } _
 
+ConstantDeclaration
+	= { (@ConstantModifier)* @Type @InitDecl ("," @InitDecl)*  ";" #Constant } _
+
+ConstantModifier
+	= Annotation
+	/ "public"    { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ "final"     { #KeyValue @{`final` #Key } @{`true` #Value } } _
+	/ "static"    { #KeyValue @{`static` #Key } @{`true` #Value } } _
+
 //method
 MethodDeclaration
 	= { (@MethodModifier)* (@TGenerics (@Annotation)*)? @Result @Name "(" @MethodParamList ")" (@Throws)? (@Block / ";") #Method } _
-
-Result
-	= { "void" #TVoid } _
-	/ Type
 
 MethodModifier
 	= Annotation
@@ -351,6 +386,21 @@ MethodModifier
 	/ "native"        { #KeyValue @{`native` #Key } @{`true` #Value } } _
 	/ "strictfp"      { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
 
+InterfaceMethodDeclaration
+	= { (@InterfaceMethodModifier)* (@TGenerics (@Annotation)*)? @Result @Name "(" @MethodParamList ")" (@Throws)? (@Block / ";") #Method } _
+
+InterfaceMethodModifier
+	= Annotation
+	/ "public"        { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ "abstract"      { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } } _
+	/ "default"       { #KeyValue @{`abstraction` #Key } @{`default` #Value } } _
+	/ "static"        { #KeyValue @{`static` #Key } @{`true` #Value } } _
+	/ "strictfp"      { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
+
+Result
+	= { "void" #TVoid } _
+	/ Type
+
 MethodParamList
 	= { ( @MethodParam ("," @MethodParam)* )? ("," "...")? #List } 
 
@@ -360,7 +410,7 @@ MethodParam
 Throws
 	= "throws" { @TypeList #Throws } _
 
-//Constructor
+//constructor
 ConstructorDeclaration
 	= { (@ConstructorModifier)* @Type "(" @MethodParamList ")" (@Throws)? @ConstructorBody #Constructor } _
 
