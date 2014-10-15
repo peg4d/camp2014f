@@ -45,7 +45,7 @@ HEX4
 	= HEX HEX HEX HEX
 
 Name
-	= { NAME #Name } _ 
+	= { NAME #Name } _
 
 NAME
 	= !DIGIT !(KEYWORD !W) W+
@@ -241,7 +241,7 @@ ElementValueArrayInitializer
 ElementValueList
 	= { @ElementValue ( _ "," @ElementValue)* #ElementValueList}
 
-	
+
 // Declaration
 //==============
 
@@ -271,7 +271,7 @@ addInitializerList
 
 Designation
 	= { (@Designator)+ "=" @Initializer  #Designation }
-	
+
 Designator
 	= "[" ConstantExpression "]"
 	/ "." Name _
@@ -325,7 +325,7 @@ ClassMemberDeclaration
 //interface, annotation type
 InterfaceDeclaration
 	= { (@InterfaceModifier)* "interface" @Name (@TGenerics)? (@ExtendsInterfaces)* @InterfaceBody #InterfaceDeclaration } _
-//(annotation)
+	/ { (@InterfaceModifier)* '@' "interface" @Name @AnnotationTypeBody #AnnotationTypeDeclaration } _
 
 InterfaceModifier
 	= Annotation
@@ -347,6 +347,27 @@ InterfaceMemberDeclaration
 	/ InterfaceMethodDeclaration
 	/ ClassDeclaration
 	/ InterfaceDeclaration
+
+AnnotationTypeBody
+	= "{" { (@AnnotationTypeMemberDeclaration)* #AnnotationTypeBody } "}"
+
+AnnotationTypeMemberDeclaration
+	= AnnotationTypeElementDeclaration
+	/ ConstantDeclaration
+	/ ClassDeclaration
+	/ InterfaceDeclaration
+
+AnnotationTypeElementDeclaration
+	= { (@AnnotationTypeElementModifier)* @Type @Name "(" ")" (@AnnotationTypeElementDefaultValue)? ";" #AnnotationTypeElement } _
+
+AnnotationTypeElementModifier
+	= Annotation
+	/ "public"    _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ "abstract"  _ { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } } _
+
+AnnotationTypeElementDefaultValue
+	= "default" ElementValue
+
 
 //field, constant
 FieldDeclaration
@@ -403,7 +424,7 @@ Result
 	/ Type
 
 MethodParamList
-	= { ( @MethodParam ("," @MethodParam)* )? ("," "...")? #List } 
+	= { ( @MethodParam ("," @MethodParam)* )? ("," "...")? #List }
 
 MethodParam
 	= { @Type _ @VarName #Param} _
@@ -461,6 +482,10 @@ PrimaryType
 Block
 	= { "{" (@Statement / @LocalDeclaration)* "}" #Block }
 
+LocalDeclaration
+	= VariableDeclaration ";"
+	/ ClassDeclaration
+
 Statement
 	= Block
 	/ { "if"   "(" @Expression ")" @Statement ("else" @Statement)? #If }
@@ -473,15 +498,19 @@ Statement
 	/ { "continue" ";" #Continue }
 	/ { "break" ";" #Break }
 	/ { "return" (@Expression)?  ";" #Return }
+	/ { "try" @Block (@CatchBlock)* @{ "finally" @Block #Finally } #Try }
+	/ { "try" @Block (@CatchBlock)+ #Try }
 	/ { "case" @ConstantExpression ":" (!"case" !"default" @Statement)* #SwitchCase }
 	/ { "default" ":" (!"case" @Statement)* #SwitchDefault }
 	/ { @Name ":" #Label }
 	/ { @Expression ";" #ExpressionStatement }
 	/ { #Empty } ";"
 
-LocalDeclaration
-	= VariableDeclaration ";"
-	/ ClassDeclaration
+CatchBlock
+	= { "catch" "(" @CatchParameter ")" @Block #Catch }
+
+CatchParameter
+	= { (@VariableModifier)* @Type @Name ("|" @Name)* #Declaration }
 
 
 //Expression
@@ -510,7 +539,7 @@ addAssignmentOperator
 
 ConstantExpression
 	= ConditionalExpression
-	
+
 ConditionalExpression
 	= LogicalORExpression {@ "?"  @Expression ":" @LogicalORExpression #Trinary }*
 
@@ -540,13 +569,13 @@ relationalOperator
 
 RelationalExpression
 	= ShiftExpression {@ ( relationalOperator @ShiftExpression / "instanceof" @Type #InstanceOf ) }*
-	
+
 ShiftExpression
 	= AdditiveExpression {@ ( "<<" #LeftShift / ">>" #ArithmeticRightShift / ">>>" #LogicalRightShift ) @AdditiveExpression }*
-	
+
 AdditiveExpression
 	= MultiplicativeExpression {@ ( "+" #Add / "-" #Sub ) @MultiplicativeExpression }*
-	
+
 MultiplicativeExpression
 	= CastNewExpression {@ ( "*" #Mul / "/" #Div / "%" #Mod ) @CastNewExpression }*
 
@@ -597,7 +626,7 @@ PrimaryExpression
 	= Constant
 	/ "(" Expression ")"
 	/ { "this" #This }
-	/ { "super" #Super } {@ addField }
+	/ { "super" #Super }
 	/ Name
 
 LambdaExpression
@@ -696,10 +725,10 @@ ESCAPE
 
 SIMPLE_ESCAPE
 	= '\\' ['\"\\bfnrt]
-	
+
 OCTAL_ESCAPE
 	= '\\' [0-3] [0-7]? [0-7]?
-	
+
 HEX_ESCAPE
 	= '\\' 'u'+ HEX HEX HEX HEX
 
