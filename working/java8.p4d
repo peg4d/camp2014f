@@ -4,10 +4,7 @@
 export
 	= Statement
 	/ Expression
-	/ CInteger
-	/ CFloat
-	/ CString
-	/ CChar
+	/ Constant
 
 File
 	= _ { ( @TopLevel / _ )* #Source } EOT
@@ -29,8 +26,6 @@ BLOCKCOMMENT
 LINECOMMENT
 	= '//' (!'\n' .)*
 
-//PRAGMA
-//	= '#' (!'\n' .)*
 
 EOL
 	= ('\r'? '\n' / !.)
@@ -68,77 +63,115 @@ KEYWORD
 
 "++"     = '++' _
 "--"     = '--' _
-"&"     = '&' !'&' _
-"*"    = '*' !'=' _
-"+"    = '+' ![+=] _
-"-"   = '-' !('-' / [=>]) _
-"~"   = '~' _
-"!"    = '!' !'=' _
-"char"      = 'char'     !W
-"short"     = 'short'    !W
-"int"       = 'int'      !W
-"long"      = 'long'     !W
-"float"     = 'float'    !W
-"double"    = 'double'   !W
-"boolean"   = 'boolean'  !W
-"byte"      = 'byte'     !W
-"{"     = '{' _
+"&"      = '&' !'&' _
+"*"      = '*' !'=' _
+"+"      = '+' ![+=] _
+"-"      = '-' !('-' / [=>]) _
+"~"      = '~' _
+"!"      = '!' !'=' _
+
+"{"      = '{' _
 "["      = '[' _
 "]"      = ']' _
-","	  = ',' _
-"..."	= '...' _
-":"	= ':' ![>] _
-"/"	= '/' !'=' _
-"%"	= '%' ![=>] _
-"<<"	= '<<' !'=' _
-">>"	= '>>' !'=' _
-"<="	= '<=' _
-">="	= '>=' _
-"<"	= '<' ![=] _
-">"	= '>' ![=] _
-"=="	= '==' _
-"!="	= '!=' _
-"^"	= '^' ![=] _
-"|"	= '|' ![=] _
-"&&"	= '&&' _
-"||"	= '||' _
-"?"	= '?' _
-";"	= (';' _ / EOL)  /* this is for debug */
-"}"	= '}' _
-"enum"	= 'enum' !W
-"case"	= 'case' !W
-"default"	= 'default' !W
-"if"	= 'if' !W
-"else"	= 'else' !W
-"switch"	= 'switch' !W
-"while"	= 'while' !W
-"do"	= 'do' !W
-"for"	= 'for' !W
-"goto"	= 'goto' !W
-"continue"	= 'continue' !W
-"break"	= 'break' !W
-"return"	= 'return' !W
-"*="	= '*=' _
-"/="	= '/=' _
-"%="	= '%=' _
-"+="	= '+=' _
-"-="	= '-=' _
-"<<="	= '<<=' _
-">>="	= '>>=' _
-"&="	= '&=' _
-"^="	= '^=' _
-"|="	= '|=' _
-"="	= '=' !'=' _
-"."	= '.' _
-"static"	= 'static' !W _
-"volatile"	= 'volatile' !W _
+","      = ',' _
+"..."    = '...' _
+":"      = ':' ![>] _
+"/"      = '/' !'=' _
+"%"      = '%' ![=>] _
+"<<"     = '<<' !'=' _
+">>"     = '>>' ![=>] _
+">>>"    = '>>>' !'=' _
+"<="     = '<=' _
+">="     = '>=' _
+"<"      = '<' ![=] _
+">"      = '>' ![=] _
+"=="     = '==' _
+"!="     = '!=' _
+"^"      = '^' ![=] _
+"|"      = '|' ![=] _
+"&&"     = '&&' _
+"||"     = '||' _
+"?"      = '?' _
+";"      = (';' _ / EOL)  /* this is for debug */
+"}"      = '}' _
+
+"*="     = '*=' _
+"/="     = '/=' _
+"%="     = '%=' _
+"+="     = '+=' _
+"-="     = '-=' _
+"<<="    = '<<=' _
+">>="    = '>>=' _
+">>>="   = '>>>=' _
+"&="     = '&=' _
+"^="     = '^=' _
+"|="     = '|=' _
+"="      = '=' !'=' _
+"."      = '.' _
+
+"("      = '(' _
+")"      = ')' _
+
+"@"      = '@' _
+"->"     = '->' _
+
+// reserved keyword
+"abstract"          = 'abstract'          !W _
+"assert"            = 'assert'            !W _
+"boolean"           = 'boolean'           !W _
+"break"             = 'break'             !W _
+"byte"              = 'byte'              !W _
+"case"              = 'case'              !W _
+"catch"             = 'catch'             !W _
+"char"              = 'char'              !W _
+"class"             = 'class'             !W _
+"const"             = 'const'             !W _
+"continue"          = 'continue'          !W _
+"default"           = 'default'           !W _
+"do"                = 'do'                !W _
+"double"            = 'double'            !W _
+"else"              = 'else'              !W _
+"enum"              = 'enum'              !W _
+"extends"           = 'extends'           !W _
+"false"             = 'false'             !W _
+"final"             = 'final'             !W _
+"finally"           = 'finally'           !W _
+"float"             = 'float'             !W _
+"for"               = 'for'               !W _
+"goto"              = 'goto'              !W _
+"if"                = 'if'                !W _
+"implements"        = 'implements'        !W _
+"import"            = 'import'            !W _
+"instanceof"        = 'instanceof'        !W _
+"int"               = 'int'               !W _
+"interface"         = 'interface'         !W _
+"long"              = 'long'              !W _
+"native"            = 'native'            !W _
+"new"               = 'new'               !W _
+"null"              = 'null'              !W _
+"package"           = 'package'           !W _
+"private"           = 'private'           !W _
+"protected"         = 'protected'         !W _
+"public"            = 'public'            !W _
+"return"            = 'return'            !W _
+"short"             = 'short'             !W _
+"static"            = 'static'            !W _
+"strictfp"          = 'strictfp'          !W _
+"super"             = 'super'             !W _
+"switch"            = 'switch'            !W _
+"synchronized"      = 'synchronized'      !W _
+"this"              = 'this'              !W _
+"throw"             = 'throw'             !W _
+"throws"            = 'throws'            !W _
+"transient"         = 'transient'         !W _
+"true"              = 'true'              !W _
+"try"               = 'try'               !W _
+"void"              = 'void'              !W _
+"volatile"          = 'volatile'          !W _
+"while"             = 'while'             !W _
 
 
-
-"("	= '(' _
-")"	= ')' _
-
-EOT	= !.
+EOT = !.
 
 TopLevel
 	= PackageDeclaration
@@ -148,7 +181,7 @@ TopLevel
 
 // package definition
 PackageDeclaration
-	= { (@PackageModifier)* _ 'package' _ @Name _ ( '.' _ @Name _ )* ";" #PackageDeclaration }
+	= { (@PackageModifier)* _ "package" _ @Name _ ( "." @Name _ )* ";" #PackageDeclaration }
 
 PackageModifier
 	= Annotation
@@ -156,24 +189,24 @@ PackageModifier
 // import definition
 ImportDeclaration
 	= TypeImportOnDemandDeclaration
-	/ SingleImportDeclaration
+	/ SingleTypeImportDeclaration
 	/ StaticImportOnDemandDeclaration
 	/ SingleStaticImportDeclaration
 
 SingleTypeImportDeclaration
-	= 'import' _ { @TypeName #SingleTypeImportDeclaration } _ ";"
+	= "import" { @TypeName #SingleTypeImportDeclaration } _ ";"
 
 TypeImportOnDemandDeclaration
-	= 'import' _ { @TypeName  _ '.' _ '*' #TypeImportOnDemandDeclaration } _ ";"
+	= "import" { @TypeName  _ "." "*" #TypeImportOnDemandDeclaration } ";"
 
 SingleStaticImportDeclaration
-	= 'import' _ 'static'  _ { @TypeName _ '.' _ @Name #SingleStaticImportDeclaration } _ ';'
+	= "import" "static" { @TypeName _ '.' _ @Name #SingleStaticImportDeclaration } _ ";"
 
 StaticImportOnDemandDeclaration
-	= 'import' _ 'static' _ { @TypeName #StaticImportOnDemandDeclaration } _ '.' _ '*' _ ';'
+	= "import" "static" { @TypeName #StaticImportOnDemandDeclaration } _ "." "*" ";"
 
 TypeName
-	= { @Name ( _ '.' _ @Name #TypeName) }
+	= { @Name ( _ "." @Name #TypeName) }
 
 // annotation definition
 Annotation
@@ -182,19 +215,19 @@ Annotation
 	/ MarkerAnnotation
 
 NormalAnnotation
-	= '@' _ { @TypeName _ '(' _ @ElementValuePairList? _ ')' #NormalAnnotation }
+	= "@" { @TypeName _ "(" (@ElementValuePairList)? _ ")" #NormalAnnotation }
 
 MarkerAnnotation
-	= '@' _ { @TypeName #MarkerAnnotation }
+	= "@" { @TypeName #MarkerAnnotation }
 
 SingleElementAnnotation
-	= '@' _ { @TypeName _ '(' _ @ElementValue _ ')' #SingleElementAnnotation }
+	= "@" { @TypeName _ "(" @ElementValue _ ")" #SingleElementAnnotation }
 
 ElementValuePairList
-	= { @ElementValuePair ( _ ',' _ @ElementValuePair)* #ElementValuePairList }
+	= { @ElementValuePair ( _ "," @ElementValuePair)* #ElementValuePairList }
 
 ElementValuePair
-	= { @Name _ '=' _ @ElementValue #ElementValuePair }
+	= { @Name _ "=" @ElementValue #ElementValuePair }
 
 ElementValue
 	= ElementValueArrayInitializer
@@ -202,18 +235,22 @@ ElementValue
 	/ Annotation
 
 ElementValueArrayInitializer
-	= '{' _ { @ElementValueList? #ElementValueArrayInitializer } _ ','? _ '}'
+	= "{" { (@ElementValueList)? #ElementValueArrayInitializer } _ ","? "}"
 
 ElementValueList
-	= { @ElementValue ( _ ',' _ @ElementValue)* #ElementValueList}
-
+	= { @ElementValue ( _ "," @ElementValue)* #ElementValueList}
 
 	
 // Declaration
 //==============
 
+//local variable
 VariableDeclaration
-	= { @Annotation* Type @InitDecl ("," @InitDecl)*  ";" #Declaration }
+	= { (@VariableModifier)* @Type @InitDecl ("," @InitDecl)*  ";" #Declaration }
+
+VariableModifier
+	= Annotation
+	/ "final"     _ { #KeyValue @{`abstraction` #Key } @{`final` #Value } } _
 
 InitDecl
 	= { @VarName ("=" @Initializer)? #VarDecl } _
@@ -222,8 +259,7 @@ InitDeclAssign
 	= { @VarName "=" @Initializer #VarDecl } _
 
 VarName
-	= { "*" @VarName #PointerName } _
-	/ Name {@ "[" (@ConstantExpression)? "]" #ArrayName}*
+	= Name {@ "[" (@ConstantExpression)? "]" #ArrayName}*
 
 Initializer
 	= AssignmentExpression
@@ -239,15 +275,172 @@ Designator
 	= "[" ConstantExpression "]"
 	/ "." Name _
 
+//class type, enum type
+ClassDeclaration
+	= { (@ClassModifier)* "class" @Name (@TGenerics)? (@SuperClass)? (@SuperInterfaces)* @ClassBody #ClassDeclaration } _
+	/ { (@ClassModifier)* "enum" @Name (@SuperInterfaces)* @EnumBody #EnumDeclaration } _
+
+ClassModifier
+	= Annotation
+	/ "public"    _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ "protected" _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
+	/ "private"   _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
+	/ "abstract"  _ { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } } _
+	/ "final"     _ { #KeyValue @{`abstraction` #Key } @{`final` #Value } } _
+	/ "static"    _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
+	/ "strictfp"  _ { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
+
+SuperClass
+	= { "extends" _ @Type #SuperClass } _
+
+SuperInterfaces
+	= { "implements" _ @TypeList #SuperInterfaces } _
+
+EnumBody
+	= "{" { (@EnumeratorList)? ","? ";" (@ClassBodyDeclaration)+ #EnumBody } _ "}"
+	/ "{" { (@EnumeratorList)? ","? ";"? #EnumBody } _ "}"
+
+EnumeratorList
+	= { @Enumerator ("," @Enumerator)* #List }
+
+Enumerator
+	= { (@Annotation)* @Name (@{ "(" addArgumentExpressionList? ")" #List })? (@ClassBody)? #Enumerator }
+
+ClassBody
+	= "{" { (@ClassBodyDeclaration)* #ClassBody } "}"
+
+ClassBodyDeclaration
+	= ClassMemberDeclaration
+	/ { @Block #InstanceInisializer } _
+	/ 'static' _ { @Block #StaticInitializer } _
+	/ ConstructorDeclaration
+
+ClassMemberDeclaration
+	= FieldDeclaration
+	/ MethodDeclaration
+	/ ClassDeclaration
+	/ InterfaceDeclaration
+
+//interface, annotation type
+InterfaceDeclaration
+	= { (@InterfaceModifier)* "interface" @Name (@TGenerics)? (@ExtendsInterfaces)* @InterfaceBody #InterfaceDeclaration } _
+//(annotation)
+
+InterfaceModifier
+	= Annotation
+	/ "public"    _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ "protected" _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
+	/ "private"   _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
+	/ "abstract"  _ { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } } _
+	/ "static"    _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
+	/ "strictfp"  _ { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
+
+ExtendsInterfaces
+	= { "extends" _ @TypeList #ExtendsInterfaces } _
+
+InterfaceBody
+	= "{" { (@InterfaceMemberDeclaration)* #InterfaceBody } "}"
+
+InterfaceMemberDeclaration
+	= ConstantDeclaration
+	/ InterfaceMethodDeclaration
+	/ ClassDeclaration
+	/ InterfaceDeclaration
+
+//field, constant
+FieldDeclaration
+	= { (@FieldModifier)* @Type @InitDecl ("," @InitDecl)*  ";" #Field } _
+
+FieldModifier
+	= Annotation
+	/ "public"    { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ "protected" { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
+	/ "private"   { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
+	/ "final"     { #KeyValue @{`final` #Key } @{`true` #Value } } _
+	/ "static"    { #KeyValue @{`static` #Key } @{`true` #Value } } _
+	/ "transient" { #KeyValue @{`transient` #Key } @{`true` #Value } } _
+	/ "volatile"  { #KeyValue @{`volatile` #Key } @{`true` #Value } } _
+
+ConstantDeclaration
+	= { (@ConstantModifier)* @Type @InitDecl ("," @InitDecl)*  ";" #Constant } _
+
+ConstantModifier
+	= Annotation
+	/ "public"    { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ "final"     { #KeyValue @{`final` #Key } @{`true` #Value } } _
+	/ "static"    { #KeyValue @{`static` #Key } @{`true` #Value } } _
+
+//method
+MethodDeclaration
+	= { (@MethodModifier)* (@TGenerics (@Annotation)*)? @Result @Name "(" @MethodParamList ")" (@Throws)? (@Block / ";") #Method } _
+
+MethodModifier
+	= Annotation
+	/ "public"        { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ "protected"     { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
+	/ "private"       { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
+	/ "abstract"      { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } } _
+	/ "final"         { #KeyValue @{`abstraction` #Key } @{`final` #Value } } _
+	/ "static"        { #KeyValue @{`static` #Key } @{`true` #Value } } _
+	/ "synchronized"  { #KeyValue @{`synchronized` #Key } @{`true` #Value } } _
+	/ "native"        { #KeyValue @{`native` #Key } @{`true` #Value } } _
+	/ "strictfp"      { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
+
+InterfaceMethodDeclaration
+	= { (@InterfaceMethodModifier)* (@TGenerics (@Annotation)*)? @Result @Name "(" @MethodParamList ")" (@Throws)? (@Block / ";") #Method } _
+
+InterfaceMethodModifier
+	= Annotation
+	/ "public"        { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ "abstract"      { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } } _
+	/ "default"       { #KeyValue @{`abstraction` #Key } @{`default` #Value } } _
+	/ "static"        { #KeyValue @{`static` #Key } @{`true` #Value } } _
+	/ "strictfp"      { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
+
+Result
+	= { "void" #TVoid } _
+	/ Type
+
+MethodParamList
+	= { ( @MethodParam ("," @MethodParam)* )? ("," "...")? #List } 
+
+MethodParam
+	= { @Type _ @VarName #Param} _
+
+Throws
+	= "throws" { @TypeList #Throws } _
+
+//constructor
+ConstructorDeclaration
+	= { (@ConstructorModifier)* @Type "(" @MethodParamList ")" (@Throws)? @ConstructorBody #Constructor } _
+
+ConstructorModifier
+	= Annotation
+	/ "public"        { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
+	/ "protected"     { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
+	/ "private"       { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
+
+ConstructorBody
+	= { "{" (@ExplicitConstructorInvocation)? (@Statement / @LocalDeclaration)* "}" #Block }
+
+ExplicitConstructorInvocation
+	= { (@TGenerics)? @{ "this"  "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
+	/ { (@TGenerics)? @{ "super" "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
+//	/ { '.' (@TGenerics)? "super" @{ "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
+//	/ { '.' (@TGenerics)? "super" @{ "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
+
 
 //Type
 //====
 
 Type
-	= (PrimaryType / { @PrimaryType @TGenerics #TGenerics }) {@ "[" _? "]" #TArray }*
+	= ({ @PrimaryType @TGenerics #TGenerics } / PrimaryType) {@ "[" _? "]" #TArray }*
+
+TypeList
+	= { @Type ("," @Type)* #TypeList }
 
 TGenerics
-	= { '<' @Type ("," @Type)* '>' #Generics }
+	= { "<" @TypeList ">" #Generics } _
 
 PrimaryType
 	= { "byte"         #TInt } _
@@ -255,106 +448,17 @@ PrimaryType
 	/ { "short"        #TInt } _
 	/ { "int"          #TInt } _
 	/ { "long"         #TInt } _
-	/ { "float"       _   #TFloat } _
-	/ { "double"      _   #TFloat } _
-	/ { "boolean"  #TBoolean } _
+	/ { "float"        #TFloat } _
+	/ { "double"       #TFloat } _
+	/ { "boolean"      #TBoolean } _
 	/ { NAME   #Name } _
-
-//class
-ClassDeclaration
-	= { @ClassModifier* "class" @Name @{ TGenerics } @SuperClass? @SuperInterfaces* ClassBody #TClass }
-	/ { @ClassModifier* "enum" @Name @SuperInterfaces* EnumBody #TEnum }
-
-ClassModifier
-	= Annotation
-	/ 'public'    _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
-	/ 'protected' _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
-	/ 'private'   _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
-	/ 'abstruct'  _ { #KeyValue @{`abstruction` #Key } @{`abstruct` #Value } } _
-	/ 'final'     _ { #KeyValue @{`abstruction` #Key } @(`final` #Value) } _
-	/ 'static'    _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
-	/ 'strictfp'  _ { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
-
-SuperClass
-	= { 'extends' _ Type #SuperClass }
-
-SuperInterfaces
-	= { 'implements' _ Type ("," Type)* #SuperInterfaces }
-
-EnumBody
-	= '{' _ @EnumeratorList? ","? (";" @ClassBodyDeclaration)? _ "}"
-
-EnumeratorList
-	= { @Enumerator ("," @Enumerator)* #List }
-
-Enumerator
-	= { @Annotation* @Name @{ "(" addArgumentExpressionList ")" #List }? ClassBody? #Enumerator }
-
-ClassBody
-	= '{' _ (@ClassBodyDeclaration / _ )+ _ "}"
-
-ClassBodyDeclaration
-	= ClassMemberDeclaration
-	/ { @Block #InstanceInisializer }
-	/ { 'static' _ @Block #StaticInitializer}
-//	/ ConstructorDeclaration
-
-ClassMemberDeclaration
-	= FieldDeclaration
-	/ MethodDeclaration
-	/ ClassDeclaration
-//	/ InterfaceDeclaration
-
-FieldDeclaration
-	= { @FieldModifier* Type @InitDecl ("," @InitDecl)*  ";" #Field }
-
-FieldModifier
-	= Annotation
-	/ 'public'    _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
-	/ 'protected' _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
-	/ 'private'   _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
-	/ 'final'     _ { #KeyValue @{`final` #Key } @(`true` #Value) } _
-	/ 'static'    _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
-	/ 'transient' _ { #KeyValue @{`transient` #Key } @{`true` #Value } } _
-	/ 'volatile'  _ { #KeyValue @{`volatile` #Key } @{`true` #Value } } _
-
-MethodDeclaration
-	= { @MethodModifier* Type @Name "(" @MethodParamList ")" (@Block / ";") #Method }
-
-MethodModifier
-	= Annotation
-	/ 'public'       _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
-	/ 'protected'    _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
-	/ 'private'      _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
-	/ 'abstruct'     _ { #KeyValue @{`abstruction` #Key } @{`abstruct` #Value } } _
-	/ 'final'        _ { #KeyValue @{`abstruction` #Key } @(`final` #Value) } _
-	/ 'static'       _ { #KeyValue @{`static` #Key } @{`true` #Value } } _
-	/ 'synchronized' _ { #KeyValue @{`synchronized` #Key } @{`true` #Value } } _
-	/ 'native'       _ { #KeyValue @{`native` #Key } @{`true` #Value } } _
-	/ 'strictfp'     _ { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
-
-MethodParamList
-	= { ( @MethodParam ("," @MethodParam)* )? ("," "...")? #List } 
-
-MethodParam
-	= { Type _ @VarName #Param} _
-
-//ConstructorDeclaration
-//	= { @ConstructorModifier* Type "(" @MethodParamList ")" @Block #Constructor }
-
-ConstructorModifier
-	= Annotation
-	/ 'public'       _ { #KeyValue @{`visibility` #Key } @{`public` #Value } } _
-	/ 'protected'    _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } } _
-	/ 'private'      _ { #KeyValue @{`visibility` #Key } @{`private` #Value } } _
-
 
 
 // Block, Statement
 //===================
 
 Block
-	= { "{" (@Statement / @Declaration)* "}" #Block }
+	= { "{" (@Statement / @LocalDeclaration)* "}" #Block }
 
 Statement
 	= Block
@@ -363,7 +467,7 @@ Statement
 	/ { "while"  "(" @Expression ")" @Statement #While }
 	/ { "do" @Statement "while" "(" @Expression ")" ";" #DoWhile }
 	/ { "for" "(" (@Expression)? ";" (@Expression)? ";" (@Expression)? ")" @Statement #For }
-	/ { "for" "(" @Declaration (@Expression)? ";" (@Expression)? ";" @Statement #For }
+	/ { "for" "(" @VariableDeclaration (@Expression)? ";" (@Expression)? ";" @Statement #For }
 	/ { "goto" @Name ";" #Goto }
 	/ { "continue" ";" #Continue }
 	/ { "break" ";" #Break }
@@ -373,6 +477,10 @@ Statement
 	/ { @Name ":" #Label }
 	/ { @Expression ";" #ExpressionStatement }
 	/ { #Empty } ";"
+
+LocalDeclaration
+	= VariableDeclaration
+	/ ClassDeclaration
 
 
 //Expression
@@ -386,17 +494,18 @@ AssignmentExpression
 	/ ConditionalExpression
 
 addAssignmentOperator
-	= "="        #Assign
-	/ "*="    #AssignMul
-	/ "/="     #AssignDiv
-	/ "%="     #AssignMod
-	/ "+="    #AssignAdd
+	= "="    #Assign
+	/ "*="   #AssignMul
+	/ "/="   #AssignDiv
+	/ "%="   #AssignMod
+	/ "+="   #AssignAdd
 	/ "-="   #AssignSub
-	/ "<<="    #AssignLeftShift
-	/ ">>="   #AssignRightShift
-	/ "&="     #AssignBitwiseAnd
-	/ "^="     #AssignBitwiseXOr 
-	/ "|="      #AssignBitwiseOr
+	/ "<<="  #AssignLeftShift
+	/ ">>="  #AssignArithmeticRightShift
+	/ ">>>=" #AssignLogicalRightShift
+	/ "&="   #AssignBitwiseAnd
+	/ "^="   #AssignBitwiseXOr
+	/ "|="   #AssignBitwiseOr
 
 ConstantExpression
 	= ConditionalExpression
@@ -421,38 +530,45 @@ ANDExpression
 
 EqualityExpression
 	= RelationalExpression {@ ( "==" #Equals / "!=" #NotEquals ) @RelationalExpression }*
-	
+
+relationalOperator
+	= "<=" #LessThanEquals
+	/ ">=" #GreaterThanEquals
+	/ "<" #LessThan
+	/ ">" #GreaterThan
+
 RelationalExpression
-	= ShiftExpression {@ ( "<=" #LessThanEquals / ">=" #GreaterThanEquals / "<" #LessThan / ">" #GreaterThan ) @ShiftExpression }*
+	= ShiftExpression {@ ( relationalOperator @ShiftExpression / "instanceof" @Type #InstanceOf ) }*
 	
 ShiftExpression
-	= AdditiveExpression {@ ( "<<" #LeftShift / ">>" #RightShift ) @AdditiveExpression }*
+	= AdditiveExpression {@ ( "<<" #LeftShift / ">>" #ArithmeticRightShift / ">>>" #LogicalRightShift ) @AdditiveExpression }*
 	
 AdditiveExpression
 	= MultiplicativeExpression {@ ( "+" #Add / "-" #Sub ) @MultiplicativeExpression }*
 	
 MultiplicativeExpression
-	= CastExpression {@ ( "*" #Mul / "/" #Div / "%" #Mod ) @CastExpression }*
+	= CastNewExpression {@ ( "*" #Mul / "/" #Div / "%" #Mod ) @CastNewExpression }*
 
 UnaryExpression
 	= PostfixExpression
-	/ { "++"    @UnaryExpression #PrefixInc }
-	/ { "--"    @UnaryExpression #PrefixDec }
-	/ { "&"    @CastExpression #Address }
-	/ { "*"   @CastExpression #Star }
-	/ { "+"   @CastExpression #Plus }
-	/ { "-"  @CastExpression #Minus }
-	/ { "~"  @CastExpression #Compl }
-	/ { "!"   @CastExpression #Not }
-	/ { "sizeof"  ( @UnaryExpression / "(" Type ")" ) #SizeOf }
+	/ { "++" @UnaryExpression #PrefixInc }
+	/ { "--" @UnaryExpression #PrefixDec }
+	/ { "+"  @CastNewExpression #Plus }
+	/ { "-"  @CastNewExpression #Minus }
+	/ { "~"  @CastNewExpression #Compl }
+	/ { "!"  @CastNewExpression #Not }
 
-CastExpression
-	= { "(" Type ")" @CastExpression #Cast }
+CastNewExpression
+	= { "(" @Type ")" @CastNewExpression #Cast }
+	/ InstanceCreationExpression
 	/ UnaryExpression
 
-PostfixExpression
-	= ( PrimaryExpression / { "(" Type ")" "{" @{ (addInitializerList)* ","? #Initializer } "}" } ) 
+InstanceCreationExpression
+	= { "new" (@TGenerics)? (@Annotation)* @Type @{ "(" addArgumentExpressionList? ")" #List } #InstanceCreation }
 	{@ (addFunctionCall / addIndex / addField / addInc / addDec) }*
+
+PostfixExpression
+	= PrimaryExpression {@ (addFunctionCall / addIndex / addField / addInc / addDec) }*
 
 addFunctionCall
 	= @{ "(" addArgumentExpressionList? ")" #List} #Apply
@@ -466,9 +582,6 @@ addIndex
 addField
 	= "." @Name #Field
 
-addPointerField
-	= "->" @Name #PointerField
-
 addInc
 	= "++" #Inc
 
@@ -477,21 +590,20 @@ addDec
 
 PrimaryExpression
 	= Constant
-	/ CString
 	/ "(" Expression ")"
 	/ Name
 
 LambdaExpression
-	= { @LambdaParameters _ '->' _ @LambdaBody #LambdaExpression }
+	= { @LambdaParameters _ "->" @LambdaBody #LambdaExpression }
 
 LambdaParameters
 	= { @Name
-		/ '(' _ @addArgumentExpressionList? _ ')'
-		/ '(' _ @InferredFormalParameterList _ ')'
-		#LambdaParameters }
+		/ @{ "(" addArgumentExpressionList? _ ")" #AddArgumentExpressionList }
+		/ "(" @InferredFormalParameterList _ ")"
+		 #LambdaParameters }
 
 InferredFormalParameterList
-	= { @Name ( _ ',' _ @Name)* #InferredFormalParameterList }
+	= { @Name ( _ "," @Name)* #InferredFormalParameterList }
 
 LambdaBody
 	= { @Expression / @Block #LambdaBody }
@@ -501,72 +613,62 @@ LambdaBody
 //=======
 
 Constant
-	= CFloat
-	/ CInteger
-	/ CChar
+	= JavaFloat
+	/ JavaInteger
+	/ JavaString
+	/ JavaChar
+	/ JavaNull
 
-CFloat
-	= { ( DECIMAL_FLOAT / HEX_FLOAT )  #Float } FLOAT_SUFFIX? _
+JavaFloat
+	= { FLOAT #Float } FLOAT_SUFFIX? _
 
-DECIMAL_FLOAT
+FLOAT
 	= FRACTION EXPONENT?
 	/ DIGIT+ EXPONENT
 
 FRACTION
-	= DIGIT* '.' DIGIT+
-	/ DIGIT+ '.'
+	= !'_' ('_'* DIGIT)* '.' DIGIT ('_'* DIGIT)*
+	/ DIGIT ('_'* DIGIT)* '.'
 
 EXPONENT
-	= [eE] [+\-]? DIGIT+
-
-HEX_FLOAT
-	= HEX_PREFIX HEX_FRACTION BINARY_EXPONENT?
-	/ HEX_PREFIX HEX+ BINARY_EXPONENT
-
-HEX_PREFIX
-	= '0' [xX]
-
-HEX_FRACTION
-	= HEX* '.' HEX+
-	/ HEX+ '.'
-
-BINARY_EXPONENT
-	= [pP] [+\-]? DIGIT+
+	= [eE] [+\-]? DIGIT ('_'* DIGIT)*
 
 FLOAT_SUFFIX
 	= [fFdD]
 
-CInteger
-	= { ( DECIMAL / HEXICAL / OCTAL ) #Integer } INT_SUFFIX? _
+JavaInteger
+	= { ( BINARY / DECIMAL / HEXADECIMAL / OCTAL ) #Integer } INT_SUFFIX? _
+
+BINARY
+	= BIN_PREFIX [01] ('_'* [01])*
+
+BIN_PREFIX
+	= '0' [bB]
 
 DECIMAL
-	= [1-9] DIGIT*
+	= [1-9] ('_'* DIGIT)*
 
-HEXICAL
-	= HEX_PREFIX HEX+
+HEXADECIMAL
+	= HEX_PREFIX HEX ('_'* HEX)*
+
+HEX_PREFIX
+	= '0' [xX]
 
 OCTAL
-	= '0' [0-7]*
+	= '0' ('_'* [0-7])*
 
 INT_SUFFIX
-	= [uU] LONG_SUFFIX?
-	/ LONG_SUFFIX [uU]?
+	= [lL]
 
-LONG_SUFFIX
-	= 'll'
-	/ 'LL'
-	/ [lL]
+JavaString
+	= '"' { STRING_CONTENT* #String } '"' _
 
-CString
-	=  'L'? ('"' { STRING_CONTENT* #String } '"' _)+
-
-CChar
-	= 'L'? "'" { CHAR_CONTENT* #Character } "'" _
+JavaChar
+	= "'" { CHAR_CONTENT* #Character } "'" _
 
 STRING_CONTENT
 	= ESCAPE
 	/ ![\"\n\\] .
-
 
 CHAR_CONTENT
 	= ESCAPE
@@ -579,10 +681,13 @@ ESCAPE
 	/ UCHAR
 
 SIMPLE_ESCAPE
-	= '\\' ['\"?\\abfnrtv]
+	= '\\' ['\"\\bfnrt]
 	
 OCTAL_ESCAPE
-	= '\\' [0-7] [0-7]? [0-7]?
+	= '\\' [0-3] [0-7]? [0-7]?
 	
 HEX_ESCAPE
-	= '\\x' HEX+
+	= '\\' 'u'+ HEX HEX HEX HEX
+
+JavaNull
+	= { 'null' #Null }
