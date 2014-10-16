@@ -327,6 +327,7 @@ UndefStatement
 
 DecoratorStatement
     [example: if true then 1 end while f]
+    [example: puts n += 1 while n < 10]
     = NoDecorationStatement {@ _ addDecorator _ @Expression }*
 
 addDecorator
@@ -392,66 +393,92 @@ PrimaryYieldExpression
     = { "yield" _ (_ "(" _ (@CallArgs _ )? ")" )? #Yield }
 
 IfExpression
-    = { "if" _ @Expression _ THEN _ @CompleteStatement
+    [example: if true then return end]
+    [example: if true; return end]
+    [example: if true; 1; else; 0; end]
+    [example: if n == 1; a; elsif n == 2 then b; else; c; end]
+    = { "if" _ @Expression _ THEN __ @CompleteStatement
         (elseClause / elsifClause)? _ "end" #If }
 
 elsifClause
     = @ElsifClause
 
 ElsifClause
-    = { "elsif" _ @Expression _ THEN _ @CompleteStatement
+    = { "elsif" _ @Expression _ THEN __ @CompleteStatement
         (elseClause / elsifClause)? #If }
 
 elseClause
-    = "else" _ @CompleteStatement
+    = "else" EOS __ @CompleteStatement
 
 UnlessExpression
+    [example: unless true then return end]
+    [example: unless true; return end]
     = { "unless" _ @Expression _ THEN _ @CompleteStatement _ elseClause? _ "end" #Unless }
 
 CaseExpression
-    = { "case" _ @Expression _ @CaseList _ elseClause? _ "end" #Case }
+    [example: case n; when 1; a; end]
+    [example: case n; when 1; a; else; b; end]
+    = { "case" _ @Expression EOS __ @CaseList __ (elseClause? __) "end" #Case }
 
 CaseList
-    = { ("when" _ @WhenArgs _ THEN _ @CompleteStatement __)+ #CaseList }
+    = { ("when" _ @WhenArgs _ THEN __ @CompleteStatement __)* #CaseList }
+
+WhenArgs
+    = { @Args (_ ',' __ @ExpandExpression)? #List }
+    / { @ExpandExpression #List }
 
 ForExpression
-    = { "for" _  @BlockVar _ "in" _ @Expression _ DO _ @CompleteStatement _ "end" #For}
+    [example: for n in 1..10; p n; end]
+    = { "for" _  @BlockVar _ "in" _ @Expression _ DO __ @CompleteStatement __ "end" #For}
 
 BeginExpression
-    = { "begin" __ addBeginBody __ "end" #Begin }
+    [example: begin p 1 end]
+    [example: begin p 1; rescue a => b; 1 end]
+    [example: begin p 1; rescue a => b; 1; else; 2 end]
+    = { "begin" __ (EOS __)? addBeginBody __ "end" #Begin }
 
 addBeginBody
-    = @[0]CompleteStatement (__ @[1]RescueList)? (__ "else" __ @[2]CompleteStatement)? (__ "ensure" __ @[3]CompleteStatement)?
+    = @[0]CompleteStatement (__ EOS)? (__ @[1]RescueList)? (__ "else" EOS __ @[2]CompleteStatement)? (__ "ensure" __ @[3]CompleteStatement)?
 
 RescueList
-    = { (@RescueItem)* #List }
+    = { (@RescueItem)+ (__ EOS)? #List }
 
 RescueItem
-    = { "rescue" __ (@[0]Args __)? ("=>" @[1]LeftHandSideExpression __)? THEN __ @[2]CompleteStatement #Rescue }
+    [example: rescue]
+    [example: rescue;]
+    [example: rescue 1;]
+    [example: rescue a; 1;]
+    [example: rescue => b; 1;]
+    [example: rescue a => b; 1;]
+    = { "rescue" _ (@[0]Args _)? ("=>" _ @[1]LeftHandSideExpression _)? THEN __ @[2]CompleteStatement #Rescue }
 
 ClassExpression
-    = { "class" __ @[0]Identifier (__ "<" __ @[1]Identifier) __ @CompleteStatement __ "end" #Class }
+    [example: class Human; end]
+    [example: class Human < Animal; end]
+    = { "class" __ @[0]Identifier (__ "<" __ @[1]Identifier)? EOS __ @CompleteStatement __ "end" #Class }
 
 ModuleExpression
     = { "module" __ @Identifier __ @CompleteStatement __ "end" #Module }
 
 FunctionDefinition
+    [example: def hoge; p 1 end]
     [example: def hoge a,b; p a end]
-    = { "def" __ @[0]FunctionName __ addFunctionParameter EOS __ @[2]FunctionBody __ "end" #Function }
+    [example: def hoge() p a end]
+    [example: def hoge(a,b) p a end]
+    [example: def hoge(a,b); p a end]
+    = { "def" __ @[0]FunctionName _ addFunctionParameter __ @[2]FunctionBody __ "end" #Function }
 
 addFunctionParameter
-    = "(" __ @[1]ParameterList __ ")"
-    / @[1]ParameterList 
+    = "(" __ (@[1]ParameterList __)? ")" EOS?
+    / @[1]ParameterList EOS
+    / EOS
 
 FunctionBody
     = { addBeginBody #Begin }
 
 EigenMethodDefinition
-    = { "def" __ @Singleton __ ("." / "::") __ @FunctionName __ addFunctionParameter EOS __ @CompleteStatement __ "end" #EigenFunction }
-
-WhenArgs
-    = { @Args (_ ',' _ @ExpandExpression)? #List }
-    / { @ExpandExpression #List }
+    [example: def self.hoge a,b; p a end]
+    = { "def" __ @Singleton __ ("." / "::") __ @FunctionName _ addFunctionParameter __ @CompleteStatement __ "end" #EigenFunction }
 
 ExpandExpression
     = { '*' _ @Arg #Expand }
@@ -519,6 +546,13 @@ BlockParameter
     = { "&" _ @Identifier #BlockParameter }
 
 ParameterList
+    [example: *a]
+    [example: &b]
+    [example: *a, &b]
+    [example: x, y, *a, &b]
+    [bad-example: &b, *a]
+    [bad-example: &b, x]
+    [bad-example: *a, x]
     = { @BlockParameter #List }
     / { @VariadicParameter (__ "," __ @BlockParameter)? #List }
     / { @Identifier (__ "," __ @Identifier)* (__ "," __ @VariadicParameter)? (__ "," __ @BlockParameter)? #List }
