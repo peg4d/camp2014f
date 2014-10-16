@@ -177,11 +177,12 @@ TopLevel
 	= PackageDeclaration
 	/ ImportDeclaration
 	/ ClassDeclaration
+	/ InterfaceDeclaration
 
 
 // package definition
 PackageDeclaration
-	= { (@PackageModifier)* _ "package" _ @Name _ ( "." @Name _ )* ";" #PackageDeclaration }
+	= { (@PackageModifier)* _ "package" _ @TypeName ";" #PackageDeclaration }
 
 PackageModifier
 	= Annotation
@@ -206,7 +207,7 @@ StaticImportOnDemandDeclaration
 	= "import" "static" { @TypeName #StaticImportOnDemandDeclaration } _ "." "*" ";"
 
 TypeName
-	= { @Name ( _ "." @Name #TypeName) }
+	= Name {@ _ "." @Name #TypeName }*
 
 // annotation definition
 Annotation
@@ -615,6 +616,7 @@ LambdaBody
 Constant
 	= JavaFloat
 	/ JavaInteger
+	/ JavaBoolean
 	/ JavaString
 	/ JavaChar
 	/ JavaNull
@@ -637,7 +639,8 @@ FLOAT_SUFFIX
 	= [fFdD]
 
 JavaInteger
-	= { ( BINARY / DECIMAL / HEXADECIMAL / OCTAL ) #Integer } INT_SUFFIX? _
+	= { ( DECIMAL / HEXADECIMAL ) #Integer } INT_SUFFIX? _
+//	= { ( BINARY / DECIMAL / HEXADECIMAL / OCTAL ) #Integer } INT_SUFFIX? _
 
 BINARY
 	= BIN_PREFIX [01] ('_'* [01])*
@@ -646,7 +649,8 @@ BIN_PREFIX
 	= '0' [bB]
 
 DECIMAL
-	= [1-9] ('_'* DIGIT)*
+	= '0' ![0-9xXbB]
+	/ [1-9] ('_'* DIGIT)*
 
 HEXADECIMAL
 	= HEX_PREFIX HEX ('_'* HEX)*
@@ -659,6 +663,10 @@ OCTAL
 
 INT_SUFFIX
 	= [lL]
+
+JavaBoolean
+	= { "true"  #True } _
+	/ { "false" #False } _
 
 JavaString
 	= '"' { STRING_CONTENT* #String } '"' _
