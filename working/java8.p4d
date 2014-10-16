@@ -232,7 +232,7 @@ ElementValuePair
 
 ElementValue
 	= ElementValueArrayInitializer
-//	/ conditionalExpression
+	/ ConditionalExpression
 	/ Annotation
 
 ElementValueArrayInitializer
@@ -247,7 +247,7 @@ ElementValueList
 
 //local variable
 VariableDeclaration
-	= { (@VariableModifier)* @Type @InitDecl ("," @InitDecl)*  ";" #Declaration }
+	= { (@VariableModifier)* @Type @InitDecl ("," @InitDecl)* #Declaration }
 
 VariableModifier
 	= Annotation
@@ -427,8 +427,8 @@ ConstructorBody
 ExplicitConstructorInvocation
 	= { (@TGenerics)? @{ "this"  "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
 	/ { (@TGenerics)? @{ "super" "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
-//	/ { '.' (@TGenerics)? "super" @{ "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
-//	/ { '.' (@TGenerics)? "super" @{ "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
+//	/ { @PrimaryExpression '.' (@TGenerics)? "super" @{ "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
+//	/ { @TypeName '.' (@TGenerics)? "super" @{ "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
 
 
 //Type
@@ -467,8 +467,8 @@ Statement
 	/ { "switch" "(" @Expression ")" @Statement #Switch }
 	/ { "while"  "(" @Expression ")" @Statement #While }
 	/ { "do" @Statement "while" "(" @Expression ")" ";" #DoWhile }
-	/ { "for" "(" (@Expression)? ";" (@Expression)? ";" (@Expression)? ")" @Statement #For }
-	/ { "for" "(" @VariableDeclaration (@Expression)? ";" (@Expression)? ";" @Statement #For }
+	/ { "for" "(" (@Expression)?       ";" (@Expression)? ";" (@Expression)? ")" @Statement #For }
+	/ { "for" "(" @VariableDeclaration ";" (@Expression)? ";" (@Expression)? ")" @Statement #For }
 	/ { "goto" @Name ";" #Goto }
 	/ { "continue" ";" #Continue }
 	/ { "break" ";" #Break }
@@ -480,7 +480,7 @@ Statement
 	/ { #Empty } ";"
 
 LocalDeclaration
-	= VariableDeclaration
+	= VariableDeclaration ";"
 	/ ClassDeclaration
 
 
@@ -592,6 +592,8 @@ addDec
 PrimaryExpression
 	= Constant
 	/ "(" Expression ")"
+	/ { "this" #This }
+	/ { "super" #Super } {@ addField }
 	/ Name
 
 LambdaExpression
