@@ -1,0 +1,59 @@
+File
+	= Statement !.
+
+Chunk
+	= Line
+
+TopLevel
+	= _ Statement _
+
+Statement
+	= { (@Line BREAK)+ #source }
+
+_
+	= [ \t]*
+
+BREAK
+	= '\n' / '\r\n' / '\r'
+
+DIGIT
+	= [0-9]
+
+
+Line
+	= ( Head / Items / Text ) (@Nl)?
+
+
+Head
+	= { _ '###' _ @Text #h1 }
+	/ { _ '##' _ @Text #h2 }
+	/ { _ '#' _ @Text #h3 }
+	/ { _ @Text BREAK _ '=====' _ #h1 }
+	/ { _ @Text BREAK _ '-----'_ #h2 }
+
+Items
+	= { &DIGIT @Item (BREAK @Item)* #ol }
+	/ { !DIGIT @Item (BREAK @Item)* #ul }
+
+Item
+	= { ('*'/'+'/'-') [ \t]+ @Text _ #li }
+	/ { DIGIT+ '.' [ \t]+ @Text _ #li }
+
+Nl
+	= [ \t] [ \t] &BREAK { #br }
+
+Text
+	= { (@TextMaterial)+ #text }
+
+TextMaterial
+	= { '[' @{ (@Letter)* #alt } ']' _ '(' @{ (@Letter)* #url } ')' #link }
+	/ { '![' @{ (@Letter)* #alt } ']' _ '(' @{ (@Letter)* #url } ')' #pic }
+	/ Letter
+
+Letter
+	= '**' { TEXT* #bold } '**'
+	/ '*' { TEXT* #italic } '*'
+	/ { TEXT+ #div }
+
+TEXT
+	= ( (!Nl [ \t]) / [A-Za-z0-9_\.\\/:] )+
