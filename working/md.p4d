@@ -8,7 +8,7 @@ TopLevel
 	= _ Statement _
 
 Statement
-	= { (@Line BREAK)+ #source }
+	= { (@Line BREAK+)+ #source }
 
 _
 	= [ \t]*
@@ -21,8 +21,15 @@ DIGIT
 
 
 Line
-	= ( Head / Items / Text ) (@Nl)?
+	= ( Item / Head / Text ) (@Nl)?
 
+Item
+	= { [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] ('*'/'+'/'-') [ \t]+ @Text _ #ul_li_3 }
+	/ { [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] DIGIT+ '.' [ \t]+ @Text _ #ol_li_3 }
+	/ { [ \t] [ \t] [ \t] [ \t] ('*'/'+'/'-') [ \t]+ @Text _ #ul_li_2 }
+	/ { [ \t] [ \t] [ \t] [ \t] DIGIT+ '.' [ \t]+ @Text _ #ol_li_2 }
+	/ { ('*'/'+'/'-') [ \t]+ @Text _ #ul_li_1 }
+	/ { DIGIT+ '.' [ \t]+ @Text _ #ol_li_1 }
 
 Head
 	= { _ '###' _ @Text #h1 }
@@ -31,14 +38,6 @@ Head
 	/ { _ @Text BREAK _ '=====' _ #h1 }
 	/ { _ @Text BREAK _ '-----'_ #h2 }
 
-Items
-	= { &DIGIT @Item (BREAK @Item)* #ol }
-	/ { !DIGIT @Item (BREAK @Item)* #ul }
-
-Item
-	= { ('*'/'+'/'-') [ \t]+ @Text _ #li }
-	/ { DIGIT+ '.' [ \t]+ @Text _ #li }
-
 Nl
 	= [ \t] [ \t] &BREAK { #br }
 
@@ -46,8 +45,8 @@ Text
 	= { (@TextMaterial)+ #text }
 
 TextMaterial
-	= { '[' @{ (@Letter)* #alt } ']' _ '(' @{ (@Letter)* #url } ')' #link }
-	/ { '![' @{ (@Letter)* #alt } ']' _ '(' @{ (@Letter)* #url } ')' #pic }
+	= { '[' @{ (@Letter)* #alt } '](' @{ TEXT* #url } ')' #link }
+	/ { '![' @{ (@Letter)* #alt } '](' @{ TEXT* #url } ')' #pic }
 	/ Letter
 
 Letter
@@ -56,4 +55,8 @@ Letter
 	/ { TEXT+ #div }
 
 TEXT
-	= ( (!Nl [ \t]) / [A-Za-z0-9_\.\\/:] )+
+	= '(' TEXT+ ')'
+	/ ( (!Nl [ \t]) / [\x21-\x27\x2C\x2F-\x5A\x5E-\x7E\\\.] )+
+
+Blank
+	= { &BREAK #emptyLine }
