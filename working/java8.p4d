@@ -562,11 +562,15 @@ UnaryExpression
 CastNewExpression
 	= { "(" @Type ")" @CastNewExpression #Cast }
 	/ InstanceCreationExpression
+	/ ArrayCreationExpression
 	/ UnaryExpression
 
 InstanceCreationExpression
 	= { "new" (@TGenerics)? (@Annotation)* @Type @{ "(" addArgumentExpressionList? ")" #List } #InstanceCreation }
 	{@ (addFunctionCall / addIndex / addField / addInc / addDec) }*
+
+ArrayCreationExpression
+	= { "new" (@Annotation)* @(Type {@ (@Annotation)* "[" @Expression "]" #ArraySize }+) #ArrayCreation }
 
 PostfixExpression
 	= PrimaryExpression {@ (addFunctionCall / addIndex / addField / addInc / addDec) }*
