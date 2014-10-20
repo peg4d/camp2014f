@@ -1,9 +1,9 @@
 
 File
-    = CompleteStatement
+    = (EOS? _)* CompleteStatement
 
 Chunk
-    = CompleteStatement
+    = (EOS? _)*  CompleteStatement
 
 SPACE
     = [\t\v\f \u00A0\uFEFF]
@@ -28,6 +28,7 @@ LINE_TERMINATOR_SEQUENCE
 
 COMMENT
     = SINGLE_LINE_COMMENT
+    / "__END__" .*
 
 SINGLE_LINE_COMMENT
     = '#' (!LINE_TERMINATOR .)*
@@ -46,11 +47,14 @@ OperationName
 
 FUNCTION_NAME
     = (IDENTIFIER [!?]?
-       / "|" / "^" / "&" / "<=>" / "==" / "===" / "=~"
-       / ">" / ">=" / "<" / "<=" / "+" / "-" / "*" / "/" / "%" / "**"
-       / "<<" / ">>" / "~" / "`" / "+@" / "-@" / "[]" / "[]="
+       / OPERATOR
        / "__LINE__" / "__FILE__" / "BEGIN" / "END"
        / KEYWORD)
+
+OPERATOR
+    = "|" / "^" / "&" / "<=>" / "==" / "===" / "=~"
+    / ">" / ">=" / "<" / "<=" / "+" / "-" / "*" / "/" / "%" / "**"
+    / "<<" / ">>" / "~" / "`" / "+@" / "-@" / "[]" / "[]="
 
 FunctionName
     = { FUNCTION_NAME #Name }
@@ -60,8 +64,8 @@ Symbol
     / ":" _ { VARIABLE_NAME #Symbol }
 
 VARIABLE_NAME
-    = GLOBAL_VARIABLE_NAME
-    / ('@@' / '@')? IDENTIFIER
+    = GLOBAL_VARIABLE_NAME ![!?]
+    / ('@@' / '@')? IDENTIFIER ![!?]
 
 VariableName
     = { VARIABLE_NAME #Name }
@@ -105,6 +109,7 @@ HEX4
 EOS
     = _ ';'
     / _ LINE_TERMINATOR_SEQUENCE
+    / _ SINGLE_LINE_COMMENT LINE_TERMINATOR_SEQUENCE
     / __ EOF
 
 EOF
@@ -207,7 +212,7 @@ HexIntegerLiteral
 
 BinaryIntegerLiteral
     [example: 0b01010]
-    = { '0' [bB] [01]+ #BinaryInteger }
+    = { '0' [bB] [01_]+ #BinaryInteger }
 
 FloatingPointLiteral
     [example: 12.456]
@@ -223,14 +228,14 @@ DECIMAL_INTEGER
 EXPONENT_PART
     = [eE] SIGN? [1-9] DIGIT*
 
-//DIGIT
-//    = [0-9]
+DIGIT
+    = [0-9_]
 
 OCT
-    = [0-7]
+    = [0-7_]
 
-//HEX
-//    = [0-9a-fA-F]
+HEX
+    = [0-9a-fA-F_]
 
 SIGN
     = ( '+' / '-' )
@@ -297,9 +302,9 @@ REGEX_FLAGS
 
 // like "block"
 CompleteStatement
-    = { @StatementOrBegin (EOS __ @StatementOrBegin)+ EOS* _ #Block }
+    = { @StatementOrBegin (EOS* _ @StatementOrBegin)+ EOS* _ #Block }
     / StatementOrBegin EOS* _
-    / { #Empty }
+    / EOS* _ { #Empty }
 
 NoDecorationStatement
     = AliasStatement
@@ -346,22 +351,22 @@ FinalizerStatement
 // Expression
 
 SelfExpression
-    = { "self" #Self }
+    = { "self" ![!?] #Self }
 
 TrueExpression
-    = { "true" #True }
+    = { "true" ![!?] #True }
 
 FalseExpression
-    = { "false" #False }
+    = { "false" ![!?] #False }
 
 NilExpression
-    = { "nil" #Nil }
+    = { "nil" ![!?] #Nil }
 
 FileExpression
-    = { "__FILE__" #File }
+    = { "__FILE__" ![!?] #File }
 
 LineExpression
-    = { "__LINE__" #Line }
+    = { "__LINE__" ![!?] #Line }
 
 Variable
     = VariableName
@@ -378,6 +383,8 @@ StatementLikeExpression
     / DefinedExpression
     / IfExpression
     / UnlessExpression
+    / WhileExpression
+    / UntilExpression
     / CaseExpression
     / ForExpression
     / BeginExpression
@@ -413,7 +420,15 @@ elseClause
 UnlessExpression
     [example: unless true then return end]
     [example: unless true; return end]
-    = { "unless" _ @Expression _ THEN _ @CompleteStatement _ elseClause? _ "end" #Unless }
+    = { "unless" _ @Expression _ THEN __ @CompleteStatement __ elseClause? __ "end" #Unless }
+
+WhileExpression
+    [example: while true do 1 end]
+    = { "while" _ @Expression _ DO __ @CompleteStatement __ "end"}
+
+UntilExpression
+    [example: until true do 1 end]
+    = { "until" _ @Expression _ DO __ @CompleteStatement __ "end"}
 
 CaseExpression
     [example: case n; when 1; a; end]
@@ -455,7 +470,7 @@ RescueItem
 ClassExpression
     [example: class Human; end]
     [example: class Human < Animal; end]
-    = { "class" __ @[0]Identifier (__ "<" __ @[1]Identifier)? EOS __ @CompleteStatement __ "end" #Class }
+    = { "class" __ @[0]Identifier (__ "<" __ @[1]Identifier)? EOS __ @[2]CompleteStatement __ "end" #Class }
 
 ModuleExpression
     = { "module" __ @Identifier __ @CompleteStatement __ "end" #Module }
@@ -515,7 +530,7 @@ Args
     = { addArgs #List }
 
 addArgs
-    = @Arg (_ "," _ @Arg)*
+    = @Arg (__ "," __ @Arg)*
 
 BlockizeArgument
     = { '&' _ @Arg #BlockArg }
@@ -531,9 +546,9 @@ CallArgs
     [bad-example: *a, 1]
     = { @Command #List }
     / { @BlockParameter #List }
-    / { @ExpandExpression (__"," __ @BlockParameter)? #List }
-    / { addAssocs (__"," __ @ExpandExpression)? (__"," __ @BlockParameter)? #List }
-    / { addArgs (__ "," __ addAssocs)? (__"," __ @ExpandExpression)? (__"," __ @BlockParameter)? #List }
+    / { @ExpandExpression (__ "," __ @BlockParameter)? #List }
+    / { addAssocs (__ "," __ @ExpandExpression)? (__ "," __ @BlockParameter)? #List }
+    / { addArgs (__ "," __ addAssocs)? (__ "," __ @ExpandExpression)? (__ "," __ @BlockParameter)? #List }
     / Args
 
 CmdArgs
@@ -559,10 +574,10 @@ ParameterList
 
 Singleton
     = VariableName
-    / "self"
-    / "nil"
-    / "true"
-    / "false"
+    / SelfExpression
+    / NilExpression
+    / TrueExpression
+    / FalseExpression
     / "(" __ Expression __ ")"
 
 addAssocs
@@ -627,33 +642,50 @@ BraceBlock
     [example: {|a,b| }]
     = { "{" __ ("|" __ (@[0]BlockVar)? __ "|" __)? (@[1]CompleteStatement)? __ "}" #BlockArgument }
 
+DoEndBlockWithoutParameter
+    [example: do a * b end]
+    = "do" __ CompleteStatement __ "end"
+
+BraceBlockWithoutParameter
+    [example: { x * x }]
+    = "{" __ CompleteStatement __ "}"
+
+
+// Note:
+// There is no space between receiver and index.
+// ex) p[1]  # => index "1" for receiver "p"
+// ex) p [1] # Array literal "[1]" as first argument of function "p"
+
 FunctionCallExpression
     [example: 10.times do |n| p n end]
     [bad-example: 10.times 2 do |n| p n end]
-    = <with DoEndBlock PrimaryExpression> {@ _ addCall }*
+    = <with DoEndBlock PrimaryExpression> {@ addCall }*
 
 LeftHandSideExpression
-    = <with DoEndBlock PrimaryExpression> {@ _ addLHSCall }+ 
+    = <with DoEndBlock PrimaryExpression> {@ addLHSCall }+ 
     / PrimaryLHSExpression
 
 addFuncName
-    = "." __ @[1]IdentifierName
+    = "." __ @[1]OperationName
+    / "." __ @[1]IdentifierName
     / "::" __ @[1]Identifier
     / ("." / "::") __ @[1]FunctionName
 
 addCall
     = "[" __ (@[1]Args)? __ "]" #Indexer
-    / addFuncName (_ addArguments)? #Apply.Function
+    / _ addFuncName (_ addArguments)? #Apply.Function
 
 addLHSCall
     = "[" __ (@[1]Args)? __ "]" #Indexer
-    / addFuncName (_ addArguments &NEXT_CALL)? #Apply.LeftSide
+    / _ addFuncName (_ addArguments &NEXT_CALL)? #Apply.LeftSide
 
 NEXT_CALL
-    = ( _ ("[" / "." / "::") )
+    = "[" / _ "." / _ "::"
 
 UnaryExpression
-    = FunctionCallExpression / { addUnaryOperator _ @UnaryExpression }
+    [example: +a]
+    [bad-example: + a]
+    = FunctionCallExpression / { addUnaryOperator @UnaryExpression }
 
 addUnaryOperator
     = "+" #Plus
@@ -752,11 +784,11 @@ addKeywordLogicalOperator
     / "or" #Or
 
 BeforeCommandFunctionCallExpression
-    = <with DoEndBlock PrimaryExpression> {@ _ addBeforeCommandCall }*
+    = <with DoEndBlock PrimaryExpression> {@ addBeforeCommandCall }*
 
 addBeforeCommandCall
     = "[" __ (@[1]Args)? __ "]" #Indexer
-    / addFuncName (_ addArguments / &NEXT_CALL) #Apply.Function.BeforeCommand
+    / _ addFuncName (_ addArguments / &NEXT_CALL) #Apply.Function.BeforeCommand
 
 // Command is a function call without parenthesis
 Command
@@ -764,13 +796,13 @@ Command
     [example: a.b.c 1]
     [example: a(b).c 1]
     [bad-example: a(b) 1]
-    = { @DummySelf @OperationName _ addCmdArguments #Apply.Command.A }
+    = { @DummySelf @OperationName !'[' !OPERATOR _ addCmdArguments #Apply.Command.A }
     / { @BeforeCommandFunctionCallExpression _ addFuncName _ addCmdArguments #Apply.Command.B }
-    / { "super" _ @CmdArgs #Super }
-    / { "yield" _ @CmdArgs #Yield }
-    / { "return" _ @CmdArgs #Return }
-    / { "break" _ @CmdArgs #Break }
-    / { "next" _ @CmdArgs #Next }
+    / { "super" (_ @CmdArgs)? #Super }
+    / { "yield" (_ @CmdArgs)? #Yield }
+    / { "return" (_ @CmdArgs)? #Return }
+    / { "break" (_ @CmdArgs)? #Break }
+    / { "next" (_ @CmdArgs)? #Next }
 
 addCmdArguments
     = @[2]CmdArgs (_ @[3]BlockArgument)?
@@ -778,10 +810,12 @@ addCmdArguments
 
 Expression
     [example: [1,2].map{|x| x*x}[1]]
+    [example: x+d > 0 and not a.include?(x+d) and not nbc.include?(x+d)]
     = { @MultipleLeftHandSideExpression __ "=" __ @MultipleRightHandSideExpression #MultipleAssign }
     / Command
     / "!" _ Command
     / ReturnExpression
+    / DefinedExpression
     / KeywordLogicalExpression
 
 ReturnExpression
