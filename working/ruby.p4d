@@ -45,11 +45,14 @@ IdentifierName
 OperationName
     = { IDENTIFIER [!?]? #Name }
 
+OperationName2
+    = { IDENTIFIER [!?] #Name }
+
 FUNCTION_NAME
-    = (IDENTIFIER [!?]?
+    = IDENTIFIER [!?]?
        / OPERATOR
-       / "__LINE__" / "__FILE__" / "BEGIN" / "END"
-       / KEYWORD)
+       / ("__LINE__" / "__FILE__" / "BEGIN" / "END") [!?]?
+       / KEYWORD [!?]?
 
 OPERATOR
     = "|" / "^" / "&" / "<=>" / "==" / "===" / "=~"
@@ -108,7 +111,7 @@ HEX4
 
 EOS
     = _ ';'
-    / _ LINE_TERMINATOR_SEQUENCE
+    / _ LINE_TERMINATOR
     / _ SINGLE_LINE_COMMENT LINE_TERMINATOR_SEQUENCE
     / __ EOF
 
@@ -333,7 +336,8 @@ UndefStatement
 DecoratorStatement
     [example: if true then 1 end while f]
     [example: puts n += 1 while n < 10]
-    = NoDecorationStatement {@ _ addDecorator _ @Expression }*
+    [example: tmp = input.read(4096) or break]
+    = <with Decorator NoDecorationStatement> {@ <if Decorator> _ addDecorator _ @Expression }*
 
 addDecorator
     = "if" #IfDecorator
@@ -378,10 +382,7 @@ Variable
     / LineExpression
 
 StatementLikeExpression
-    = PrimaryReturnExpression
-    / PrimaryYieldExpression
-    / DefinedExpression
-    / IfExpression
+    = IfExpression
     / UnlessExpression
     / WhileExpression
     / UntilExpression
@@ -392,12 +393,6 @@ StatementLikeExpression
     / ModuleExpression
     / FunctionDefinition
     / EigenMethodDefinition
-
-PrimaryReturnExpression
-    = { "return" _ (_ "(" _ (@CallArgs _ )? ")" )? #Return }
-
-PrimaryYieldExpression
-    = { "yield" _ (_ "(" _ (@CallArgs _ )? ")" )? #Yield }
 
 IfExpression
     [example: if true then return end]
@@ -415,7 +410,7 @@ ElsifClause
         (elseClause / elsifClause)? #If }
 
 elseClause
-    = "else" EOS __ @CompleteStatement
+    = "else" EOS* _ @CompleteStatement
 
 UnlessExpression
     [example: unless true then return end]
@@ -424,11 +419,11 @@ UnlessExpression
 
 WhileExpression
     [example: while true do 1 end]
-    = { "while" _ @Expression _ DO __ @CompleteStatement __ "end"}
+    = { "while" _ <without DoEndBlock @Expression> _ DO __ @CompleteStatement __ "end" #While }
 
 UntilExpression
     [example: until true do 1 end]
-    = { "until" _ @Expression _ DO __ @CompleteStatement __ "end"}
+    = { "until" _ <without DoEndBlock @Expression> _ DO __ @CompleteStatement __ "end" #Until }
 
 CaseExpression
     [example: case n; when 1; a; end]
@@ -502,10 +497,10 @@ LHSExpandExpression
     = { '*' _ @LeftHandSideExpression #Expand }
 
 THEN
-    = EOS / "then" / EOS _ "then"
+    = "then" / EOS _ "then" / EOS
 
 DO
-    = EOS / "do" / EOS _ "do"
+    = "do" / EOS (_ "do")?
 
 BlockVar
     = MultipleLeftHandSideExpression
@@ -532,8 +527,13 @@ Args
 addArgs
     = @Arg (__ "," __ @Arg)*
 
-BlockizeArgument
-    = { '&' _ @Arg #BlockArg }
+CallArgsBody
+    = { @Command #List }
+    / { @BlockParameter #List }
+    / { @ExpandExpression (__ "," __ @BlockParameter)? #List }
+    / { addAssocs (__ "," __ @ExpandExpression)? (__ "," __ @BlockParameter)? #List }
+    / { addArgs (__ "," __ addAssocs)? (__ "," __ @ExpandExpression)? (__ "," __ @BlockParameter)? #List }
+    / Args
 
 CallArgs
     [example: 1,2,3,4]
@@ -544,21 +544,17 @@ CallArgs
     [bad-example: &b, *a]
     [bad-example: &b, 1]
     [bad-example: *a, 1]
-    = { @Command #List }
-    / { @BlockParameter #List }
-    / { @ExpandExpression (__ "," __ @BlockParameter)? #List }
-    / { addAssocs (__ "," __ @ExpandExpression)? (__ "," __ @BlockParameter)? #List }
-    / { addArgs (__ "," __ addAssocs)? (__ "," __ @ExpandExpression)? (__ "," __ @BlockParameter)? #List }
-    / Args
+    //= <without Decorator CallArgsBody>
+    = <without Decorator <without KeywordOperator CallArgsBody> >
 
 CmdArgs
-    = !"(" <without DoEndBlock CallArgs>
+    = !"(" <without DoEndBlock <without StatementAsPrimary CallArgs> >
 
 VariadicParameter
     = { "*" _ @Identifier #VariadicParameter }
 
 BlockParameter
-    = { "&" _ @Identifier #BlockParameter }
+    = { "&" _ (@Identifier / @Symbol) #BlockParameter }
 
 ParameterList
     [example: *a]
@@ -589,7 +585,7 @@ Association
 // Expression
 
 PrimaryExpression
-    = "(" __ CompleteStatement __ ")"
+    = "(" __ <with StatementAsPrimary CompleteStatement> __ ")"
     / Literal
     / Variable !(_[({])
     / ArrayLiteral
@@ -597,12 +593,13 @@ PrimaryExpression
     / Symbol
     / PrimaryCallExpression
     / ConstantExpression
-    / StatementLikeExpression
+    / <if StatementAsPrimary> StatementLikeExpression
 
 ConstantExpression
     = { "::" _ @[1]Identifier #Name }
 
 PrimaryCallExpression
+    [example: p (if false then 1 else 2 end)]
     = { @[0]DummySelf @[1]OperationName _ addArguments #Apply.P.A }
     / { @[0]DummySelf @[1]Super (_ addArguments)? #Apply.P.B }
 
@@ -773,11 +770,47 @@ addAssignmentOperator
 Arg
     = AssignmentExpression
 
+CommandNotExpression
+    = Command / { __ "!" #Not _ @CommandNotExpression }
+
 KeywordNotExpression
-    = AssignmentExpression / { __ "not" #Not _ @KeywordNotExpression }
+    = <with KeywordOperator CommandNotExpression>
+    / <with KeywordOperator AssignmentExpression>
+    / <if KeywordOperator> { __ "not" #Not _ @KeywordNotExpression }
+
+KeywordLogicalOperandWithControl
+    = KeywordNotExpression
+    / ControlExpression
+
+ControlExpression
+    = ReturnExpression
+    / BreakExpression
+    / NextExpression
+    / RedoExpression
+    / YieldExpression
+
+ReturnExpression
+    = { "return" _ "(" _ @CallArgs _ ")" #Return }
+    / { "return" (_ @CmdArgs)? #Return }
+
+BreakExpression
+    = { "break" _ "(" _ @CallArgs _ ")" #Break }
+    / { "break" (_ @CmdArgs)? #Break }
+
+NextExpression
+    = { "next" _ "(" _ @CallArgs _ ")" #Next }
+    / { "next" (_ @CmdArgs)? #Next }
+
+RedoExpression
+    = { "redo" _ "(" _ @CallArgs _ ")" #Redo }
+    / { "redo" (_ @CmdArgs)? #Redo }
+
+YieldExpression
+    = { "yield" _ "(" _ @CallArgs _ ")" #Redo }
+    / { "yield" (_ @CmdArgs)? #Redo }
 
 KeywordLogicalExpression
-    = KeywordNotExpression {@ __ addKeywordLogicalOperator __ @KeywordNotExpression #And }*
+    = KeywordNotExpression {@ <if KeywordOperator> __ addKeywordLogicalOperator __ @KeywordLogicalOperandWithControl #And }*
 
 addKeywordLogicalOperator
     = "and" #And
@@ -796,13 +829,12 @@ Command
     [example: a.b.c 1]
     [example: a(b).c 1]
     [bad-example: a(b) 1]
+    [bad-example: p if false then 1 else 2 end]
     = { @DummySelf @OperationName !'[' !OPERATOR _ addCmdArguments #Apply.Command.A }
-    / { @BeforeCommandFunctionCallExpression _ addFuncName _ addCmdArguments #Apply.Command.B }
+    / { @DummySelf @OperationName2 !'[' !OPERATOR _ addCmdArguments? #Apply.Command.B }
+    / { @BeforeCommandFunctionCallExpression _ addFuncName _ addCmdArguments #Apply.Command.C }
     / { "super" (_ @CmdArgs)? #Super }
-    / { "yield" (_ @CmdArgs)? #Yield }
-    / { "return" (_ @CmdArgs)? #Return }
-    / { "break" (_ @CmdArgs)? #Break }
-    / { "next" (_ @CmdArgs)? #Next }
+    / { "defined?" _ @Arg #Defined }
 
 addCmdArguments
     = @[2]CmdArgs (_ @[3]BlockArgument)?
@@ -812,17 +844,8 @@ Expression
     [example: [1,2].map{|x| x*x}[1]]
     [example: x+d > 0 and not a.include?(x+d) and not nbc.include?(x+d)]
     = { @MultipleLeftHandSideExpression __ "=" __ @MultipleRightHandSideExpression #MultipleAssign }
-    / Command
-    / "!" _ Command
-    / ReturnExpression
-    / DefinedExpression
     / KeywordLogicalExpression
-
-ReturnExpression
-    = { "return" (_ @CallArgs)? #Return }
-
-DefinedExpression
-    = { "defined?" __ @Arg #Defined }
+    / ControlExpression
 
 /*
 HIGH
