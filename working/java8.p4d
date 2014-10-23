@@ -488,12 +488,14 @@ LocalDeclaration
 
 Statement
 	= Block
+	/ { "assert" @Expression (":" @Expression)? ";" #Assert }
 	/ { "if"   "(" @Expression ")" @Statement ("else" @Statement)? #If }
 	/ { "switch" "(" @Expression ")" @Statement #Switch }
 	/ { "while"  "(" @Expression ")" @Statement #While }
 	/ { "do" @Statement "while" "(" @Expression ")" ";" #DoWhile }
 	/ { "for" "(" (@Expression)?       ";" (@Expression)? ";" (@Expression)? ")" @Statement #For }
 	/ { "for" "(" @VariableDeclaration ";" (@Expression)? ";" (@Expression)? ")" @Statement #For }
+	/ { "for" "(" (@VariableModifier)* @Type @Name ":" @Expression ")" @Statement #ForEach }
 	/ { "goto" @Name ";" #Goto }
 	/ { "continue" ";" #Continue }
 	/ { "break" ";" #Break }
