@@ -26,7 +26,7 @@ DIGIT
 
 
 Line
-	= Code / Item / Head / Text / Blank / Nl
+	= Code / Item / Head / Text / Blank / Nl / Hr
 
 Code
 	= { ( [ \t] [ \t] [ \t] [ \t]+ '`' @{ (!'`' .)* #code } '`' _ BREAK?)+ #multilinecode }
@@ -41,14 +41,21 @@ Item
 	/ { DIGIT+ '.' [ \t]+ @Text _ BREAK? #ol_li_1 }
 
 Head
-	= { '###' _ @Text _ BREAK? #h1 }
+	= { '######' _ @Text _ BREAK? #h6 }
+	/ { '#####' _ @Text _ BREAK? #h5 }
+	/ { '####' _ @Text _ BREAK? #h4 }
+	/ { '###' _ @Text _ BREAK? #h3 }
 	/ { '##' _ @Text _ BREAK? #h2 }
-	/ { '#' _ @Text _ BREAK? #h3 }
+	/ { '#' _ @Text _ BREAK? #h1 }
 	/ { @Text _ '='+ _ BREAK? #h1 }
 	/ { @Text _ '-'+ _ BREAK? #h2 }
 
 Nl
 	= [ \t] [ \t] BREAK { #br }
+
+Hr
+	= '*' _ '*' ( _ '*')* BREAK { #hr }
+	/ '-' _ '-' ( _ '-')* BREAK { #hr }
 
 Text
 	= { (@TextMaterial)+ BREAK? #text }
