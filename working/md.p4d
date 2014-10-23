@@ -13,10 +13,10 @@ TopLevel
 	= _ Statement _
 
 Statement
-	= { (@Line BREAK+)+ #source }
+	= { (@Line)+ #source }
 
 _
-	= [ \t]*
+	= (!Nl [ \t])*
 
 BREAK
 	= '\n' / '\r\n' / '\r'
@@ -26,48 +26,56 @@ DIGIT
 
 
 Line
-	= ( Code / Item / Head / Text ) (@Nl)?
+	= Code / Item / Head / Text / Blank / Nl
 
 Code
-	= { ( [ \t] [ \t] [ \t] [ \t]+ '`' @{ TEXT* #code } '`' _ BREAK)* [ \t] [ \t] [ \t] [ \t]+ '`' @{ TEXT* #code } '`' _ #multilinecode }
-	/ '`' { TEXT* #singlelinecode } '`'
+	= { ( [ \t] [ \t] [ \t] [ \t]+ '`' @{ (!'`' .)* #code } '`' _ BREAK?)+ #multilinecode }
+	/ '`' { @{ (!'`' .)* #code } #singlelinecode } '`' BREAK?
 
 Item
-	= { [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] ('*'/'+'/'-') [ \t]+ @Text _ #ul_li_3 }
-	/ { [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] DIGIT+ '.' [ \t]+ @Text _ #ol_li_3 }
-	/ { [ \t] [ \t] [ \t] [ \t] ('*'/'+'/'-') [ \t]+ @Text _ #ul_li_2 }
-	/ { [ \t] [ \t] [ \t] [ \t] DIGIT+ '.' [ \t]+ @Text _ #ol_li_2 }
-	/ { ('*'/'+'/'-') [ \t]+ @Text _ #ul_li_1 }
-	/ { DIGIT+ '.' [ \t]+ @Text _ #ol_li_1 }
+	= { [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] ('*'/'+'/'-') [ \t]+ @Text _ BREAK? #ul_li_3 }
+	/ { [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] DIGIT+ '.' [ \t]+ @Text _ BREAK? #ol_li_3 }
+	/ { [ \t] [ \t] [ \t] [ \t] ('*'/'+'/'-') [ \t]+ @Text _ BREAK? #ul_li_2 }
+	/ { [ \t] [ \t] [ \t] [ \t] DIGIT+ '.' [ \t]+ @Text _ BREAK? #ol_li_2 }
+	/ { ('*'/'+'/'-') [ \t]+ @Text _ BREAK? #ul_li_1 }
+	/ { DIGIT+ '.' [ \t]+ @Text _ BREAK? #ol_li_1 }
 
 Head
-	= { _ '###' _ @Text #h1 }
-	/ { _ '##' _ @Text #h2 }
-	/ { _ '#' _ @Text #h3 }
-	/ { _ @Text BREAK _ '=' '='+ _ #h1 }
-	/ { _ @Text BREAK _ '-' '-'+ _ #h2 }
+	= { '###' _ @Text _ BREAK? #h1 }
+	/ { '##' _ @Text _ BREAK? #h2 }
+	/ { '#' _ @Text _ BREAK? #h3 }
+	/ { @Text _ '='+ _ BREAK? #h1 }
+	/ { @Text _ '-'+ _ BREAK? #h2 }
 
 Nl
-	= [ \t] [ \t] &BREAK { #br }
+	= [ \t] [ \t] BREAK { #br }
 
 Text
-	= { (@TextMaterial)+ #text }
+	= { (@TextMaterial)+ BREAK? #text }
 
 TextMaterial
 	= { 'http' [-_#\.!'()%A-Za-z0-9] #a }		//GFM
-	/ { '[' @{ (@Letter)* #alt } '](' @{ TEXT* #url } ')' #link }
-	/ { '![' @{ (@Letter)* #alt } '](' @{ TEXT* #url } ')' #pic }
+	/ { '[' @{ (@NoBLetter)* #alt } '](' @{ (!')' .)* #url } ')' #link }
+	/ { '![' @{ (@NoBLetter)* #alt } '](' @{ (!')' .)* #url } ')' #pic }
 	/ Letter
 
 Letter
-	= '~~' { TEXT* #strike } '~~'		//GFM
-	/ '**' { TEXT* #bold } '**'
-	/ '*' { TEXT* #italic } '*'
+	= '~~' { (!'~~' TEXT)* #strike } '~~'		//GFM
+	/ '**' { (!'**' TEXT)* #bold } '**'
+	/ '*' { (!'*' TEXT)* #italic } '*'
 	/ { TEXT+ #div }
 
 TEXT
-	= '(' TEXT+ ')'
-	/ ( (!Nl [ \t]) / [\x21-\x27\x2C\x2D\x2F-\x5A\x5E\x5F\x61-\x7E\\\.] )+
+	= (!Nl [ \t]) / [\x21-\x29\x2C\x2D\x2F-\x5A\x5E\x5F\x61-\x7E\\\.]
+
+NoBLetter
+	= '~~' { (!'~~' NOBTEXT)* #strike } '~~'		//GFM
+	/ '**' { (!'**' NOBTEXT)* #bold } '**'
+	/ '*' { (!'*' NOBTEXT)* #italic } '*'
+	/ { NOBTEXT+ #div }
+
+NOBTEXT
+	= (!Nl [ \t]) / !'](' [\x21-\x29\x2C\x2D\x2F-\x5A\x5E\x5F\x61-\x7E\\\.]
 
 Blank
-	= { &BREAK #emptyLine }
+	= _ BREAK { #emptyLine }
