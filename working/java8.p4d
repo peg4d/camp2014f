@@ -63,7 +63,7 @@ KEYWORD
 
 "++"     = '++' _
 "--"     = '--' _
-"&"      = '&' !'&' _
+"&"      = '&' ![&=] _
 "*"      = '*' !'=' _
 "+"      = '+' ![+=] _
 "-"      = '-' !('-' / [=>]) _
@@ -88,7 +88,7 @@ KEYWORD
 "=="     = '==' _
 "!="     = '!=' _
 "^"      = '^' ![=] _
-"|"      = '|' ![=] _
+"|"      = '|' ![|=] _
 "&&"     = '&&' _
 "||"     = '||' _
 "?"      = '?' _
@@ -459,7 +459,10 @@ Type
 	= ({ @PrimaryType @TGenerics #TGenerics } / PrimaryType) {@ "[" _? "]" #TArray }*
 
 TypeList
-	= { @Type ("," @Type)* #TypeList }
+	= { @TypeElement ("," @TypeElement)* #TypeList }
+
+TypeElement
+	= (Type / { "?" #TWildCard }) {@ (@{ _ "extends" @Type ("&" @Type)* #SuperType })? #TypeElement }
 
 TGenerics
 	= { "<" @TypeList ">" #Generics } _
@@ -500,6 +503,7 @@ Statement
 	/ { "continue" ";" #Continue }
 	/ { "break" ";" #Break }
 	/ { "return" (@Expression)?  ";" #Return }
+	/ { "try" @ResourceStatement @Block (@CatchBlock)* (@{ "finally" @Block #Finally })? #Try }
 	/ { "try" @Block (@CatchBlock)* @{ "finally" @Block #Finally } #Try }
 	/ { "try" @Block (@CatchBlock)+ #Try }
 	/ { "case" @ConstantExpression ":" (!"case" !"default" @Statement)* #SwitchCase }
@@ -507,6 +511,13 @@ Statement
 	/ { @Name ":" #Label }
 	/ { @Expression ";" #ExpressionStatement }
 	/ { #Empty } ";"
+
+//trycatch
+ResourceStatement
+	= "(" { @Resource _ (";" @Resource _ )* #ResourceList } ";"? ")"
+
+Resource
+	= { (@VariableModifier)* @Type @Name "=" @Expression #Declaration }
 
 CatchBlock
 	= { "catch" "(" @CatchParameter ")" @Block #Catch }
@@ -735,4 +746,4 @@ HEX_ESCAPE
 	= '\\' 'u'+ HEX HEX HEX HEX
 
 JavaNull
-	= { 'null' #Null }
+	= { 'null' #Null } _
