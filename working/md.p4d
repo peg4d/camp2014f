@@ -4,16 +4,16 @@
 //
 
 File
-	= Statement !.
+	= Statements !.
 
 Chunk
-	= Line
+	= Quote
 
 TopLevel
-	= _ Statement _
+	= _ Statements _
 
-Statement
-	= { (@Line)+ #source }
+Statements
+	= { (@Quote)+ #source }
 
 _
 	= (!Nl [ \t])*
@@ -24,65 +24,77 @@ BREAK
 DIGIT
 	= [0-9]
 
+Quote
+	= {'>' #quote} @Quote
+	/ Statement
 
-Line
-	= Code / Item / Head / Text / Blank / Nl / Hr
+Statement
+	= Code / Item / Head / Text / Blank / Hr / Nl
 
 Code
 	= { ( [ \t] [ \t] [ \t] [ \t]+ '`' @{ (!'`' .)* #code } '`' _ BREAK?)+ #multilinecode }
-	/ '`' { @{ (!'`' .)* #code } #singlelinecode } '`' BREAK?
+	/ '`' { @{ (!'`' !BREAK .)* #code } #singlelinecode } '`' BREAK?
 
 Item
-	= { [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] ('*'/'+'/'-') [ \t]+ @Text _ BREAK? #ul_li_3 }
-	/ { [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] DIGIT+ '.' [ \t]+ @Text _ BREAK? #ol_li_3 }
-	/ { [ \t] [ \t] [ \t] [ \t] ('*'/'+'/'-') [ \t]+ @Text _ BREAK? #ul_li_2 }
-	/ { [ \t] [ \t] [ \t] [ \t] DIGIT+ '.' [ \t]+ @Text _ BREAK? #ol_li_2 }
-	/ { ('*'/'+'/'-') [ \t]+ @Text _ BREAK? #ul_li_1 }
-	/ { DIGIT+ '.' [ \t]+ @Text _ BREAK? #ol_li_1 }
+	= { [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t]+ ('*'/'+'/'-') [ \t]+ @NoBreakText _ BREAK? #ul_li_3 }
+	/ { [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t]+ DIGIT+ '.' [ \t]+ @NoBreakText _ BREAK? #ol_li_3 }
+	/ { [ \t] [ \t] [ \t] [ \t]+ ('*'/'+'/'-') [ \t]+ @NoBreakText _ BREAK? #ul_li_2 }
+	/ { [ \t] [ \t] [ \t] [ \t]+ DIGIT+ '.' [ \t]+ @NoBreakTextt _ BREAK? #ol_li_2 }
+	/ { _ ('*'/'+'/'-') [ \t]+ @NoBreakText _ BREAK? #ul_li_1 }
+	/ { _ DIGIT+ '.' [ \t]+ @NoBreakText _ BREAK? #ol_li_1 }
 
 Head
-	= { '######' _ @Text _ BREAK? #h6 }
-	/ { '#####' _ @Text _ BREAK? #h5 }
-	/ { '####' _ @Text _ BREAK? #h4 }
-	/ { '###' _ @Text _ BREAK? #h3 }
-	/ { '##' _ @Text _ BREAK? #h2 }
-	/ { '#' _ @Text _ BREAK? #h1 }
-	/ { @Text _ '='+ _ BREAK? #h1 }
-	/ { @Text _ '-'+ _ BREAK? #h2 }
+	= { '######' _ @NoBreakText #h6 } _ '#'* _ BREAK?
+	/ { '#####' _ @NoBreakText #h5 } _ '#'* _ BREAK?
+	/ { '####' _ @NoBreakText #h4 } _ '#'* _ BREAK?
+	/ { '###' _ @NoBreakText #h3 } _ '#'* _ BREAK?
+	/ { '##' _ @NoBreakText #h2 } _ '#'* _ BREAK?
+	/ { '#' _ @NoBreakText #h1 } _ '#'* _ BREAK?
+	/ { @NoBreakText _ BREAK _'-'+ _ BREAK? #h2 }
+	/ { @NoBreakText _ BREAK _ '='+ _ BREAK? #h1 }
 
 Nl
 	= [ \t] [ \t] BREAK { #br }
 
 Hr
-	= '*' _ '*' ( _ '*')* BREAK { #hr }
-	/ '-' _ '-' ( _ '-')* BREAK { #hr }
+	= '*' _ '*' _ '*' ( _ / '*')* BREAK { #hr }
+	/ '-' _ '-' _ '-' ( _ / '-')* BREAK { #hr }
+	/ '_' _ '_' _ '_'( _ / '_')* BREAK { #hr }
 
 Text
 	= { (@TextMaterial)+ BREAK? #text }
 
+NoBreakText
+	= { (@TextMaterial)+ #text }
+
 TextMaterial
-	= { 'http' [-_#\.!'()%A-Za-z0-9] #a }		//GFM
-	/ { '[' @{ (@NoBLetter)* #alt } '](' @{ (!')' .)* #url } ')' #link }
-	/ { '![' @{ (@NoBLetter)* #alt } '](' @{ (!')' .)* #url } ')' #pic }
+	= { '[' @{ (!']' .)* #name } ']:' #a }
+	/ { '[' @{ (@NoBLetter)* #alt } '][' @{ (!']' .)* #href } ']' #a }
+	/ { '[' @{ (@NoBLetter)* #alt } '](' @{ (!')' .)* #href } ')' #a }
+	/ { '![' @{ (@NoBLetter)* #alt } '](' @{ (!')' .)* #href } ')' #img }
+//	/ { @{ 'http' [-_#\.!'()%A-Za-z0-9] #href } #a }		//GFM
 	/ Letter
 
 Letter
 	= '~~' { (!'~~' TEXT)* #strike } '~~'		//GFM
 	/ '**' { (!'**' TEXT)* #bold } '**'
 	/ '*' { (!'*' TEXT)* #italic } '*'
-	/ { TEXT+ #div }
-
-TEXT
-	= (!Nl [ \t]) / [\x21-\x29\x2C\x2D\x2F-\x5A\x5E\x5F\x61-\x7E\\\.]
+	/ '__' { (!'__' TEXT)* #bold } '__'
+	/ '_' { (!'_' TEXT)* #italic } '_'
+	/ { (!'*' !'_' !'~' TEXT)+ #span }
 
 NoBLetter
-	= '~~' { (!'~~' NOBTEXT)* #strike } '~~'		//GFM
-	/ '**' { (!'**' NOBTEXT)* #bold } '**'
-	/ '*' { (!'*' NOBTEXT)* #italic } '*'
-	/ { NOBTEXT+ #div }
+	= '~~' { (!'~~' !'](' TEXT)* #strike } '~~'		//GFM
+	/ '**' { (!'**' !'](' TEXT)* #bold } '**'
+	/ '__' { (!'__' !'](' TEXT)* #bold } '__'
+	/ '_' { (!'_' !'](' TEXT)* #italic } '_'
+	/ '*' { (!'*' !'](' TEXT)* #italic } '*'
+	/ { (!'](' !'*' !'_' !'~' TEXT)+ #span }
 
-NOBTEXT
-	= (!Nl [ \t]) / !'](' [\x21-\x29\x2C\x2D\x2F-\x5A\x5E\x5F\x61-\x7E\\\.]
+TEXT
+	= !'![' !'[' !']' !BREAK !([ \t] [ \t] BREAK) .
 
 Blank
 	= _ BREAK { #emptyLine }
+
+//	[\x21-\x29\x2C\x2D\x2F-\x5A\x5E\x5F\x61-\x7E\\\.]
