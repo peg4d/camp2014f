@@ -29,7 +29,7 @@ Quote
 	/ Statement
 
 Statement
-	= Code / Item / Head / Text / Blank / Hr / Nl
+	= Code / Item / Head / Hr / Nl / Text / Blank
 
 Code
 	= { ( [ \t] [ \t] [ \t] [ \t]+ '`' @{ (!'`' .)* #code } '`' _ BREAK?)+ #multilinecode }
@@ -37,29 +37,29 @@ Code
 
 Item
 	= { [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t]+ ('*'/'+'/'-') [ \t]+ @NoBreakText _ BREAK? #ul_li_3 }
-	/ { [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t]+ DIGIT+ '.' [ \t]+ @NoBreakText _ BREAK? #ol_li_3 }
-	/ { [ \t] [ \t] [ \t] [ \t]+ ('*'/'+'/'-') [ \t]+ @NoBreakText _ BREAK? #ul_li_2 }
-	/ { [ \t] [ \t] [ \t] [ \t]+ DIGIT+ '.' [ \t]+ @NoBreakTextt _ BREAK? #ol_li_2 }
-	/ { _ ('*'/'+'/'-') [ \t]+ @NoBreakText _ BREAK? #ul_li_1 }
-	/ { _ DIGIT+ '.' [ \t]+ @NoBreakText _ BREAK? #ol_li_1 }
+	/ { [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t]+ DIGIT+ '.' [ \t]+ @NoBreakText _ BREAK #ol_li_3 }
+	/ { [ \t] [ \t] [ \t] [ \t]+ ('*'/'+'/'-') [ \t]+ @NoBreakText _ BREAK #ul_li_2 }
+	/ { [ \t] [ \t] [ \t] [ \t]+ DIGIT+ '.' [ \t]+ @NoBreakText _ BREAK #ol_li_2 }
+	/ { _ ('*'/'+'/'-') [ \t]+ @NoBreakText _ BREAK #ul_li_1 }
+	/ { _ DIGIT+ '.' [ \t]+ @NoBreakText _ BREAK #ol_li_1 }
 
 Head
-	= { '######' _ @NoBreakText #h6 } _ '#'* _ BREAK?
-	/ { '#####' _ @NoBreakText #h5 } _ '#'* _ BREAK?
-	/ { '####' _ @NoBreakText #h4 } _ '#'* _ BREAK?
-	/ { '###' _ @NoBreakText #h3 } _ '#'* _ BREAK?
-	/ { '##' _ @NoBreakText #h2 } _ '#'* _ BREAK?
-	/ { '#' _ @NoBreakText #h1 } _ '#'* _ BREAK?
-	/ { @NoBreakText _ BREAK _'-'+ _ BREAK? #h2 }
-	/ { @NoBreakText _ BREAK _ '='+ _ BREAK? #h1 }
+	= { '######' _ @NoBreakText #h6 } _ '#'* _ BREAK
+	/ { '#####' _ @NoBreakText #h5 } _ '#'* _ BREAK
+	/ { '####' _ @NoBreakText #h4 } _ '#'* _ BREAK
+	/ { '###' _ @NoBreakText #h3 } _ '#'* _ BREAK
+	/ { '##' _ @NoBreakText #h2 } _ '#'* _ BREAK
+	/ { '#' _ @NoBreakText #h1 } _ '#'* _ BREAK
+	/ { @NoBreakText _ BREAK _'-'+ _ BREAK #h2 }
+	/ { @NoBreakText _ BREAK _ '='+ _ BREAK #h1 }
 
 Nl
 	= [ \t] [ \t] BREAK { #br }
 
 Hr
-	= '*' _ '*' _ '*' ( _ / '*')* BREAK { #hr }
-	/ '-' _ '-' _ '-' ( _ / '-')* BREAK { #hr }
-	/ '_' _ '_' _ '_'( _ / '_')* BREAK { #hr }
+	= _ '*' _ '*' _ '*' ( _ '*')* _ BREAK { #hr }
+	/ _ '-' _ '-' _ '-' ( _ '-')* _ BREAK { #hr }
+	/ _ '_' _ '_' _ '_'( _ '_')* _ BREAK { #hr }
 
 Text
 	= { (@TextMaterial)+ BREAK? #text }
