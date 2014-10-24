@@ -3,6 +3,8 @@
 // ("GFM" means "GitHub Flavored Markdown".)
 //
 
+// Todo: Text複数行対応
+
 File
 	= Statements !.
 
@@ -29,37 +31,40 @@ Quote
 	/ Statement
 
 Statement
-	= Code / Item / Head / Hr / Nl / Text / Blank
+	= Hr / Code / Item / Head / ( Nl BREAK ) / Text / Blank
 
 Code
-	= { ( [ \t] [ \t] [ \t] [ \t]+ '`' @{ (!'`' .)* #code } '`' _ BREAK?)+ #multilinecode }
-	/ '`' { @{ (!'`' !BREAK .)* #code } #singlelinecode } '`' BREAK?
+	= { ( [ \t] [ \t] [ \t] [ \t]+ '`' @{ (!'`' .)* #code } '`' _ eos)+ #multilinecode }
+	/ '`' { @{ (!'`' !BREAK .)* #code } #singlelinecode } '`' _ eos
 
 Item
-	= { [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t]+ ('*'/'+'/'-') [ \t]+ @NoBreakText _ BREAK? #ul_li_3 }
-	/ { [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t]+ DIGIT+ '.' [ \t]+ @NoBreakText _ BREAK #ol_li_3 }
-	/ { [ \t] [ \t] [ \t] [ \t]+ ('*'/'+'/'-') [ \t]+ @NoBreakText _ BREAK #ul_li_2 }
-	/ { [ \t] [ \t] [ \t] [ \t]+ DIGIT+ '.' [ \t]+ @NoBreakText _ BREAK #ol_li_2 }
-	/ { _ ('*'/'+'/'-') [ \t]+ @NoBreakText _ BREAK #ul_li_1 }
-	/ { _ DIGIT+ '.' [ \t]+ @NoBreakText _ BREAK #ol_li_1 }
+	= { [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t]+ ('*'/'+'/'-') [ \t]+ @NoBreakText _ eos #ul_li_3 }
+	/ { [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t]+ DIGIT+ '.' [ \t]+ @NoBreakText _ eos #ol_li_3 }
+	/ { [ \t] [ \t] [ \t] [ \t]+ ('*'/'+'/'-') [ \t]+ @NoBreakText _ eos #ul_li_2 }
+	/ { [ \t] [ \t] [ \t] [ \t]+ DIGIT+ '.' [ \t]+ @NoBreakText _ eos #ol_li_2 }
+	/ { _ ('*'/'+'/'-') [ \t]+ @NoBreakText _ eos #ul_li_1 }
+	/ { _ DIGIT+ '.' [ \t]+ @NoBreakText _ eos #ol_li_1 }
 
 Head
-	= { '######' _ @NoBreakText #h6 } _ '#'* _ BREAK
-	/ { '#####' _ @NoBreakText #h5 } _ '#'* _ BREAK
-	/ { '####' _ @NoBreakText #h4 } _ '#'* _ BREAK
-	/ { '###' _ @NoBreakText #h3 } _ '#'* _ BREAK
-	/ { '##' _ @NoBreakText #h2 } _ '#'* _ BREAK
-	/ { '#' _ @NoBreakText #h1 } _ '#'* _ BREAK
-	/ { @NoBreakText _ BREAK _'-'+ _ BREAK #h2 }
-	/ { @NoBreakText _ BREAK _ '='+ _ BREAK #h1 }
+	= { '######' _ @NoBreakText #h6 } _ '#'* _ eos
+	/ { '#####' _ @NoBreakText #h5 } _ '#'* _ eos
+	/ { '####' _ @NoBreakText #h4 } _ '#'* _ eos
+	/ { '###' _ @NoBreakText #h3 } _ '#'* _ eos
+	/ { '##' _ @NoBreakText #h2 } _ '#'* _ eos
+	/ { '#' _ @NoBreakText #h1 } _ '#'* _ eos
+	/ { @NoBreakText _ eos _ '-'+ _ eos #h2 }
+	/ { @NoBreakText _ eos _ '='+ _ eos #h1 }
 
 Nl
-	= [ \t] [ \t] BREAK { #br }
+	= [ \t] [ \t] &BREAK { #br }
+
+eos
+	= (@Nl)? _ BREAK
 
 Hr
-	= _ '*' _ '*' _ '*' ( _ '*')* _ BREAK { #hr }
-	/ _ '-' _ '-' _ '-' ( _ '-')* _ BREAK { #hr }
-	/ _ '_' _ '_' _ '_'( _ '_')* _ BREAK { #hr }
+	= _ '*' _ '*' _ '*' ( _ '*')* _ eos { #hr }
+	/ _ '-' _ '-' _ '-' ( _ '-')* _ eos { #hr }
+	/ _ '_' _ '_' _ '_'( _ '_')* _ eos { #hr }
 
 Text
 	= { (@TextMaterial)+ BREAK? #text }
@@ -81,15 +86,15 @@ Letter
 	/ '*' { (!'*' TEXT)* #italic } '*'
 	/ '__' { (!'__' TEXT)* #bold } '__'
 	/ '_' { (!'_' TEXT)* #italic } '_'
-	/ { (!'*' !'_' !'~' TEXT)+ #span }
+	/ { TEXT+ #span }
 
 NoBLetter
 	= '~~' { (!'~~' !'](' TEXT)* #strike } '~~'		//GFM
 	/ '**' { (!'**' !'](' TEXT)* #bold } '**'
+	/ '*' { (!'*' !'](' TEXT)* #italic } '*'
 	/ '__' { (!'__' !'](' TEXT)* #bold } '__'
 	/ '_' { (!'_' !'](' TEXT)* #italic } '_'
-	/ '*' { (!'*' !'](' TEXT)* #italic } '*'
-	/ { (!'](' !'*' !'_' !'~' TEXT)+ #span }
+	/ { (!'](' TEXT)+ #span }
 
 TEXT
 	= !'![' !'[' !']' !BREAK !([ \t] [ \t] BREAK) .
