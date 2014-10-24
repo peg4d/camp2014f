@@ -18,10 +18,13 @@ Statements
 	= { (@Quote)+ #source }
 
 _
-	= (!Nl [ \t])*
+	= (!NL [ \t])*
 
 BREAK
 	= '\n' / '\r\n' / '\r'
+
+NL
+	= [ \t] [ \t] &BREAK
 
 DIGIT
 	= [0-9]
@@ -31,43 +34,46 @@ Quote
 	/ Statement
 
 Statement
-	= Hr / Code / Item / Head / ( Nl BREAK ) / Text / Blank
+	= Hr / Code / Item / Head / Text / Blank
 
 Code
-	= { ( [ \t] [ \t] [ \t] [ \t]+ '`' @{ (!'`' .)* #code } '`' _ eos)+ #multilinecode }
+	= { ( [ \t] [ \t] [ \t] [ \t]+ '`' @{ (!'`' .)* #code } '`' _ eos )+ #multilinecode }
 	/ '`' { @{ (!'`' !BREAK .)* #code } #singlelinecode } '`' _ eos
 
 Item
-	= { [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t]+ ('*'/'+'/'-') [ \t]+ @NoBreakText _ eos #ul_li_3 }
-	/ { [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t]+ DIGIT+ '.' [ \t]+ @NoBreakText _ eos #ol_li_3 }
-	/ { [ \t] [ \t] [ \t] [ \t]+ ('*'/'+'/'-') [ \t]+ @NoBreakText _ eos #ul_li_2 }
-	/ { [ \t] [ \t] [ \t] [ \t]+ DIGIT+ '.' [ \t]+ @NoBreakText _ eos #ol_li_2 }
-	/ { _ ('*'/'+'/'-') [ \t]+ @NoBreakText _ eos #ul_li_1 }
-	/ { _ DIGIT+ '.' [ \t]+ @NoBreakText _ eos #ol_li_1 }
+	= [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t]+ ('*'/'+'/'-') [ \t]+ { (!BREAK !NL .)* #ul_li_3 } _ eos
+	/ [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t]+ DIGIT+ '.' [ \t]+ { (!BREAK !NL .)* #ol_li_3 } _ eos
+	/ [ \t] [ \t] [ \t] [ \t]+ ('*'/'+'/'-') [ \t]+ { (!BREAK !NL .)* #ul_li_2 } _ eos
+	/ [ \t] [ \t] [ \t] [ \t]+ DIGIT+ '.' [ \t]+ { (!BREAK !NL .)* #ol_li_2 } _ eos
+	/  _ ('*'/'+'/'-') [ \t]+ { (!BREAK !NL .)*#ul_li_1 } _ eos
+	/ _ DIGIT+ '.' [ \t]+ { (!BREAK !NL .)* #ol_li_1 } _ eos
 
 Head
-	= { '######' _ @NoBreakText #h6 } _ '#'* _ eos
-	/ { '#####' _ @NoBreakText #h5 } _ '#'* _ eos
-	/ { '####' _ @NoBreakText #h4 } _ '#'* _ eos
-	/ { '###' _ @NoBreakText #h3 } _ '#'* _ eos
-	/ { '##' _ @NoBreakText #h2 } _ '#'* _ eos
-	/ { '#' _ @NoBreakText #h1 } _ '#'* _ eos
-	/ { @NoBreakText _ eos _ '-'+ _ eos #h2 }
-	/ { @NoBreakText _ eos _ '='+ _ eos #h1 }
-
-Nl
-	= [ \t] [ \t] &BREAK { #br }
-
-eos
-	= (@Nl)? _ BREAK
+	= { '######' _ @{ (!BREAK !NL !'#' .)* #span } _ '#'* _ eos #h6 }
+	/ { '#####' _ @{ (!BREAK !NL !'#' .)* #span } _ '#'* _ eos #h5 }
+	/ { '####' _ @{ (!BREAK !NL !'#' .)* #span } _ '#'* _ eos #h4 }
+	/ { '###' _ @{ (!BREAK !NL !'#' .)* #span } _ '#'* _ eos #h3 }
+	/ { '##' _ @{ (!BREAK !NL !'#' .)* #span } _ '#'* _ eos #h2 }
+	/ { '#' _ @{ (!BREAK !NL !'#' .)* #span } _ '#'* _ eos #h1 }
+	/ { @{ (!BREAK !NL .)* #span } _ eos _ '-'+ _ eos #h2 }
+	/ { @{ (!BREAK !NL .)* #span } _ eos _ '='+ _ eos #h1 }
 
 Hr
 	= _ '*' _ '*' _ '*' ( _ '*')* _ eos { #hr }
 	/ _ '-' _ '-' _ '-' ( _ '-')* _ eos { #hr }
 	/ _ '_' _ '_' _ '_'( _ '_')* _ eos { #hr }
 
+Blank
+	= _ BREAK { #emptyLine }
+
+NewLine
+	= NL { #br }
+
+eos
+	= (@NewLine)? BREAK
+
 Text
-	= { (@TextMaterial)+ BREAK? #text }
+	= { (@TextMaterial)+ _ eos #text }
 
 NoBreakText
 	= { (@TextMaterial)+ #text }
@@ -97,9 +103,6 @@ NoBLetter
 	/ { (!'](' TEXT)+ #span }
 
 TEXT
-	= !'![' !'[' !']' !BREAK !([ \t] [ \t] BREAK) .
-
-Blank
-	= _ BREAK { #emptyLine }
+	= !'![' !'[' !']' !NL !BREAK .
 
 //	[\x21-\x29\x2C\x2D\x2F-\x5A\x5E\x5F\x61-\x7E\\\.]
