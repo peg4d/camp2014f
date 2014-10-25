@@ -14,7 +14,10 @@ __
     [example: /* comment*/]
     [example: //comment
 ]
-    = (SPACE / LINE_TERMINATOR_SEQUENCE / COMMENT)*
+    = SPACE_OR_NEWLINE*
+
+SPACE_OR_NEWLINE
+    = SPACE / LINE_TERMINATOR_SEQUENCE / COMMENT
 
 // Space without line terminator
 _
@@ -172,7 +175,7 @@ EOF
 "or" = 'or' !W
 "self" = 'self' !W
 "super" = 'super' !W
-"then" = 'then' !W
+"F" = 'then' !W
 "true" = 'true' !W
 "undef" = 'undef' !W
 
@@ -189,7 +192,7 @@ KEYWORD
 //Literal
 //==========
 Literal
-    = NumericLiteral / StringLiteral / RegularExpressionLiteral
+    = NumericLiteral / StringLiteral / RegularExpressionLiteral / Symbol / ParcentNotation
 
 NumericLiteral
     [example: 0x1F]
@@ -222,6 +225,7 @@ FloatingPointLiteral
     [example: 12.456e-78]
     [example: 0.12]
     [example: 5e3]
+    [example: 4.84143144246472090e+00]
     = { DECIMAL_INTEGER '.' DIGIT+ EXPONENT_PART? #FloatingPointNumber }
     / { DECIMAL_INTEGER EXPONENT_PART #FloatingPointNumber }
 
@@ -229,7 +233,10 @@ DECIMAL_INTEGER
     = [1-9] DIGIT* / '0'
 
 EXPONENT_PART
-    = [eE] SIGN? [1-9] DIGIT*
+    [example: e+1]
+    [exam0]
+    [example: E-1]
+    = [eE] SIGN? DIGIT*
 
 DIGIT
     = [0-9_]
@@ -247,10 +254,12 @@ SOURCE
     = .
 
 StringLiteral
+    [example: ?"]
+    [bad-example: ? ]
     = ["] { DOUBLE_STRING_CHARACTER* #String } ["]
     / ['] { SINGLE_STRING_CHARACTER* #String } [']
     / [`] { BACK_STRING_CHARACTER* #Command } [`]
-    / "?" { ('\\' ESCAPE_SEQUENCE) / . #String }
+    / "?" { ('\\' ESCAPE_SEQUENCE) / !SPACE_OR_NEWLINE . #String }
 
 DOUBLE_STRING_CHARACTER
     = !( ["] / '\\' / LINE_TERMINATOR ) SOURCE / '\\' ESCAPE_SEQUENCE
@@ -301,6 +310,56 @@ REGEX_CLASS_CHAR
 REGEX_FLAGS
     = [gimsy]*
 
+ParcentNotation
+    = { "%" [wWiI] <without PNSpace PN_BODY> #ParcentNotation }
+    / { "%" [qQxrs]? PN_BODY #ParcentNotation }
+
+PN_BODY
+    = PN_PAREN
+    / PN_BRACE
+    / PN_BRAKET
+    / PN_ANGLE
+    / <if PNSpace> " " (!" " .)* " "
+    / <if PNSpace> <name EON LINE_TERMINATOR_SEQUENCE> (!<isa EON> .)* <isa EON>
+    / <name EON PN_PAIR> (!<isa EON> .)* <isa EON>
+
+PN_PAREN
+    = "(" (PN_PAREN / ![()] .)* ")"
+
+PN_BRACE
+    = "{" (PN_BRACE / ![{}] .)* "}"
+
+PN_BRAKET
+    = "[" (PN_BRAKET / ![\[\]] .)* "]"
+
+PN_ANGLE
+    = "<" (PN_ANGLE / ![<>] .)* ">"
+
+PN_PAIR
+    = ![a-zA-Z0-9 \n\r([{<] .
+
+HereDocument
+    = { "<<" "-"? (
+          ["] <name HereDocID IDENTIFIER> ["]
+        / ['] <name HereDocID IDENTIFIER> [']
+        / [`] <name HereDocID IDENTIFIER> [`]
+        / <name HereDocID IDENTIFIER>) (!HD_NEWLINE .)* HD_NEWLINE
+      (!(_ <isa HereDocID>) (!HD_NEWLINE .)* HD_NEWLINE)*
+      _ <isa HereDocID> HD_NEWLINE
+      #HereDocument
+    }/* / { "<<" (
+          ["] <name HereDocID IDENTIFIER> ["]
+        / ['] <name HereDocID IDENTIFIER> [']
+        / [`] <name HereDocID IDENTIFIER> [`]
+        / <name HereDocID IDENTIFIER>) HD_NEWLINE
+      (!<isa HereDocID> (!HD_NEWLINE .)* HD_NEWLINE)*
+      <isa HereDocID> HD_NEWLINE
+      #HereDocument
+    }*/
+
+HD_NEWLINE
+    = LINE_TERMINATOR_SEQUENCE
+
 // Statement
 
 // like "block"
@@ -350,7 +409,7 @@ InitializerStatement
     = { "BEGIN" __ "{" __ @CompleteStatement __ "}" #Initializer }
 
 FinalizerStatement
-    = { "END" __ "{" __ @CompleteStatement __ "}" #Initializer }
+    = { "END" __ "{" __ @CompleteStatement __ "}" #Finalizer }
 
 // Expression
 
@@ -478,29 +537,52 @@ FunctionDefinition
     [example: def hoge(a,b); p a end]
     = { "def" __ @[0]FunctionName _ addFunctionParameter __ @[2]FunctionBody __ "end" #Function }
 
+EmptyList
+    = { #List }
+
+ParamOrEmptyList
+    = ParameterList / EmptyList
+
 addFunctionParameter
-    = "(" __ (@[1]ParameterList __)? ")" EOS?
-    / @[1]ParameterList EOS
-    / EOS
+    = "(" __ @[1]ParamOrEmptyList __ ")" EOS?
+    / @[1]ParamOrEmptyList EOS
+
+addLambdaParameter
+    = "(" __ @[1]ParamOrEmptyList __ ")"
+    / @[1]ParamOrEmptyList
 
 FunctionBody
     = { addBeginBody #Begin }
 
 EigenMethodDefinition
     [example: def self.hoge a,b; p a end]
-    = { "def" __ @Singleton __ ("." / "::") __ @FunctionName _ addFunctionParameter __ @CompleteStatement __ "end" #EigenFunction }
+    = { "def" __ @Singleton __ ("." / "::") __ @FunctionName _ addFunctionParameter __ @FunctionBody __ "end" #EigenFunction }
+
+LambdaExpression
+    = { "->" __ addLambdaParameter __ @[2]LambdaBody #Function }
+
+LambdaBody
+    = DoEndBlockWithoutParameter / BraceBlockWithoutParameter
+
+DoEndBlockWithoutParameter
+    [example: do a * b end]
+    = "do" __ CompleteStatement __ "end"
+
+BraceBlockWithoutParameter
+    [example: { x * x }]
+    = "{" __ CompleteStatement __ "}"
 
 ExpandExpression
-    = { '*' _ @Arg #Expand }
+    = { '*' @Arg #Expand }
 
 LHSExpandExpression
-    = { '*' _ @LeftHandSideExpression #Expand }
+    = { '*' @LeftHandSideExpression #Expand }
 
 THEN
-    = "then" / EOS _ "then" / EOS
+    = "then" / EOS (__ "then")?
 
 DO
-    = "do" / EOS (_ "do")?
+    = "do" / EOS (__ "do")?
 
 BlockVar
     = MultipleLeftHandSideExpression
@@ -527,12 +609,15 @@ Args
 addArgs
     = @Arg (__ "," __ @Arg)*
 
+addArgsNoAssoc
+    = @Arg !(_ "=>") (__ "," __ @Arg !(_ "=>"))*
+
 CallArgsBody
     = { @Command #List }
     / { @BlockParameter #List }
     / { @ExpandExpression (__ "," __ @BlockParameter)? #List }
     / { addAssocs (__ "," __ @ExpandExpression)? (__ "," __ @BlockParameter)? #List }
-    / { addArgs (__ "," __ addAssocs)? (__ "," __ @ExpandExpression)? (__ "," __ @BlockParameter)? #List }
+    / { addArgsNoAssoc (__ "," __ addAssocs)? (__ "," __ @ExpandExpression)? (__ "," __ @BlockParameter)? #List }
     / Args
 
 CallArgs
@@ -540,33 +625,49 @@ CallArgs
     [example: *a]
     [example: &b]
     [example: *a, &b]
+    [example: 1, b => 1]
     [example: 1, 2, *a, &b]
     [bad-example: &b, *a]
     [bad-example: &b, 1]
     [bad-example: *a, 1]
-    //= <without Decorator CallArgsBody>
     = <without Decorator <without KeywordOperator CallArgsBody> >
 
 CmdArgs
     = !"(" <without DoEndBlock <without StatementAsPrimary CallArgs> >
 
 VariadicParameter
-    = { "*" _ @Identifier #VariadicParameter }
+    = { "*" @Identifier #VariadicParameter }
 
 BlockParameter
-    = { "&" _ (@Identifier / @Symbol) #BlockParameter }
+    [bad-example: a & b]
+    = { "&" (@Identifier / @Symbol) #BlockParameter }
 
 ParameterList
     [example: *a]
     [example: &b]
     [example: *a, &b]
     [example: x, y, *a, &b]
+    [example: a = 1]
+    [example: a = 1, *b]
+    [example: a, b = 1]
     [bad-example: &b, *a]
     [bad-example: &b, x]
     [bad-example: *a, x]
     = { @BlockParameter #List }
     / { @VariadicParameter (__ "," __ @BlockParameter)? #List }
-    / { @Identifier (__ "," __ @Identifier)* (__ "," __ @VariadicParameter)? (__ "," __ @BlockParameter)? #List }
+    / { addParameterAssocs (__ "," __ @VariadicParameter)? (__ "," __ @BlockParameter)? #List }
+    / { addParameters (__ "," __ addParameterAssocs)? (__ "," __ @VariadicParameter)? (__ "," __ @BlockParameter)? #List }
+
+DefaultValueAssociation
+    [example: a = 1]
+    = { @Identifier __ "=" __ @Arg #Assign }
+
+addParameters
+    = @Identifier !(_ [=]) (__ "," __ @Identifier !(_ "="))*
+
+addParameterAssocs
+    [example: a = 1, b = 2]
+    = @DefaultValueAssociation (__ "," __ @DefaultValueAssociation)*
 
 Singleton
     = VariableName
@@ -577,9 +678,11 @@ Singleton
     / "(" __ Expression __ ")"
 
 addAssocs
+    [example: a => 1, b => 2]
     = @Association (__ "," __ @Association)*
 
 Association
+    [example: a => 1]
     = { @Arg __ "=>" __ @Arg #Assign }
 
 // Expression
@@ -587,10 +690,11 @@ Association
 PrimaryExpression
     = "(" __ <with StatementAsPrimary CompleteStatement> __ ")"
     / Literal
-    / Variable !(_[({])
+    / HereDocument
     / ArrayLiteral
     / HashLiteral
-    / Symbol
+    / LambdaExpression
+    / Variable !(_[({])
     / PrimaryCallExpression
     / ConstantExpression
     / <if StatementAsPrimary> StatementLikeExpression
@@ -619,7 +723,11 @@ DummySelf
 
 ArrayLiteral
     [example: [1,2,3]]
-    = { "[" __ addArgs? __ "]" #Array }
+    = { "[" __ addArgs? __ ("," __)? "]" #Array }
+
+UnwrapedArray
+    [example: 1,2]
+    = { addArgs #Array }
 
 HashLiteral
     [example: {"a"=>1,"b"=>2}]
@@ -638,15 +746,6 @@ BraceBlock
     [example: {|n| p n }]
     [example: {|a,b| }]
     = { "{" __ ("|" __ (@[0]BlockVar)? __ "|" __)? (@[1]CompleteStatement)? __ "}" #BlockArgument }
-
-DoEndBlockWithoutParameter
-    [example: do a * b end]
-    = "do" __ CompleteStatement __ "end"
-
-BraceBlockWithoutParameter
-    [example: { x * x }]
-    = "{" __ CompleteStatement __ "}"
-
 
 // Note:
 // There is no space between receiver and index.
@@ -696,9 +795,19 @@ UnaryMinusExpression
     = PowerExpression / { __ "-" #Minus _ @UnaryMinusExpression }
 
 MultiplicativeExpression
-    = UnaryMinusExpression {@ __ ( "*" #Mul / "/" #Div / "%" #Mod ) __ @UnaryMinusExpression }*
+    [example: a / 2]
+    [example: a/ 2]
+    [bad-example: a /2]
+    = UnaryMinusExpression {@ addMultiplicativeOperator @UnaryMinusExpression }*
+
+addMultiplicativeOperator
+    = __ "*" __ #Mul
+    / __ "%" __ #Mod
+    / SPACE_OR_NEWLINE __ "/" SPACE_OR_NEWLINE __ #Div
+    / "/" __ #Div
 
 AdditiveExpression
+    [example: a + 1]
     = MultiplicativeExpression {@ __ ( "+" #Add / "-" #Sub ) __ @MultiplicativeExpression }*
   
 ShiftExpression
@@ -720,6 +829,7 @@ addRelationalOperator
     / ">" #GreaterThan
   
 EqualityExpression
+    [example: /hoge/ =~ str]
     = RelationalExpression {@ __ addEqualityOperator __ @RelationalExpression }*
 
 addEqualityOperator
@@ -747,8 +857,10 @@ ConditionalExpression
     = RangeExpression {@ _ '?' __ @RangeExpression __ ':' __ @RangeExpression #Trinary }*
 
 AssignmentExpression
+    [example: a = Klass.new 1, 2]
     [example: a += b -= c **= 2]
-    = { @LeftHandSideExpression __ addAssignmentOperator __ @AssignmentExpression }
+    [example: a = 1,2]
+    = { @LeftHandSideExpression __ addAssignmentOperator __ ( @Command / @UnwrapedArray / @AssignmentExpression ) }
     / ConditionalExpression
 
 addAssignmentOperator
@@ -828,6 +940,7 @@ Command
     [example: a 1]
     [example: a.b.c 1]
     [example: a(b).c 1]
+    [example: p +1]
     [bad-example: a(b) 1]
     [bad-example: p if false then 1 else 2 end]
     = { @DummySelf @OperationName !'[' !OPERATOR _ addCmdArguments #Apply.Command.A }
