@@ -704,8 +704,8 @@ ConstantExpression
 
 PrimaryCallExpression
     [example: p (if false then 1 else 2 end)]
-    = { @[0]DummySelf @[1]OperationName _ addArguments #Apply.P.A }
-    / { @[0]DummySelf @[1]Super (_ addArguments)? #Apply.P.B }
+    = { @[0]DummySelf @[1]OperationName _ addArguments #Apply }
+    / { @[0]DummySelf @[1]Super (_ addArguments)? #Apply }
 
 PrimaryLHSExpression
     = Variable !(_[({])
@@ -769,11 +769,11 @@ addFuncName
 
 addCall
     = "[" __ (@[1]Args)? __ "]" #Indexer
-    / _ addFuncName (_ addArguments)? #Apply.Function
+    / _ addFuncName (_ addArguments)? #Apply
 
 addLHSCall
     = "[" __ (@[1]Args)? __ "]" #Indexer
-    / _ addFuncName (_ addArguments &NEXT_CALL)? #Apply.LeftSide
+    / _ addFuncName (_ addArguments &NEXT_CALL)? #Apply
 
 NEXT_CALL
     = "[" / _ "." / _ "::"
@@ -933,7 +933,7 @@ BeforeCommandFunctionCallExpression
 
 addBeforeCommandCall
     = "[" __ (@[1]Args)? __ "]" #Indexer
-    / _ addFuncName (_ addArguments / &NEXT_CALL) #Apply.Function.BeforeCommand
+    / _ addFuncName (_ addArguments / &NEXT_CALL) #Apply
 
 // Command is a function call without parenthesis
 Command
@@ -943,9 +943,9 @@ Command
     [example: p +1]
     [bad-example: a(b) 1]
     [bad-example: p if false then 1 else 2 end]
-    = { @DummySelf @OperationName !'[' !OPERATOR _ addCmdArguments #Apply.Command.A }
-    / { @DummySelf @OperationName2 !'[' !OPERATOR _ addCmdArguments? #Apply.Command.B }
-    / { @BeforeCommandFunctionCallExpression _ addFuncName _ addCmdArguments #Apply.Command.C }
+    = { @DummySelf @OperationName !'[' !OPERATOR _ addCmdArguments #Apply }
+    / { @DummySelf @OperationName2 !'[' !OPERATOR _ addCmdArguments? #Apply }
+    / { @BeforeCommandFunctionCallExpression _ addFuncName _ addCmdArguments #Apply }
     / { "super" (_ @CmdArgs)? #Super }
     / { "defined?" _ @Arg #Defined }
 
