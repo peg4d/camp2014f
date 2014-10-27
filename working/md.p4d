@@ -83,7 +83,7 @@ TextMaterial
 	/ { '[' @{ (@NoBLetter)* #alt } '][' @{ (!']' .)* #href } ']' #a }
 	/ { '[' @{ (@NoBLetter)* #alt } '](' @{ (!')' .)* #href } ')' #a }
 	/ { '![' @{ (@NoBLetter)* #alt } '](' @{ (!')' .)* #href } ')' #img }
-//	/ { @{ 'http' [-_#\.!'()%A-Za-z0-9] #href } #a }		//GFM
+	/ { @{ 'http' (![ \t] .)* #href } #a }		//GFM
 	/ Letter
 
 Letter
@@ -103,6 +103,6 @@ NoBLetter
 	/ { (!'](' TEXT)+ #span }
 
 TEXT
-	= !'![' !'[' !']' !([ /t]+ '~') !([ /t]+ '*') !([ /t]+ '_') !NL !BREAK .
+	= !'![' !'[' !']' !([ /t]+ '~') !([ /t]+ '*') !([ /t]+ '_') !'http' !NL !BREAK .
 
 //	[\x21-\x29\x2C\x2D\x2F-\x5A\x5E\x5F\x61-\x7E\\\.]
