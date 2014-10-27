@@ -3,7 +3,6 @@
 // ("GFM" means "GitHub Flavored Markdown".)
 //
 
-// Todo: Text複数行対応
 
 File
 	= Statements !.
@@ -21,7 +20,7 @@ _
 	= (!NL [ \t])*
 
 BREAK
-	= '\n' / '\r\n' / '\r'
+	= '\n' / '\r\n' / '\r' 
 
 NL
 	= [ \t] [ \t] &BREAK
@@ -38,7 +37,7 @@ Statement
 
 Code
 	= { ( [ \t] [ \t] [ \t] [ \t]+ '`' @{ (!'`' .)* #code } '`' _ eos )+ #multilinecode }
-	/ '`' { @{ (!'`' !BREAK .)* #code } #singlelinecode } '`' _ eos
+	/ _ '`' { @{ (!'`' !BREAK .)* #code } #singlelinecode } '`' _ eos
 
 Item
 	= [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t] [ \t]+ ('*'/'+'/'-') [ \t]+ { (!BREAK !NL .)* #ul_li_3 } _ eos
@@ -59,9 +58,9 @@ Head
 	/ { @{ (!BREAK !NL .)* #span } _ eos _ '='+ _ eos #h1 }
 
 Hr
-	= _ '*' _ '*' _ '*' ( _ '*')* _ eos { #hr }
-	/ _ '-' _ '-' _ '-' ( _ '-')* _ eos { #hr }
-	/ _ '_' _ '_' _ '_'( _ '_')* _ eos { #hr }
+	= _ eos _ '*' _ '*' _ '*' ( _ '*')* _ eos { #hr }
+	/ _ eos _ '-' _ '-' _ '-' ( _ '-')* _ eos { #hr }
+	/ _ eos _ '_' _ '_' _ '_'( _ '_')* _ eos { #hr }
 
 Blank
 	= _ BREAK { #emptyLine }
@@ -71,6 +70,7 @@ NewLine
 
 eos
 	= (@NewLine)? BREAK
+	/ !.
 
 Text
 	= { (@TextMaterial)+ _ eos #text }
@@ -87,22 +87,22 @@ TextMaterial
 	/ Letter
 
 Letter
-	= '~~' { (!'~~' TEXT)* #strike } '~~'		//GFM
-	/ '**' { (!'**' TEXT)* #bold } '**'
-	/ '*' { (!'*' TEXT)* #italic } '*'
-	/ '__' { (!'__' TEXT)* #bold } '__'
-	/ '_' { (!'_' TEXT)* #italic } '_'
+	= [ /t]+ '~~' [ /t]+ { (!'~~' TEXT)* #strike } [ /t]+ '~~' (!NL [ /t])+		//GFM
+	/ [ /t]+ '**' [ /t]+ { (!'**' TEXT)* #bold } [ /t]+ '**' (!NL [ /t])+
+	/ [ /t]+ '*' [ /t]+ { (!'*' TEXT)* #italic } [ /t]+ '*' (!NL [ /t])+
+	/ [ /t]+ '__' [ /t]+ { (!'__' TEXT)* #bold } [ /t]+ '__' (!NL [ /t])+
+	/ [ /t]+ '_' [ /t]+ { (!'_' TEXT)* #italic } [ /t]+ '_' (!NL [ /t])+
 	/ { TEXT+ #span }
 
 NoBLetter
-	= '~~' { (!'~~' !'](' TEXT)* #strike } '~~'		//GFM
-	/ '**' { (!'**' !'](' TEXT)* #bold } '**'
-	/ '*' { (!'*' !'](' TEXT)* #italic } '*'
-	/ '__' { (!'__' !'](' TEXT)* #bold } '__'
-	/ '_' { (!'_' !'](' TEXT)* #italic } '_'
+	= [ /t]+ '~~' [ /t]+ { (!'~~' !'](' TEXT)* #strike } [ /t]+ '~~' (!NL [ /t])+		//GFM
+	/ [ /t]+ '**' [ /t]+ { (!'**' !'](' TEXT)* #bold } [ /t]+ '**' (!NL [ /t])+
+	/ [ /t]+ '*' [ /t]+ { (!'*' !'](' TEXT)* #italic } [ /t]+ '*' (!NL [ /t])+
+	/ [ /t]+ '__' [ /t]+ { (!'__' !'](' TEXT)* #bold } [ /t]+ '__' (!NL [ /t])+
+	/ [ /t]+ '_' [ /t]+ { (!'_' !'](' TEXT)* #italic } [ /t]+ '_' (!NL [ /t])+
 	/ { (!'](' TEXT)+ #span }
 
 TEXT
-	= !'![' !'[' !']' !NL !BREAK .
+	= !'![' !'[' !']' !([ /t]+ '~') !([ /t]+ '*') !([ /t]+ '_') !NL !BREAK .
 
 //	[\x21-\x29\x2C\x2D\x2F-\x5A\x5E\x5F\x61-\x7E\\\.]
