@@ -4,7 +4,7 @@ import bbb.ccc;
 
 public class Hoge {
 	public boolean piyo(MyList X) {
-		try {
+		try(MyClass X = null;) {
 			A();
 		} catch (Exception e) {
 			B();
