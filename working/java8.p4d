@@ -260,7 +260,7 @@ VarName
 	= Name {@ "[" (@ConstantExpression)? "]" #ArrayName}*
 
 Initializer
-	= AssignmentExpression
+	= Expression
 	/ "{" { (addInitializerList)* ","? #Initializer } "}"
 
 addInitializerList
@@ -421,10 +421,14 @@ Result
 	/ Type
 
 MethodParamList
-	= { ( @MethodParam ("," @MethodParam)* )? ("," "...")? #List }
+	= { (@MethodParam ",")* @VarArgs #List }
+	/ { ( @MethodParam ("," @MethodParam)* )? #List }
 
 MethodParam
-	= { @Type _ @VarName #Param} _
+	= { @Type _ @VarName #Param } _
+
+VarArgs
+	= { @Type _ "..." @VarName #VarArgs }
 
 Throws
 	= "throws" { @TypeList #Throws } _
@@ -463,6 +467,7 @@ TypeElement
 
 TGenerics
 	= { "<" @TypeList ">" #Generics } _
+	/ { "<" ">" #Diamond } _
 
 TypeName
 	= Name {@ _ "." @Name #TypeName }*
@@ -499,8 +504,8 @@ Statement
 	/ { "switch" "(" @Expression ")" @Statement #Switch }
 	/ { "while"  "(" @Expression ")" @Statement #While }
 	/ { "do" @Statement "while" "(" @Expression ")" ";" #DoWhile }
-	/ { "for" "(" (@Expression)?       ";" (@Expression)? ";" (@Expression)? ")" @Statement #For }
-	/ { "for" "(" @VariableDeclaration ";" (@Expression)? ";" (@Expression)? ")" @Statement #For }
+	/ { "for" "(" (@Expressions)?      ";" (@Expression)? ";" (@Expressions)? ")" @Statement #For }
+	/ { "for" "(" @VariableDeclaration ";" (@Expression)? ";" (@Expressions)? ")" @Statement #For }
 	/ { "for" "(" (@VariableModifier)* @Type @Name ":" @Expression ")" @Statement #ForEach }
 	/ { "goto" @Name ";" #Goto }
 	/ { "continue" ";" #Continue }
@@ -509,6 +514,7 @@ Statement
 	/ { "try" @ResourceStatement @Block (@CatchBlock)* (@{ "finally" @Block #Finally })? #Try }
 	/ { "try" @Block (@CatchBlock)* @{ "finally" @Block #Finally } #Try }
 	/ { "try" @Block (@CatchBlock)+ #Try }
+	/ { "throw" @Expression ";" #Throw }
 	/ { "case" @ConstantExpression ":" (!"case" !"default" @Statement)* #SwitchCase }
 	/ { "default" ":" (!"case" @Statement)* #SwitchDefault }
 	/ { @Name ":" #Label }
@@ -533,10 +539,14 @@ CatchParameter
 //==========
 
 Expression
-	= AssignmentExpression {@ "," @AssignmentExpression #Expression }*
+	= LambdaExpression
+	/ AssignmentExpression
+
+Expressions
+	= { @Expression ("," @Expression)* #Expressions }
 
 AssignmentExpression
-	= { @UnaryExpression addAssignmentOperator @AssignmentExpression }
+	= { @UnaryExpression addAssignmentOperator @Expression }
 	/ ConditionalExpression
 
 addAssignmentOperator
@@ -624,7 +634,7 @@ addFunctionCall
 	= @{ "(" addArgumentExpressionList? ")" #List} #Apply
 
 addArgumentExpressionList
-	= (@AssignmentExpression ("," @AssignmentExpression)*)
+	= (@Expression ("," @Expression)*)
 
 addIndex
 	= "[" @Expression "]" #Index
@@ -650,16 +660,16 @@ LambdaExpression
 	= { @LambdaParameters _ "->" @LambdaBody #LambdaExpression }
 
 LambdaParameters
-	= { @Name
+	= { (@Name
 		/ @{ "(" addArgumentExpressionList? _ ")" #AddArgumentExpressionList }
 		/ "(" @InferredFormalParameterList _ ")"
-		 #LambdaParameters }
+		) #LambdaParameters }
 
 InferredFormalParameterList
 	= { @Name ( _ "," @Name)* #InferredFormalParameterList }
 
 LambdaBody
-	= { @Expression / @Block #LambdaBody }
+	= { (@Expression / @Block) #LambdaBody }
 
 
 //Literal
