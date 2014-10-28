@@ -1,4 +1,15 @@
-// PEG4d Lua Grammar
+/*
+
+  PEG4d Lua Grammar
+
+  Based on eBNF grammar for Lua[1]
+
+  [1] http://www.lua.org/manual/5.1/
+
+  Author:
+    Tetsuro Matsumura (https://github.com/tetsurom/)
+
+*/
 
 File
     = Chunk
@@ -46,7 +57,7 @@ W
 EOS
     = __ ';'
     / _ SINGLE_LINE_COMMENT? LINE_TERMINATOR_SEQUENCE
-    / _ &("end" / "elseif" / "else")
+    / _ &("end" / "elseif" / "else" / "until")
     / __ EOF
 
 EOF
@@ -107,7 +118,8 @@ exp ::= exp binop exp
 exp ::= unop exp
 prefixexp ::= var | functioncall | `(´ exp `)´
 
-//LOW
+Operator precedences
+(LOW)
 or
 and
 <     >     <=    >=    ~=    ==
@@ -116,7 +128,7 @@ and
 *     /     %
 not   #     - (unary)
 ^
-//HIGH
+(HIGH)
 */
 
 PrimaryExpression
@@ -389,9 +401,9 @@ NumericLiteral
     [example: 0x1F]
     [example: 0.12]
     [example: 1234]
-    = HexIntegerLiteral / FloatingPointLiteral / DecimalLiteral
+    = HexIntegerLiteral / FloatingPointLiteral / DecimalIntergerLiteral
 
-DecimalLiteral
+DecimalIntergerLiteral
     [example: 123]
     = { DECIMAL_INTEGER #DecimalInteger }
 
@@ -407,57 +419,45 @@ FloatingPointLiteral
     [example: .12]
     [example: .12e3]
     [example: 5e3]
-    = { ( '0' / [1-9] DIGIT* )? '.' DIGIT+ EXPONENT_PART? #FloatingPointNumber }
-    / { DECIMAL_INTEGER EXPONENT_PART? #FloatingPointNumber }
+    = { DECIMAL_INTEGER? '.' DIGIT+ EXPONENT_PART? #FloatingPointNumber }
+    / { DECIMAL_INTEGER EXPONENT_PART #FloatingPointNumber }
 
 DECIMAL_INTEGER
     = [1-9] DIGIT* / "0"
 
 EXPONENT_PART
-    = [eE] SIGN? [1-9] DIGIT*
+    = [eE] SIGN? DECIMAL_INTEGER
 
 SIGN
     = '+' / '-'
 
-SOURCE
-    = .
-
-/*
-
-  (1)   'alo\n123"'
-  (2)   "alo\n123\""
-  (3)   '\97lo\10\04923"'
-  (4)   [[alo
-        123"]]
-  (5)   [==[
-        alo
-        123"]==]
-*/
-
 StringLiteral
     [example: '\97lo\10\04923"']
-    [example: [==[alo123]==]]
-    = ["] { DOUBLE_STRING_CHARACTER* #String } ["]
-    / ['] { SINGLE_STRING_CHARACTER* #String } [']
-    / '[' <name BracketStringEquals [=]*> '[' LINE_TERMINATOR_SEQUENCE? { BRACKET_STRING_CHARACTER* #String } BRACKET_STRING_TERMINATOR
+    [example: [[foobar123]]]
+    [example: [==[foo[bar]123]==]]
+    = ["] { (!["] QUOTED_STRING_CHAR)* #String } ["]
+    / ['] { (!['] QUOTED_STRING_CHAR)* #String } [']
+    / '[' <name BracketStringEquals [=]*> '[' LINE_TERMINATOR_SEQUENCE? { BS_CHAR* #String } BS_TERMINATOR
 
 BRACKET_STRING_COMMENT
-    = '[' <name BracketStringEquals [=]*> '[' LINE_TERMINATOR_SEQUENCE? BRACKET_STRING_CHARACTER* BRACKET_STRING_TERMINATOR
+    = '[' <name BracketStringEquals [=]*> '[' LINE_TERMINATOR_SEQUENCE? BS_COMMENT_CHAR* BS_TERMINATOR
 
-DOUBLE_STRING_CHARACTER
-    = !( ["] / '\\' / LINE_TERMINATOR ) SOURCE / '\\' ESCAPE_SEQUENCE
+QUOTED_STRING_CHAR
+    = !('\\' / LINE_TERMINATOR) . / '\\' ESCAPE_SEQUENCE
 
-SINGLE_STRING_CHARACTER
-    = !( ['] / '\\' / LINE_TERMINATOR ) SOURCE / '\\' ESCAPE_SEQUENCE
+BS_CHAR
+    = !BS_TERMINATOR (LINE_TERMINATOR_SEQUENCE / .)
 
-BRACKET_STRING_CHARACTER
-    = !BRACKET_STRING_TERMINATOR (!LINE_TERMINATOR_SEQUENCE SOURCE / <if MultiLineBracketString> LINE_TERMINATOR_SEQUENCE)
+BS_COMMENT_CHAR
+    = !BS_TERMINATOR (!LINE_TERMINATOR_SEQUENCE . / <if MultiLineBracketString> LINE_TERMINATOR_SEQUENCE)
 
-BRACKET_STRING_TERMINATOR
+BS_TERMINATOR
     = ']' <isa BracketStringEquals> ']'
 
 ESCAPE_SEQUENCE
-    = '\\' / ["'abfnrtv] / CODE_ESCAPE_SEQUENCE / LINE_TERMINATOR_SEQUENCE / .
+    = '\\' / ["'abfnrtv] / CODE_ESCAPE_SEQUENCE / LINE_TERMINATOR_SEQUENCE
 
 CODE_ESCAPE_SEQUENCE
     = DIGIT DIGIT DIGIT
+    / DIGIT DIGIT
+    / DIGIT
