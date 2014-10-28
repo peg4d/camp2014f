@@ -206,9 +206,6 @@ SingleStaticImportDeclaration
 StaticImportOnDemandDeclaration
 	= "import" "static" { @TypeName #StaticImportOnDemandDeclaration } _ "." "*" ";"
 
-TypeName
-	= Name {@ _ "." @Name #TypeName }*
-
 // annotation definition
 Annotation
 	= NormalAnnotation
@@ -456,7 +453,7 @@ ExplicitConstructorInvocation
 //====
 
 Type
-	= ({ @PrimaryType @TGenerics #TGenerics } / PrimaryType) {@ "[" _? "]" #TArray }*
+	= (PrimaryType / ReferenceType) {@ "[" _? "]" #TArray }*
 
 TypeList
 	= { @TypeElement ("," @TypeElement)* #TypeList }
@@ -467,6 +464,13 @@ TypeElement
 TGenerics
 	= { "<" @TypeList ">" #Generics } _
 
+TypeName
+	= Name {@ _ "." @Name #TypeName }*
+
+ReferenceType
+	= { @TypeName @TGenerics #TGenerics } _
+	/ TypeName _
+
 PrimaryType
 	= { "byte"         #TInt } _
 	/ { "char"         #TInt } _
@@ -476,7 +480,6 @@ PrimaryType
 	/ { "float"        #TFloat } _
 	/ { "double"       #TFloat } _
 	/ { "boolean"      #TBoolean } _
-	/ { NAME   #Name } _
 
 
 // Block, Statement
@@ -640,6 +643,7 @@ PrimaryExpression
 	/ "(" Expression ")"
 	/ { "this" #This }
 	/ { "super" #Super }
+	/ { @Type "." "class" #Class }
 	/ Name
 
 LambdaExpression
