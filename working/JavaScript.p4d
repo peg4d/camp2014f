@@ -561,9 +561,9 @@ NumericLiteral
     [example: 0123]
     [example: 0.12]
     [example: 1234]
-    = HexIntegerLiteral / FloatingPointLiteral / OctaIntegerLiteral / DecimalLiteral / InfinityLiteral / NaNLiteral
+    = HexIntegerLiteral / FloatingPointLiteral / OctaIntegerLiteral / DecimalIntegerLiteral / InfinityLiteral / NaNLiteral
 
-DecimalLiteral
+DecimalIntegerLiteral
     [example: 123]
     = { DECIMAL_INTEGER #DecimalInteger }
 
@@ -584,8 +584,8 @@ FloatingPointLiteral
     [example: .12]
     [example: .12e3]
     [example: 5e3]
-    = { ( '0' / [1-9] DIGIT* )? '.' DIGIT+ EXPONENT_PART? #FloatingPointNumber }
-    / { DECIMAL_INTEGER EXPONENT_PART? #FloatingPointNumber }
+    = { DECIMAL_INTEGER? '.' DIGIT+ EXPONENT_PART? #FloatingPointNumber }
+    / { DECIMAL_INTEGER EXPONENT_PART #FloatingPointNumber }
 
 InfinityLiteral
     = { 'Infinity' #FloatingPointNumber }
@@ -594,19 +594,13 @@ NaNLiteral
     = { 'NaN' #FloatingPointNumber }
 
 DECIMAL_INTEGER
-    = [1-9] DIGIT*
+    = [1-9] DIGIT* / "0"
 
 EXPONENT_PART
-    = [eE] SIGN? [1-9] DIGIT*
-
-//DIGIT
-//    = [0-9]
+    = [eE] SIGN? DECIMAL_INTEGER
 
 OCT
     = [0-7]
-
-//HEX
-//    = [0-9a-fA-F]
 
 SIGN
     = ( '+' / '-' )
