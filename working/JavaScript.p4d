@@ -1,17 +1,18 @@
-// PEG4d JavaScript Grammar
+/*
 
-// # Rule naming rule:
-// 1. The rule creating a object is named in UpperCamelCase
-//    ex) TheRule = { @OtherRule #TheTag }
-// 2. The rule not creating any object but contains # or @ is named in lowerCamelCase
-//    ex) theRule = '=' @OtherRule
-//    ex) theRule = DIGIT+ #Number
-// 3. Otherwise, it named in UPPER_CASE
-//    ex) DIGIT = [1-9][0-9]* / '0'
-//
-// # Tag naming rule
-// 1. Tags should be named in UpperCamelCase
+  PEG4d JavaScript Grammar
 
+  Based on grammar from ECMA-262[1] and javascript.pegjs[2]
+
+  [1] http://www.ecma-international.org/publications/standards/Ecma-262.htm
+  [2] https://github.com/dmajda/pegjs/blob/master/examples/javascript.pegjs
+
+  Authors:
+    Tetsuro Matsumura (https://github.com/tetsurom/)
+    Sudo Takeru (https://github.com/takerusu)
+    Kensuke Tamura (https://github.com/kensuketamura)
+
+*/
 
 File
     = { (__ @SourceElement)* __ #Source }
@@ -21,7 +22,6 @@ Chunk
 
 SPACE
     = [\t\v\f \u00A0\uFEFF]
-//  / Zs
 
 // Space including line terminator
 __
@@ -158,7 +158,7 @@ EOF
 "yield" = 'yield' !W
 "get" = 'get' !W
 "set" = 'set' !W
-//"undefined" = 'undefined' !W
+"undefined" = 'undefined' !W
 "null" = 'null' !W
 "true" = 'true' !W
 "false" = 'false' !W
