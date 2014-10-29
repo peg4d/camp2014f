@@ -1,0 +1,20 @@
+# onemore(longest)
+a+
+
+# onemore(shortest)
+a+?
+
+# zeromore(longest)
+a*
+
+# zeromore(shortest)
+a*?
+
+# optional
+a?
+
+# times
+a{2}
+a{6,}
+a{3,34}
+a{,9800}
