@@ -36,7 +36,11 @@ Statement
 	= Hr / Code / Item / Head / Text / Blank
 
 Code
-	= { ( [ \t] [ \t] [ \t] [ \t]+ '`' @{ (!'`' .)* #code } '`' _ eos )+ #multilinecode }
+	= { ( [ \t] [ \t] [ \t] [ \t]+ '```' @{ (!'```' .)* #code } '```' _ eos )+ #multilinecode }
+	/ { ( [ \t] [ \t] [ \t] [ \t]+ '``' @{ (!'``' .)* #code } '``' _ eos )+ #multilinecode }
+	/ { ( [ \t] [ \t] [ \t] [ \t]+ '`' @{ (!'`' .)* #code } '`' _ eos )+ #multilinecode }
+	/ _ '```' { @{ (!'```' !BREAK .)* #code } #singlelinecode } '```' _ eos
+	/ _ '``' { @{ (!'``' !BREAK .)* #code } #singlelinecode } '``' _ eos
 	/ _ '`' { @{ (!'`' !BREAK .)* #code } #singlelinecode } '`' _ eos
 
 Item
