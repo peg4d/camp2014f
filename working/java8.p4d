@@ -425,7 +425,7 @@ MethodParamList
 	/ { ( @MethodParam ("," @MethodParam)* )? #List }
 
 MethodParam
-	= { @Type _ @VarName #Param } _
+	= { (@VariableModifier)* @Type _ @VarName #Param } _
 
 VarArgs
 	= { @Type _ "..." @VarName #VarArgs }
@@ -605,6 +605,10 @@ AdditiveExpression
 MultiplicativeExpression
 	= CastNewExpression {@ ( "*" #Mul / "/" #Div / "%" #Mod ) @CastNewExpression }*
 
+CastNewExpression
+	= { "(" @Type ")" @CastNewExpression #Cast }
+	/ UnaryExpression
+
 UnaryExpression
 	= PostfixExpression
 	/ { "++" @UnaryExpression #PrefixInc }
@@ -614,21 +618,15 @@ UnaryExpression
 	/ { "~"  @CastNewExpression #Compl }
 	/ { "!"  @CastNewExpression #Not }
 
-CastNewExpression
-	= { "(" @Type ")" @CastNewExpression #Cast }
-	/ InstanceCreationExpression
-	/ ArrayCreationExpression
-	/ UnaryExpression
+PostfixExpression
+	= (PrimaryExpression / InstanceCreationExpression / ArrayCreationExpression)
+		{@ (addFunctionCall / addIndex / addField / addMethodReference / addInc / addDec) }*
 
 InstanceCreationExpression
-	= { "new" (@TGenerics)? (@Annotation)* @Type @{ "(" addArgumentExpressionList? ")" #List } #InstanceCreation }
-	{@ (addFunctionCall / addIndex / addField / addInc / addDec) }*
+	= { "new" (@TGenerics)? (@Annotation)* @Type @{ "(" addArgumentExpressionList? ")" #List } (@ClassBody)? #InstanceCreation }
 
 ArrayCreationExpression
 	= { "new" (@Annotation)* @(Type {@ (@Annotation)* "[" @Expression "]" #ArraySize }+) #ArrayCreation }
-
-PostfixExpression
-	= PrimaryExpression {@ (addFunctionCall / addIndex / addField / addInc / addDec) }*
 
 addFunctionCall
 	= @{ "(" addArgumentExpressionList? ")" #List} #Apply
@@ -641,6 +639,9 @@ addIndex
 
 addField
 	= "." @Name #Field
+
+addMethodReference
+	= "::" @(Name / { "new" #New }) #MethodReference
 
 addInc
 	= "++" #Inc
