@@ -53,12 +53,12 @@ NAME
 KEYWORD
 	= 'abstract' / 'assert' / 'boolean' / 'break' / 'byte' / 'case'
 	/ 'catch' / 'char' / 'class' / 'const' / 'continue' / 'default'
-	/ 'do' / 'double' / 'else' / 'enum' / 'extends' / 'false'
+	/ 'double' / 'do' / 'else' / 'enum' / 'extends' / 'false'
 	/ 'final' / 'finally' / 'float' / 'for' / 'goto' / 'if' / 'implements'
-	/ 'import' / 'instanceof' / 'int' / 'interface' / 'long' / 'native'
+	/ 'import' / 'instanceof' / 'interface' / 'int' / 'long' / 'native'
 	/ 'new' / 'null' / 'package' / 'private' / 'protected' / 'public'
 	/ 'return' / 'short' / 'static' / 'strictfp' / 'super' / 'switch'
-	/ 'synchronized' / 'this' / 'throw' / 'throws' / 'transient'
+	/ 'synchronized' / 'this' / 'throws' / 'throw' / 'transient'
 	/ 'true' / 'try' / 'void' / 'volatile' / 'while'
 
 "++"     = '++' _
@@ -201,7 +201,7 @@ TypeImportOnDemandDeclaration
 	= "import" { @TypeName  _ "." "*" #TypeImportOnDemandDeclaration } ";"
 
 SingleStaticImportDeclaration
-	= "import" "static" { @TypeName _ '.' _ @Name #SingleStaticImportDeclaration } _ ";"
+	= "import" "static" { @TypeName #SingleStaticImportDeclaration } _ ";"
 
 StaticImportOnDemandDeclaration
 	= "import" "static" { @TypeName #StaticImportOnDemandDeclaration } _ "." "*" ";"
@@ -275,7 +275,7 @@ Designator
 
 //class type, enum type
 ClassDeclaration
-	= { (@ClassModifier)* "class" @Name (@TGenerics)? (@SuperClass)? (@SuperInterfaces)* @ClassBody #ClassDeclaration } _
+	= { (@ClassModifier)* "class" @Name (@TypeParameters)? (@SuperClass)? (@SuperInterfaces)* @ClassBody #ClassDeclaration } _
 	/ { (@ClassModifier)* "enum" @Name (@SuperInterfaces)* @EnumBody #EnumDeclaration } _
 
 ClassModifier
@@ -289,10 +289,10 @@ ClassModifier
 	/ "strictfp"  _ { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
 
 SuperClass
-	= { "extends" _ @Type #SuperClass } _
+	= { "extends" _ @ClassOrInterfaceType #SuperClass } _
 
 SuperInterfaces
-	= { "implements" _ @TypeList #SuperInterfaces } _
+	= { "implements" _ @ClassOrInterfaceTypes #SuperInterfaces } _
 
 EnumBody
 	= "{" { (@EnumeratorList)? ","? ";" (@ClassBodyDeclaration)+ #EnumBody } _ "}"
@@ -321,7 +321,7 @@ ClassMemberDeclaration
 
 //interface, annotation type
 InterfaceDeclaration
-	= { (@InterfaceModifier)* "interface" @Name (@TGenerics)? (@ExtendsInterfaces)* @InterfaceBody #InterfaceDeclaration } _
+	= { (@InterfaceModifier)* "interface" @Name (@TypeParameters)? (@ExtendsInterfaces)* @InterfaceBody #InterfaceDeclaration } _
 	/ { (@InterfaceModifier)* '@' "interface" @Name @AnnotationTypeBody #AnnotationTypeDeclaration } _
 
 InterfaceModifier
@@ -334,7 +334,7 @@ InterfaceModifier
 	/ "strictfp"  _ { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
 
 ExtendsInterfaces
-	= { "extends" _ @TypeList #ExtendsInterfaces } _
+	= { "extends" _ @ClassOrInterfaceTypes #ExtendsInterfaces } _
 
 InterfaceBody
 	= "{" { (@InterfaceMemberDeclaration)* #InterfaceBody } "}"
@@ -391,7 +391,7 @@ ConstantModifier
 
 //method
 MethodDeclaration
-	= { (@MethodModifier)* (@TGenerics (@Annotation)*)? @Result @Name "(" @MethodParamList ")" (@Throws)? (@Block / ";") #Method } _
+	= { (@MethodModifier)* (@TypeParameters (@Annotation)*)? @Result @Name "(" @MethodParamList ")" (@Throws)? (@Block / ";") #Method } _
 
 MethodModifier
 	= Annotation
@@ -406,7 +406,7 @@ MethodModifier
 	/ "strictfp"      { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
 
 InterfaceMethodDeclaration
-	= { (@InterfaceMethodModifier)* (@TGenerics (@Annotation)*)? @Result @Name "(" @MethodParamList ")" (@Throws)? (@Block / ";") #Method } _
+	= { (@InterfaceMethodModifier)* (@TypeParameters (@Annotation)*)? @Result @Name "(" @MethodParamList ")" (@Throws)? (@Block / ";") #Method } _
 
 InterfaceMethodModifier
 	= Annotation
@@ -431,11 +431,11 @@ VarArgs
 	= { @Type _ "..." @VarName #VarArgs }
 
 Throws
-	= "throws" { @TypeList #Throws } _
+	= "throws" { @ClassOrInterfaceTypes #Throws } _
 
 //constructor
 ConstructorDeclaration
-	= { (@ConstructorModifier)* @Type "(" @MethodParamList ")" (@Throws)? @ConstructorBody #Constructor } _
+	= { (@ConstructorModifier)* @ReferenceType "(" @MethodParamList ")" (@Throws)? @ConstructorBody #Constructor } _
 
 ConstructorModifier
 	= Annotation
@@ -447,34 +447,51 @@ ConstructorBody
 	= { "{" (@ExplicitConstructorInvocation)? (@Statement / @LocalDeclaration)* "}" #Block }
 
 ExplicitConstructorInvocation
-	= { (@TGenerics)? @{ "this"  "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
-	/ { (@TGenerics)? @{ "super" "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
-//	/ { @PrimaryExpression '.' (@TGenerics)? "super" @{ "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
-//	/ { @TypeName '.' (@TGenerics)? "super" @{ "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
+	= { (@TypeArguments)? @{ "this"  "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
+	/ { (@TypeArguments)? @{ "super" "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
+//	/ { @PrimaryExpression '.' (@TypeArguments)? "super" @{ "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
+//	/ { @TypeName '.' (@TypeArguments)? "super" @{ "(" addArgumentExpressionList? ")" #List } #ExplicitConstructorInvocation  } ";"
 
 
 //Type
 //====
 
 Type
-	= (PrimaryType / ReferenceType) {@ "[" _? "]" #TArray }*
+	= ReferenceType / PrimaryType
 
-TypeList
-	= { @TypeElement ("," @TypeElement)* #TypeList }
-
-TypeElement
-	= (Type / { "?" #TWildCard }) {@ (@{ _ "extends" @Type ("&" @Type)* #SuperType })? #TypeElement }
-
-TGenerics
-	= { "<" @TypeList ">" #Generics } _
-	/ { "<" ">" #Diamond } _
+Type_noArray
+	= ClassOrInterfaceType / PrimaryType
 
 TypeName
 	= Name {@ _ "." @Name #TypeName }*
 
 ReferenceType
-	= { @TypeName @TGenerics #TGenerics } _
+	= ArrayType
+	/ ClassOrInterfaceType
+
+ArrayType
+	= (PrimaryType / ClassOrInterfaceType) {@ "[" _? "]" #TArray }+
+
+ClassOrInterfaceType
+	= { @TypeName @TypeArguments #TGenerics } _
 	/ TypeName _
+
+ClassOrInterfaceTypes
+	= { @ClassOrInterfaceType ("," @ClassOrInterfaceType)* #TypeList }
+
+TypeParameters
+	= { "<" @TypeParameter ("," @TypeParameter)* ">" #TypeParameters } _
+
+TypeParameter
+	= ReferenceType {@ _ "extends" @ReferenceType ("&" @ReferenceType)* #SuperTypes }?
+
+TypeArguments
+	= { "<" @TypeArgument ("," @TypeArgument)* ">" #TypeArguments } _
+	/ { "<" ">" #Diamond } _
+
+TypeArgument
+	= ReferenceType
+	/ { "?" #TWildCard } {@ _ ("extends" #UpperBound / "super" #LowerBound) @ReferenceType }?
 
 PrimaryType
 	= { "byte"         #TInt } _
@@ -532,7 +549,7 @@ CatchBlock
 	= { "catch" "(" @CatchParameter ")" @Block #Catch }
 
 CatchParameter
-	= { (@VariableModifier)* @Type @Name ("|" @Name)* #Declaration }
+	= { (@VariableModifier)* @ClassOrInterfaceType @Name ("|" @Name)* #Declaration }
 
 
 //Expression
@@ -594,7 +611,7 @@ relationalOperator
 	/ ">" #GreaterThan
 
 RelationalExpression
-	= ShiftExpression {@ ( relationalOperator @ShiftExpression / "instanceof" @Type #InstanceOf ) }*
+	= ShiftExpression {@ ( relationalOperator @ShiftExpression / "instanceof" @ReferenceType #InstanceOf ) }*
 
 ShiftExpression
 	= AdditiveExpression {@ ( "<<" #LeftShift / ">>" #ArithmeticRightShift / ">>>" #LogicalRightShift ) @AdditiveExpression }*
@@ -623,10 +640,17 @@ PostfixExpression
 		{@ (addFunctionCall / addIndex / addField / addMethodReference / addInc / addDec) }*
 
 InstanceCreationExpression
-	= { "new" (@TGenerics)? (@Annotation)* @Type @{ "(" addArgumentExpressionList? ")" #List } (@ClassBody)? #InstanceCreation }
+	= { "new" (@TypeArguments)? (@Annotation)* @ClassOrInterfaceType @{ "(" addArgumentExpressionList? ")" #List } (@ClassBody)? #InstanceCreation }
 
 ArrayCreationExpression
-	= { "new" (@Annotation)* @(Type {@ (@Annotation)* "[" @Expression "]" #ArraySize }+) #ArrayCreation }
+	= { "new" (@Annotation)* @((PrimaryType / ClassOrInterfaceType) {@ (@Annotation)* "[" @Expression "]" #ArraySize }+) #ArrayCreation }
+	/ { "new" (@Annotation)* @((PrimaryType / ClassOrInterfaceType) {@ (@Annotation)* "[" "]" #ArraySize }+) @ArrayInitializer #ArrayCreation }
+
+ArrayInitializer
+	= { "{" arrayInitializeExpressionList? _ ","? "}" #ArrayInitializer }
+
+arrayInitializeExpressionList
+	= ((@Expression / @ArrayInitializer) ("," (@Expression / @ArrayInitializer))*)
 
 addFunctionCall
 	= @{ "(" addArgumentExpressionList? ")" #List} #Apply
@@ -638,7 +662,7 @@ addIndex
 	= "[" @Expression "]" #Index
 
 addField
-	= "." @Name #Field
+	= "." (@TypeArguments)? @Name #Field
 
 addMethodReference
 	= "::" @(Name / { "new" #New }) #MethodReference
