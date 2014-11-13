@@ -178,6 +178,7 @@ TopLevel
 	/ ImportDeclaration
 	/ ClassDeclaration
 	/ InterfaceDeclaration
+	/ { ";" #Empty }
 
 
 // package definition
@@ -318,6 +319,7 @@ ClassMemberDeclaration
 	/ MethodDeclaration
 	/ ClassDeclaration
 	/ InterfaceDeclaration
+	/ { ";" #Empty }
 
 //interface, annotation type
 InterfaceDeclaration
@@ -344,6 +346,7 @@ InterfaceMemberDeclaration
 	/ InterfaceMethodDeclaration
 	/ ClassDeclaration
 	/ InterfaceDeclaration
+	/ { ";" #Empty }
 
 AnnotationTypeBody
 	= "{" { (@AnnotationTypeMemberDeclaration)* #AnnotationTypeBody } "}"
@@ -353,6 +356,7 @@ AnnotationTypeMemberDeclaration
 	/ ConstantDeclaration
 	/ ClassDeclaration
 	/ InterfaceDeclaration
+	/ { ";" #Empty }
 
 AnnotationTypeElementDeclaration
 	= { (@AnnotationTypeElementModifier)* @Type @Name "(" ")" (@AnnotationTypeElementDefaultValue)? ";" #AnnotationTypeElement } _
@@ -536,7 +540,7 @@ Statement
 	/ { "default" ":" (!"case" @Statement)* #SwitchDefault }
 	/ { @Name ":" #Label }
 	/ { @Expression ";" #ExpressionStatement }
-	/ { #Empty } ";"
+	/ { ";" #Empty }
 
 //trycatch
 ResourceStatement
@@ -785,4 +789,4 @@ HEX_ESCAPE
 	= '\\' 'u'+ HEX HEX HEX HEX
 
 JavaNull
-	= { 'null' #Null } _
+	= { "null" #Null } _
