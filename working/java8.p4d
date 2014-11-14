@@ -393,7 +393,7 @@ ConstantModifier
 
 //method
 MethodDeclaration
-	= { (@MethodModifier)* (@TypeParameters (@Annotation)*)? @Result @Name "(" @MethodParamList ")" (@Throws)? (@Block / ";") #Method } _
+	= { (@MethodModifier)* (@TypeParameters (@Annotation)*)? @TypeOrVoid @Name "(" @MethodParamList ")" (@Throws)? (@Block / ";") #Method } _
 
 MethodModifier
 	= Annotation
@@ -408,7 +408,7 @@ MethodModifier
 	/ "strictfp"      { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
 
 InterfaceMethodDeclaration
-	= { (@InterfaceMethodModifier)* (@TypeParameters (@Annotation)*)? @Result @Name "(" @MethodParamList ")" (@Throws)? (@Block / ";") #Method } _
+	= { (@InterfaceMethodModifier)* (@TypeParameters (@Annotation)*)? @TypeOrVoid @Name "(" @MethodParamList ")" (@Throws)? (@Block / ";") #Method } _
 
 InterfaceMethodModifier
 	= Annotation
@@ -417,10 +417,6 @@ InterfaceMethodModifier
 	/ "default"       { #KeyValue @{`abstraction` #Key } @{`default` #Value } } _
 	/ "static"        { #KeyValue @{`static` #Key } @{`true` #Value } } _
 	/ "strictfp"      { #KeyValue @{`strictfp` #Key } @{`true` #Value } } _
-
-Result
-	= { "void" #TVoid } _
-	/ Type
 
 MethodParamList
 	= { (@MethodParam ",")* @VarArgs #List }
@@ -460,6 +456,9 @@ ExplicitConstructorInvocation
 
 Type
 	= ReferenceType / PrimaryType
+
+TypeOrVoid
+	= Type / Void
 
 Type_noArray
 	= ClassOrInterfaceType / PrimaryType
@@ -504,6 +503,9 @@ PrimaryType
 	/ { "float"        #TFloat } _
 	/ { "double"       #TFloat } _
 	/ { "boolean"      #TBoolean } _
+
+Void
+	= { "void" #TVoid } _
 
 
 // Block, Statement
@@ -680,7 +682,7 @@ PrimaryExpression
 	/ "(" Expression ")"
 	/ { "this" #This }
 	/ { "super" #Super }
-	/ { @Type "." "class" #Class }
+	/ { @TypeOrVoid "." "class" #Class }
 	/ Name
 
 LambdaExpression
