@@ -35,11 +35,9 @@ DIGIT
 
 W
 	= [a-zA-Z0-9_$]
-	/ UCHAR
 
-UCHAR
-	= '\\u' HEX4
-	/ '\\U' HEX4 HEX4
+HEX
+	= [a-fA-F0-9]
 
 HEX4
 	= HEX HEX HEX HEX
@@ -777,16 +775,17 @@ ESCAPE
 	= SIMPLE_ESCAPE
 	/ OCTAL_ESCAPE
 	/ HEX_ESCAPE
-	/ UCHAR
 
 SIMPLE_ESCAPE
 	= '\\' ['\"\\bfnrt]
 
 OCTAL_ESCAPE
-	= '\\' [0-3] [0-7]? [0-7]?
+	= '\\' [0-3] [0-7] [0-7]
+	/ '\\' [0-7] [0-7]
+	/ '\\' [0-7]
 
 HEX_ESCAPE
-	= '\\' 'u'+ HEX HEX HEX HEX
+	= '\\' 'u'+ HEX4
 
 JavaNull
 	= { "null" #Null } _
