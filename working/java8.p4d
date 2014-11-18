@@ -642,7 +642,7 @@ UnaryExpression
 
 PostfixExpression
 	= (PrimaryExpression / InstanceCreationExpression / ArrayCreationExpression)
-		{@ (addFunctionCall _ / addIndex _ / addField / addMethodReference / addInc _ / addDec _ ) }*
+		{@ (addMethodCall _ / addIndex _ / addField / addMethodReference / addInc _ / addDec _ ) }*
 
 InstanceCreationExpression
 	= { "new" _ (@TypeArguments)? (@Annotation)* @ClassOrInterfaceType @{ "(" _ addArgumentExpressionList? ")" #List } _ (@ClassBody)? #InstanceCreation }
@@ -651,8 +651,9 @@ ArrayCreationExpression
 	= { "new" _ (@Annotation)* @((PrimaryType / ClassOrInterfaceType) {@ (@Annotation)* "[" _ @Expression "]" _ #ArraySize }+) #ArrayCreation }
 	/ { "new" _ (@Annotation)* @((PrimaryType / ClassOrInterfaceType) {@ (@Annotation)* "[" _ "]" _ #ArraySize }+) @ArrayInitializer #ArrayCreation }
 
-addFunctionCall
-	= @{ "(" _ addArgumentExpressionList? ")" #List} #Apply
+addMethodCall
+	= "." _ (@TypeArguments)? @Name @{ "(" _ addArgumentExpressionList? ")" #List } #Method
+	/ @{ "(" _ addArgumentExpressionList? ")" #List } #Method
 
 addArgumentExpressionList
 	= (@Expression ("," _ @Expression)*)
@@ -661,7 +662,7 @@ addIndex
 	= "[" _ @Expression "]" #Index
 
 addField
-	= "." _ (@TypeArguments)? @Name #Field
+	= "." _ @Name !'(' #Field
 
 addMethodReference
 	= "::" _ @(Name / { "new" #New } _ ) #MethodReference
