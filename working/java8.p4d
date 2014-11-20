@@ -47,6 +47,9 @@ HEX4
 Name
 	= { NAME #Name }
 
+QualifiedName
+	= Name {@ _ "." _ @Name #QualifiedName }*
+
 NAME
 	= !DIGIT !(KEYWORD !W) W+
 
@@ -181,7 +184,7 @@ TopLevel
 
 // package definition
 PackageDeclaration
-	= { (@PackageModifier _ )* "package" _ @TypeName _ ";" #PackageDeclaration }
+	= { (@PackageModifier _ )* "package" _ @QualifiedName _ ";" #PackageDeclaration }
 
 PackageModifier
 	= Annotation
@@ -194,16 +197,16 @@ ImportDeclaration
 	/ SingleStaticImportDeclaration
 
 SingleTypeImportDeclaration
-	= "import" _ { @TypeName #SingleTypeImportDeclaration } _ ";"
+	= "import" _ { @QualifiedName #SingleTypeImportDeclaration } _ ";"
 
 TypeImportOnDemandDeclaration
-	= "import" _ { @TypeName _ "." _ "*" #TypeImportOnDemandDeclaration } _ ";"
+	= "import" _ { @QualifiedName _ "." _ "*" #TypeImportOnDemandDeclaration } _ ";"
 
 SingleStaticImportDeclaration
-	= "import" _ "static" _ { @TypeName #SingleStaticImportDeclaration } _ ";"
+	= "import" _ "static" _ { @QualifiedName #SingleStaticImportDeclaration } _ ";"
 
 StaticImportOnDemandDeclaration
-	= "import" _ "static" _ { @TypeName #StaticImportOnDemandDeclaration } _ "." _ "*" _ ";"
+	= "import" _ "static" _ { @QualifiedName #StaticImportOnDemandDeclaration } _ "." _ "*" _ ";"
 
 // type definition
 TypeDeclaration
@@ -218,13 +221,13 @@ Annotation
 	/ MarkerAnnotation
 
 NormalAnnotation
-	= "@" _ { @TypeName _ "(" _ (@ElementValuePairList)? _ ")" #NormalAnnotation }
+	= "@" _ { @QualifiedName _ "(" _ (@ElementValuePairList)? _ ")" #NormalAnnotation }
 
 MarkerAnnotation
-	= "@" _ { @TypeName #MarkerAnnotation }
+	= "@" _ { @QualifiedName #MarkerAnnotation }
 
 SingleElementAnnotation
-	= "@" _ { @TypeName _ "(" _ @ElementValue _ ")" #SingleElementAnnotation }
+	= "@" _ { @QualifiedName _ "(" _ @ElementValue _ ")" #SingleElementAnnotation }
 
 ElementValuePairList
 	= { @ElementValuePair ( _ "," _ @ElementValuePair)* #ElementValuePairList }
@@ -447,10 +450,9 @@ ConstructorBody
 	= { "{" _ (@ExplicitConstructorInvocation _ )? ((@Statement / @LocalDeclaration) _ )* "}" #Block }
 
 ExplicitConstructorInvocation
-	= { (@TypeArguments _ )? @{ "this" _  "(" _ addArgumentExpressionList? _ ")" #List } #ExplicitConstructorInvocation  } _ ";"
-	/ { (@TypeArguments _ )? @{ "super" _ "(" _ addArgumentExpressionList? _ ")" #List } #ExplicitConstructorInvocation  } _ ";"
-//	/ { @PrimaryExpression '.' (@TypeArguments _ )? "super" _ @{ "(" _ addArgumentExpressionList? _ ")" #List } #ExplicitConstructorInvocation  } _ ";"
-//	/ { @TypeName _ '.' (@TypeArguments _ )? "super" _ @{ "(" _ addArgumentExpressionList? _ ")" #List } #ExplicitConstructorInvocation  } _ ";"
+	= { (@TypeArguments _ )? @{ @This  _ "(" _ addArgumentExpressionList? _ ")" #List } #ExplicitConstructorInvocation } _ ";"
+	/ { (@TypeArguments _ )? @{ @Super _ "(" _ addArgumentExpressionList? _ ")" #List } #ExplicitConstructorInvocation } _ ";"
+	/ { @PostfixExpression _ "." _ (@TypeArguments _ )? @Super _ @{ "(" _ addArgumentExpressionList? _ ")" #List } #ExplicitConstructorInvocation  } _ ";"
 
 
 //Type
@@ -465,9 +467,6 @@ TypeOrVoid
 Type_noArray
 	= ClassOrInterfaceType / PrimaryType
 
-TypeName
-	= Name {@ _ "." _ @Name #TypeName }*
-
 ReferenceType
 	= ArrayType
 	/ ClassOrInterfaceType
@@ -476,8 +475,7 @@ ArrayType
 	= (PrimaryType / ClassOrInterfaceType) {@ _ "[" _ "]" #TArray }+
 
 ClassOrInterfaceType
-	= { @TypeName _ @TypeArguments #TGenerics }
-	/ TypeName
+	= QualifiedName {@ _ @TypeArguments #TGenerics }?
 
 ClassOrInterfaceTypes
 	= { @ClassOrInterfaceType ( _ "," _ @ClassOrInterfaceType)* #TypeList }
@@ -642,19 +640,13 @@ UnaryExpression
 	/ { "!"  _ @CastNewExpression #Not }
 
 PostfixExpression
-	= (PrimaryExpression / InstanceCreationExpression / ArrayCreationExpression )
-		{@ _ (addMethodCall / addIndex / addField / addMethodReference / addInc / addDec ) }*
-
-InstanceCreationExpression
-	= { "new" _ (@TypeArguments)? _ (@Annotation _ )* @ClassOrInterfaceType _ @{ "(" _ addArgumentExpressionList? _ ")" #List } ( _ @ClassBody)? #InstanceCreation }
-
-ArrayCreationExpression
-	= { "new" _ (@Annotation _ )* @(Type_noArray {@ _ (@Annotation _ )* "[" _ @Expression _ "]" #ArraySize }+ ) #ArrayCreation }
-	/ { "new" _ (@Annotation _ )* @(Type_noArray {@ _ (@Annotation _ )* "[" _ "]" #ArraySize }+ ) _ @ArrayInitializer #ArrayCreation }
+	= PrimaryExpression {@ _ (addMethodCall / addInstanceCreation / addIndex / addField / addMethodReference / addInc / addDec ) }*
 
 addMethodCall
 	= "." _ (@TypeArguments)? _ @Name _ @{ "(" _ addArgumentExpressionList? _ ")" #List } #Method
-	/ @{ "(" _ addArgumentExpressionList? _ ")" #List } #Method
+
+addInstanceCreation
+	= "." _ "new" _ (@TypeArguments)? _ (@Annotation _ )* @ClassOrInterfaceType _ @{ "(" _ addArgumentExpressionList? _ ")" #List } ( _ @ClassBody)? #InstanceCreation
 
 addArgumentExpressionList
 	= (@Expression (_ "," _ @Expression)*)
@@ -666,7 +658,7 @@ addField
 	= "." _ @Name _ !'(' #Field
 
 addMethodReference
-	= "::" _ @(Name / { "new" #New } ) #MethodReference
+	= "::" _ (@TypeArguments)? _ @Name #MethodReference
 
 addInc
 	= "++" #Inc
@@ -677,16 +669,41 @@ addDec
 PrimaryExpression
 	= Constant
 	/ "(" _ Expression _ ")"
-	/ { "this" #This }
-	/ { "super" #Super }
 	/ { @TypeOrVoid _ "." _ "class" #Class }
+	/ This
+	/ { @QualifiedName _ "." _ "this" #This }
+	/ Super
+	/ { @QualifiedName _ "." _ "super" #Super }
+	/ MethodInvocationExpression
+	/ InstanceCreationExpression
+	/ ArrayCreationExpression
+	/ MethodReference
 	/ Name
+
+This
+	= { "this" #This }
+
+Super
+	= { "super" #Super }
+
+MethodInvocationExpression
+	= { @Name _ @{ "(" _ addArgumentExpressionList? _ ")" #List } #Method }
+
+InstanceCreationExpression
+	= { "new" _ (@TypeArguments)? _ (@Annotation _ )* @ClassOrInterfaceType _ @{ "(" _ addArgumentExpressionList? _ ")" #List } ( _ @ClassBody)? #InstanceCreation }
+
+ArrayCreationExpression
+	= { "new" _ (@Annotation _ )* @(Type_noArray {@ _ (@Annotation _ )* "[" _ @Expression _ "]" #ArraySize }+ ) #ArrayCreation }
+	/ { "new" _ (@Annotation _ )* @(Type_noArray {@ _ (@Annotation _ )* "[" _ "]" #ArraySize }+ ) _ @ArrayInitializer #ArrayCreation }
+
+MethodReference
+	= { @ReferenceType _ "::" _ (@TypeArguments)? _ @(Name / { "new" #New } ) #MethodReference }
 
 LambdaExpression
 	= { @LambdaParameters _ "->" _ @LambdaBody #LambdaExpression }
 
 LambdaParameters
-	= { (@Name
+	= { ( @Name
 		/ @{ "(" _ addArgumentExpressionList? _ ")" #AddArgumentExpressionList }
 		/ "(" _ @InferredFormalParameterList _ ")"
 		) #LambdaParameters }
@@ -727,24 +744,17 @@ FLOAT_SUFFIX
 	= [fFdD]
 
 JavaInteger
-	= { ( DECIMAL / HEXADECIMAL ) #Integer } INT_SUFFIX?
-//	= { ( BINARY / DECIMAL / HEXADECIMAL / OCTAL ) #Integer } INT_SUFFIX?
-
-BINARY
-	= BIN_PREFIX [01] ('_'* [01])*
-
-BIN_PREFIX
-	= '0' [bB]
+	= { ( DECIMAL / HEXADECIMAL / BINARY / OCTAL ) #Integer } INT_SUFFIX?
 
 DECIMAL
-	= '0' ![0-9xXbB]
+	= '0' ![bBxX0-9_]
 	/ [1-9] ('_'* DIGIT)*
 
 HEXADECIMAL
-	= HEX_PREFIX HEX ('_'* HEX)*
+	= '0' [xX] HEX ('_'* HEX)*
 
-HEX_PREFIX
-	= '0' [xX]
+BINARY
+	= '0' [bB] [01] ('_'* [01])*
 
 OCTAL
 	= '0' ('_'* [0-7])*
