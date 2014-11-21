@@ -1,7 +1,7 @@
 // PEG4d Python 2 Grammar
 
 File
-	= { (_ NL / @TopLevel)* #Source}
+	= { (_ NL / EOS / @TopLevel)* #Source}
 
 Chunk
 	= TopLevel
@@ -117,10 +117,12 @@ Statement
 	/ { "with"   _ @Expr ("as" _ @Name)? _ @Block #With }
 	/ { "return" _ @Expr #Return }
 	/ Expr EOS?
-	/ { #Empty } EOS
 
 Annotation
-	= { '@' NAME #Annotation } __
+	= '@' { @AnnotationContent #Annotation } __
+
+AnnotationContent
+	= { NAME #Name } {@  addSelector }* __
 
 Elif
 	= {"elif" S+ @Expr _ @Block #if }
@@ -181,10 +183,16 @@ addEqOp
 	/ 'in' #In
 
 Relation
-	= Shift {@ _ ('<=' #Lte / '<' !'<' #Lt / '>=' #Gte / '>' !'>' #Gt) _ @Shift }*
+	= Shift {@ _ addRelOp _ @Shift }*
+
+addRelOp
+	= '<=' #LessThanEquals
+	/ '<' !'<' #LessThan
+	/ '>=' #GreaterThanEquals
+	/ '>' !'>' #GreaterThan
 
 Shift
-	= Sum {@ _ ("<<" #LShift / ">>" #RShift) _ @Sum }*
+	= Sum {@ _ ("<<" #LeftShift / ">>" #RightShift) _ @Sum }*
 
 Sum
 	= Product {@ _ ('+' #Add / '-' #Sub) _ @Product }*
@@ -193,7 +201,7 @@ Product
 	= Unary {@ _ ("*" #Mul / "/" #Div / "%" #Mod) _ @Unary }*
 
 Unary
-	= { ("not" #Not / "!" #Not / "-" #Minus / "+" #Plus / "~" #Compl) @Unary }
+	= { ("not" #LogicalNot / "!" #LogicalNot / "-" #Minus / "+" #Plus / "~" #Compl ) @Unary }
 	/ Value {@ addSelector }*
 
 addSelector
@@ -222,33 +230,33 @@ Value
 	/ TupleLiteral
 
 ArrayLiteral
-	= { "[" (@Expr)? (__ ',' __ @Expr)* _* "]" #Array}
+	= { "[" (@Expr)? (__ ',' __ @Expr)* _* "]" #Array }
 	/ { "[" @Expr _ "for" _ @Name _ "in" _ @Expr (_ "if" _ @Expr)? _ "]" #ListComprehension }
 
 DictLiteral
-	= { "{" _* (@DictContent)? (_* "," _* @DictContent )* _* "}" #Hash}
+	= { "{" _* (@DictContent)? (_* "," _* @DictContent )* _* "}" #Hash }
 
 TupleLiteral
 	= "(" Expr ")"
 	/ { "(" @Expr (_ "," @Expr)+ _ ")" #List }
 
 DictContent
-	= { (@StringLiteral / @Name) ":" @Expr #KeyValue};
+	= { (@StringLiteral / @Name) ":" @Expr #KeyValue }
 
 Params
-	= { (@Param)? (_ "," @Param)* _ #Params};
+	= { (@Param)? (_ "," @Param)* _ #Params }
 
 Param
 	= { @Name (_ "=" @Expr)? #Param }
 
 Args
-	= { (@Expr)? (_ "," @Expr)* #Args};
+	= { (@Expr)? (_ "," @Expr)* #Args }
 
 Symbol
-	= { "True" #TTrue }
-	/ { "False" #TFalse }
-	/ { "None" #TNull }
-	/ { "self" #This }
+	= { "True"  #True }
+	/ { "False" #False }
+	/ { "None"  #Null }
+	/ { "self"  #This }
 
 Name
 	= { NAME #Name}
@@ -283,5 +291,5 @@ INTEGER
 	/ [1-9] DIGIT*               // decimal integer
 
 Number
-	= { ("-" / "+")? FLOAT   #Float }
-	/ { ("-" / "+")? INTEGER #Int }
+	= { ("-" / "+")? FLOAT   #Double }
+	/ { ("-" / "+")? INTEGER #Integer }
