@@ -19,3 +19,10 @@ public final static class Hoge<T> extends Hogehoge {
 		return true;
 	}
 }
+
+class Fuga {
+	Fuga() {
+		Hoge<?> X = new Hoge<?>();
+		Piyo Y = X.new Piyo();
+	}
+}
