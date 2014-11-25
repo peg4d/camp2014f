@@ -143,11 +143,11 @@ ExtendContent
 	= Name
 
 Block
-	= ":" { <block (_ NL / <indent> S+ @Statement)+ > #Block}
+	= { <block ":" _ NL (_ NL / <indent> S+ @Statement)+ > #Block}
 	/ _ { @Statement #Block}
 
 ClassBlock
-	= ":" { <block (_ NL / <indent> S+ @Statement EOS?)+ > #Block};
+	= { <block ":" _ NL (_ NL / <indent> S+ @Statement EOS?)+ > #Block};
 
 Expr
 	= Assign
