@@ -58,6 +58,7 @@ __
 "True"     = 'True'     !W
 "False"    = 'False'    !W
 "self"     = 'self'     !W
+"pass"     = 'pass'     !W
 
 "*"   = '*' !'=' _
 "+"   = '+' ![+=] _
@@ -116,6 +117,7 @@ Statement
 	/ { "raise"  _ @Expr #Throw }
 	/ { "with"   _ @Expr ("as" _ @Name)? _ @Block #With }
 	/ { "return" _ @Expr #Return }
+	/ "pass" { #Empty }
 	/ Expr EOS?
 
 Annotation
@@ -141,14 +143,11 @@ ExtendContent
 	= Name
 
 Block
-	= { <block ":" _ NL (_ NL / <indent> S+ @Statement)+ > #Block}
+	= ":" { <block (_ NL / <indent> S+ @Statement)+ > #Block}
 	/ _ { @Statement #Block}
 
 ClassBlock
-	= NL+ { <block (S* EOS+ / @ClassStatement EOS?)+ > #Block};
-
-ClassStatement
-	= <indent> _ Statement
+	= ":" { <block (_ NL / <indent> S+ @Statement EOS?)+ > #Block};
 
 Expr
 	= Assign
