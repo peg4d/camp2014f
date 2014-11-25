@@ -1,0 +1,519 @@
+
+// ##############################
+// ##     lexer definition     ##
+// ##############################
+
+// key word definition
+"as"          = 'as'          !W
+"assert"      = 'assert'      !W
+"boolean"     = 'boolean'     !W
+"break"       = 'break'       !W
+"catch"       = 'catch'       !W
+"class"       = 'class'       !W
+"continue"    = 'continue'    !W
+"constructor" = 'constructor' !W
+"do"          = 'do'          !W
+"else"        = 'else'        !W
+"extends"     = 'extends'     !W
+"export-env"  = 'export-env'  !W
+"finally"     = 'finally'     !W
+"float"       = 'float'       !W
+"for"         = 'for'         !W
+"Func"        = 'Func'        !W
+"function"    = 'function'    !W
+"if"          = 'if'          !W
+"import-env"  = 'import-env'  !W
+"in"          = 'in'          !W
+"int"         = 'int'         !W
+"is"          = 'is'          !W
+"let"         = 'let'         !W
+"new"         = 'new'         !W
+"not"         = 'not'         !W
+"return"      = 'return'      !W
+"trace"       = 'trace'       !W
+"try"         = 'try'         !W
+"throw"       = 'throw'       !W
+"var"         = 'var'         !W
+"void"        = 'void'        !W
+"while"       = 'while'       !W
+
+"+"           = '+' ![+=]
+"-"           = '-' ![-=]
+
+// literal
+// integer literal
+INT_LITERAL
+	= NUMBER !'.'
+
+NUMBER
+	= '0'
+	/ [1-9][0-9]*
+
+DIGIT
+	= [0-9]
+
+// float literal
+FLOAT_LITERAL
+	= NUMBER '.' DIGIT+ FLOAT_SUFFIX?
+
+FLOAT_SUFFIX
+	= [eE] [+-]? DIGIT+
+
+// boolean literal
+BOOLEAN_LITERAL
+	= '$true'  !W
+	/ '$false' !W
+
+// String literal
+STRING_LITERAL
+	= ['] SINGLE_QUOTE_STRING_CHAR* [']
+
+SINGLE_QUOTE_STRING_CHAR
+	= ![\r\n'\\] .
+	/ SINGLE_ESCAPE_SEQUENCE
+
+SINGLE_ESCAPE_SEQUENCE
+	= '\\' [btnfr'\\]
+
+// variable or function name
+APPLIED_NAME
+	= '$' PERMITTED_NAME
+
+SPECIAL_NAME
+	= '$' SPECIAL_NAMES
+
+SPECIAL_NAMES
+	= '@'
+
+// command literal
+BACKQUOTE_LITERAL
+	= '`' BACKQUOTE_CHAR+ '`'
+
+BACKQUOTE_CHAR
+	= '\\' '`'
+	/ ![`\n\r] .
+
+// command
+COMMAND
+	= COMMAND_START_CHAR COMMAND_CHAR*
+
+COMMAND_CHAR
+	= '\\'
+	/ ![ \t\r\n;'"`|&<>(){}$#!\[\]] .
+
+COMMAND_START_CHAR
+	= '\\'
+	/ ![ \t\r\n;'"`|&<>(){}$#!\[\]0-9+-] .
+
+// operator
+"*" = '*' !'='
+"/" = '/' !'='
+"%" = '%' !'='
+"<" = '<' !'='
+">" = '>' !'='
+
+"&" = '&' !'&'
+"|" = '|' !'|'
+
+"=" = '=' !'='
+
+// identifier
+IDENTIFIER
+	= PERMITTED_NAME
+
+// line end
+LINE_END
+	= ';' [ \t\r\n]*
+
+NEW_LINE
+	= [\r\n] [ \t\r\n]*
+
+// comment and space
+COMMENT
+	= '#' (![\r\n] .)*
+
+WHITE_SPACE
+	= WHITE_SPACE_FLAGMENT+
+
+WHITE_SPACE_FLAGMENT
+	= '\\' [\r\n]
+	/ [ \t]
+
+// mode NameMode
+RESERVED_NAME
+	= 'this'
+	/ 'super'
+	/ 'true'
+	/ 'false'
+
+VAR_NAME
+	= PERMITTED_NAME
+
+PERMITTED_NAME
+	= !RESERVED_NAME [a-zA-Z] [_0-9a-zA-Z]*
+	/ '_' [_0-9a-zA-z]+
+
+// mode DoubleQuoteStringMode
+STRING_ELEMENT
+	= DOUBLE_QUOTE_STRING_CHAR+
+
+DOUBLE_QUOTE_STRING_CHAR
+	= ![\r\n`$"\\] .
+	/ DOUBLE_QUOTE_ESCAPE_SEQUENCE
+
+DOUBLE_QUOTE_ESCAPE_SEQUENCE
+	= '\\' [$btnfr"`\\]
+
+INNER_BOOLEAN
+	= BOOLEAN_LITERAL
+	/ '${true}'
+	/ '${false}'
+
+INNER_NAME
+	= APPLIED_NAME
+	/ '${' PERMITTED_NAME '}'
+
+INNER_SPECIAL_NAME
+	= SPECIAL_NAME
+	/ '${' SPECIAL_NAMES '}'
+
+// mode CommandMode
+CMD_ARG_PART
+	= COMMAND_CHAR+
+
+CMD_SEP
+	= [ \t]+
+
+REDIRECT_OP
+	= '<'
+	/ '>' !'>'
+	/ '1>' !'>'
+	/ '1>>'
+	/ '>>'
+	/ '2>' !'>'
+	/ '2>>'
+	/ '>&'
+	/ '&>' !'>'
+	/ '&>>'
+
+REDIRECT_OP_NO_ARG
+	= '2>&1'
+
+PIPE       = '|' !'|'
+BACKGROUND = '&' !'&'
+OR_LIST    = '||'
+AND_LIST   = '&&'
+
+
+// ###############################
+// ##     parser definition     ##
+// ###############################
+
+EOF
+	= !.
+
+ws
+	= (WHITE_SPACE / COMMENT)?
+
+_
+	= (NEW_LINE / ws)*
+
+// separator definition
+"," = ws ','
+
+// entry point
+File
+	= topLevel
+
+Chunk
+	= topLevelStatement?
+
+// statement definition
+topLevel
+	= _ (topLevelStatement _)* EOF
+
+topLevelStatement
+	= functionDeclaration
+	/ statement
+	/ COMMENT
+
+statementEnd
+	= EOF
+	/ LINE_END
+	/ NEW_LINE
+
+functionDeclaration
+	= "function" _ VAR_NAME _ '(' _ argumentsDeclaration _ ')' _ returnType _ block
+
+returnType
+	= (typeAnnoPrefix typeNameWithVoid)?
+
+typeAnnoPrefix = ws ':' ws
+typeSep = ws ',' ws
+
+argumentsDeclaration
+	= (argumentDeclarationWithType (typeSep _ argumentDeclarationWithType)*)?
+
+argumentDeclarationWithType
+	= APPLIED_NAME typeAnnoPrefix typeName
+
+typeName
+	= "int"
+	/ "float"
+	/ "boolean"
+	/ "Func" openType typeNameWithVoid (typeSep openParamType typeName (typeSep typeName)* closeParamType)? closeType
+	/ !"void" IDENTIFIER openType typeName (typeSep typeName)* closeType
+	/ !"void" IDENTIFIER
+
+typeNameWithVoid
+	= typeName
+	/ "void"
+
+openType       = ws '<' ws
+closeType      = ws '>' _
+openParamType  =  _ '[' ws
+closeParamType = ws ']' _
+
+block
+	= '{' (_ statement)+ _ '}'
+
+statement
+	= emptyStatement
+	/ assertStatement ws statementEnd
+	/ breakStatement ws statementEnd
+	/ continueStatement ws statementEnd
+	/ exportEnvStatement ws statementEnd
+	/ forStatement
+	/ ifStatement
+	/ importEnvStatement ws statementEnd
+	/ returnStatement ws statementEnd
+	/ throwStatement ws statementEnd
+	/ whileStatement
+	/ doWhileStatement
+	/ tryCatchStatement
+	/ variableDeclaration ws statementEnd
+	/ commandListExpression ws statementEnd
+	/ assignStatement ws statementEnd
+	/ expression ws statementEnd
+
+forbitKeyWord
+	= "assert" / "break" / "catch" / "class" / "continue" / "constructor" / "do"
+	/ "else" / "extends" / "export-env" / "finally" / "for" / "function" / "if"
+	/ "import-env" / "let" / "new" / "not" / "return" / "trace" / "try" / "throw"
+	/ "var" / "while"
+
+emptyStatement
+	= LINE_END
+
+assertStatement
+	= "assert" _ '(' _ condExpression _ ')'
+
+breakStatement
+	= "break"
+
+continueStatement
+	= "continue"
+
+exportEnvStatement
+	= "export-env" _ VAR_NAME ws "=" _ expression
+
+forStatement
+	= "for" _ '(' _ 
+		(
+			APPLIED_NAME ws "in" _ expression /
+			forInit _ LINE_END _ forCond _ LINE_END _ forIter
+		)
+		_ ')' _ block
+
+forInit
+	= (variableDeclaration
+	/ assignStatement
+	/ expression)?
+
+forCond
+	= expression?
+
+forIter
+	= (assignStatement 
+	/ expression)?
+
+condExpression
+	= commandListExpression
+	/ expression
+
+ifStatement
+	= "if" _ '(' _ condExpression _ ')' _ block
+		(_ "else" _ (ifStatement / block))?
+
+importEnvStatement
+	= "import-env" _ VAR_NAME
+
+returnStatement
+	= "return" (ws expression)?
+
+throwStatement
+	= "throw" _ expression
+
+whileStatement
+	= "while" _ '(' _ condExpression _ ')' _ block
+
+doWhileStatement
+	= "do" _ block _ "while" _ '(' _ condExpression _ ')'
+
+tryCatchStatement
+	= "try" _ block (_ catchStatement)* (_ finallyBlock)?
+
+finallyBlock
+	= "finally" _ block
+
+catchStatement
+	= "catch" _ '(' _ exceptDeclaration _ ')' _ block
+
+exceptDeclaration
+	= APPLIED_NAME (typeAnnoPrefix typeName)?
+
+variableDeclaration
+	= ("let" / "var") _ VAR_NAME ws "=" _ assignRightExpression
+
+assignRightExpression
+	= commandExpression
+	/ expression
+
+assignStatement
+	= applyOrGetExpression ws
+		(("=" / '+=' / '-=' / '*=' / '/=' / '%=') _ assignRightExpression
+		/ ('++' / '--'))
+
+// expression definition
+// command expression
+commandListExpression
+	= orListCommand
+
+orListCommand
+	= andListCommand (CMD_SEP? OR_LIST _ andListCommand)*
+
+andListCommand
+	= commandExpression (CMD_SEP? AND_LIST _ commandExpression)*
+
+commandExpression
+	= singleCommandExpr (CMD_SEP? PIPE _ singleCommandExpr)* CMD_SEP? BACKGROUND?
+
+singleCommandExpr
+	= !forbitKeyWord ("trace" CMD_SEP)? COMMAND (CMD_SEP commandArg)* (CMD_SEP redirOption)*
+
+commandArg
+	= (commandArgSeg)+
+
+commandArgSeg
+	= CMD_ARG_PART
+	/ STRING_LITERAL
+	/ substitutedCommand
+	/ interpolation
+	/ stringExpr
+
+redirOption
+		[example: > gtr]
+		[example: >> 32]
+	= REDIRECT_OP CMD_SEP? commandArg
+	/ REDIRECT_OP_NO_ARG
+
+// normal expression
+expression
+	= condOrExpression
+
+condOrExpression
+	= condAndExpression (ws '||' _ condAndExpression)*
+
+condAndExpression
+	= orExpression (ws '&&' _ orExpression)*
+
+orExpression
+	= xorExpression (ws "|" _ xorExpression)*
+
+xorExpression
+	= andExpression (ws '^' _ andExpression)*
+
+andExpression
+	= equalityExpression (ws "&" _ equalityExpression)*
+
+equalityExpression
+	= typeExpression (ws ('==' / '!=' / '=~' / '!~') _ typeExpression)*
+
+typeExpression
+	= relationalExpression (ws ("as" / "is") _ typeName)*
+
+relationalExpression
+	= addExpression (ws ("<" / ">" / '<=' / '>=') _ addExpression)*
+
+addExpression
+	= mulExpression (ws ("+" / "-") _ mulExpression)*
+
+mulExpression
+	= unaryExpression (ws ("/" / "*" / "%") _ unaryExpression)*
+
+unaryExpression
+	= (("+" / "-" / "not") ws)* applyOrGetExpression
+
+applyOrGetExpression
+	= primaryExpression (ws (
+		'.' _ VAR_NAME
+		/ '[' _ expression _ ']'
+		/ arguments))*
+
+primaryExpression
+	= literal
+	/ "new" ws typeName _ arguments
+	/ symbol
+	/ substitutedCommand
+	/ '(' _ expression _ ')'
+	/ stringExpr
+
+literal
+	= INT_LITERAL
+	/ FLOAT_LITERAL
+	/ BOOLEAN_LITERAL
+	/ STRING_LITERAL
+	/ SPECIAL_NAME
+	/ arrayLiteral
+	/ mapLiteral
+	/ pairLiteral
+
+symbol
+	= APPLIED_NAME
+
+substitutedCommand
+	= BACKQUOTE_LITERAL
+	/ '$(' _ commandListExpression _ ')'
+
+arrayLiteral
+	= '[' _ expression ("," _ expression)* _ ']'
+
+mapLiteral
+	= '{' _ mapEntry ("," _ mapEntry)* _ '}'
+
+mapEntry
+	= expression ws ':' _ expression
+
+pairLiteral
+	= '(' _ expression "," _ expression _ ')'
+
+arguments
+	= '(' _ argumentList? _ ')'
+
+argumentList
+	= expression ("," _ expression)*
+
+interpolation
+	= INNER_NAME
+	/ INNER_SPECIAL_NAME
+	/ INNER_BOOLEAN
+	/ '${' _ expression _ '}'
+
+stringExpr
+	= '"' stringElement* '"'
+
+stringElement
+	= STRING_ELEMENT
+	/ interpolation
+	/ substitutedCommand
+
