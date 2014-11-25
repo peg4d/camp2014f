@@ -116,7 +116,7 @@ Statement
 	/ { "print"  _ @Expr #Print }
 	/ { "raise"  _ @Expr #Throw }
 	/ { "with"   _ @Expr ("as" _ @Name)? _ @Block #With }
-	/ { "return" _ @Expr #Return }
+	/ { "return" (_ @Expr)? #Return }
 	/ "pass" { #Empty }
 	/ Expr EOS?
 
