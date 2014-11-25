@@ -102,13 +102,13 @@ __
 // Block, Statement
 
 Statement
-	= { "if"    _ @Expr _ @Block (_ @Elif)* (_ NL* 'else' _ @Block)? #If }
-	/ { "while" _ @Expr _ @Block #While}
-	/ { "for"   _ @Name _ "in" _ @Expr @Block #ForEach}
-	/ { "import" _ @ImportName (_ "," @Name)* #Import}
-	/ { "from"   _ @ImportName _ "import" _ @ImportName (_ "," @ImportName)* #FromImport}
-	/ { "break"    #Break}
-	/ { "continue" #Continue}
+	= { "if"     _ @Expr _ @Block (_ @Elif)* (_ NL* 'else' _ @Block)? #If }
+	/ { "while"  _ @Expr _ @Block #While}
+	/ { "for"    _ @Name _ "in" _ @Expr @Block #ForEach }
+	/ { "import" _ @ImportName (_ "," @Name)* #Import }
+	/ { "from"   _ @ImportName _ "import" _ @ImportName (_ "," @ImportName)* #FromImport }
+	/ { "break"    #Break }
+	/ { "continue" #Continue }
 	/ { (@Annotation)? "def"    _ @Name "(" @Params ")" @Block #Function }
 	/ { (@Annotation)? "class"  _ @Name (_ "(" (@Extend)? _ ")" )? @ClassBlock #Class }
 	/ { "try"    _ @Block "except" _ @Expr _ @Block #Try }
