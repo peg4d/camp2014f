@@ -43,7 +43,7 @@
 // literal
 // integer literal
 INT_LITERAL
-	= NUMBER !'.'
+	= { NUMBER #Integer } !'.'
 
 NUMBER
 	= '0'
@@ -54,19 +54,19 @@ DIGIT
 
 // float literal
 FLOAT_LITERAL
-	= NUMBER '.' DIGIT+ FLOAT_SUFFIX?
+	= { NUMBER '.' DIGIT+ FLOAT_SUFFIX? #Float }
 
 FLOAT_SUFFIX
 	= [eE] [+-]? DIGIT+
 
 // boolean literal
 BOOLEAN_LITERAL
-	= '$true'  !W
-	/ '$false' !W
+	= { '$true' #True }  !W
+	/ { '$false' #False } !W
 
 // String literal
 STRING_LITERAL
-	= ['] SINGLE_QUOTE_STRING_CHAR* [']
+	= { ['] SINGLE_QUOTE_STRING_CHAR* ['] #String }
 
 SINGLE_QUOTE_STRING_CHAR
 	= ![\r\n'\\] .
@@ -83,7 +83,7 @@ SPECIAL_NAME
 	= '$' SPECIAL_NAMES
 
 SPECIAL_NAMES
-	= '@'
+	= { '@' #Name }
 
 // command literal
 BACKQUOTE_LITERAL
@@ -95,7 +95,7 @@ BACKQUOTE_CHAR
 
 // command
 COMMAND
-	= COMMAND_START_CHAR COMMAND_CHAR*
+	={  COMMAND_START_CHAR COMMAND_CHAR* #Name }
 
 COMMAND_CHAR
 	= '\\'
@@ -150,12 +150,12 @@ VAR_NAME
 	= PERMITTED_NAME
 
 PERMITTED_NAME
-	= !RESERVED_NAME [a-zA-Z] [_0-9a-zA-Z]*
-	/ '_' [_0-9a-zA-z]+
+	= { !RESERVED_NAME [a-zA-Z] [_0-9a-zA-Z]* #Name }
+	/ { '_' [_0-9a-zA-z]+ #Name }
 
 // mode DoubleQuoteStringMode
 STRING_ELEMENT
-	= DOUBLE_QUOTE_STRING_CHAR+
+	= { DOUBLE_QUOTE_STRING_CHAR+ #String }
 
 DOUBLE_QUOTE_STRING_CHAR
 	= ![\r\n`$"\\] .
@@ -166,8 +166,8 @@ DOUBLE_QUOTE_ESCAPE_SEQUENCE
 
 INNER_BOOLEAN
 	= BOOLEAN_LITERAL
-	/ '${true}'
-	/ '${false}'
+	/ { '${true}' #True }
+	/ { '${false}' #False }
 
 INNER_NAME
 	= APPLIED_NAME
@@ -179,13 +179,13 @@ INNER_SPECIAL_NAME
 
 // mode CommandMode
 CMD_ARG_PART
-	= COMMAND_CHAR+
+	= { COMMAND_CHAR+ #String }
 
 CMD_SEP
 	= [ \t]+
 
 REDIRECT_OP
-	= '<'
+	= { '<'
 	/ '>' !'>'
 	/ '1>' !'>'
 	/ '1>>'
@@ -194,10 +194,10 @@ REDIRECT_OP
 	/ '2>>'
 	/ '>&'
 	/ '&>' !'>'
-	/ '&>>'
+	/ '&>>' #Name }
 
 REDIRECT_OP_NO_ARG
-	= '2>&1'
+	= { '2>&1' #Name }
 
 PIPE       = '|' !'|'
 BACKGROUND = '&' !'&'
@@ -230,7 +230,7 @@ Chunk
 
 // statement definition
 topLevel
-	= _ (topLevelStatement _)* EOF
+	= { _ (@topLevelStatement _)*  #TopLevel }EOF	//TODO
 
 topLevelStatement
 	= functionDeclaration
@@ -243,7 +243,7 @@ statementEnd
 	/ NEW_LINE
 
 functionDeclaration
-	= "function" _ VAR_NAME _ '(' _ argumentsDeclaration _ ')' _ returnType _ block
+	= { "function" _ @[2]VAR_NAME _ '(' _ @[3]argumentsDeclaration _ ')' _ @[1]returnType _ @[4]block #FuncDecl }
 
 returnType
 	= (typeAnnoPrefix typeNameWithVoid)?
@@ -252,22 +252,23 @@ typeAnnoPrefix = ws ':' ws
 typeSep = ws ',' ws
 
 argumentsDeclaration
-	= (argumentDeclarationWithType (typeSep _ argumentDeclarationWithType)*)?
+	= { (@argumentDeclarationWithType (typeSep _ @argumentDeclarationWithType)*)?  #List}
 
 argumentDeclarationWithType
-	= APPLIED_NAME typeAnnoPrefix typeName
+	= { @[2]APPLIED_NAME typeAnnoPrefix @[1]typeName #Parameter }
 
 typeName
-	= "int"
-	/ "float"
-	/ "boolean"
-	/ "Func" openType typeNameWithVoid (typeSep openParamType typeName (typeSep typeName)* closeParamType)? closeType
-	/ !"void" IDENTIFIER openType typeName (typeSep typeName)* closeType
-	/ !"void" IDENTIFIER
+	= { @{"int" #Name } #Type }
+	/ { @{"float" #Name } #Type }
+	/ { @{"boolean" #Name } #Type }
+	/ { @{"Func" #Name } openType 
+		@{ @typeNameWithVoid (typeSep openParamType @typeName (typeSep @typeName)* closeParamType)? #List } closeType #Type }
+	/ !"void" { @IDENTIFIER openType @{ @typeName (typeSep @typeName)* #List } closeType #Type }
+	/ !"void" { @IDENTIFIER #Type}
 
 typeNameWithVoid
 	= typeName
-	/ "void"
+	/ { @{"void" #Name } #Type }
 
 openType       = ws '<' ws
 closeType      = ws '>' _
@@ -275,7 +276,7 @@ openParamType  =  _ '[' ws
 closeParamType = ws ']' _
 
 block
-	= '{' (_ statement)+ _ '}'
+	= { '{' (_ @statement)+ _ '}' #Block }
 
 statement
 	= emptyStatement
@@ -302,28 +303,28 @@ forbitKeyWord
 	/ "import-env" / "let" / "new" / "not" / "return" / "trace" / "try" / "throw"
 	/ "var" / "while"
 
-emptyStatement
-	= LINE_END
+emptyStatement	//TODO:
+	= { LINE_END #Empty }
 
 assertStatement
-	= "assert" _ '(' _ condExpression _ ')'
+	= { @{`System` #Type } @{"assert" #Name } _ '(' _ @condExpression _ ')' #Method }
 
 breakStatement
-	= "break"
+	= { "break" #Break }
 
 continueStatement
-	= "continue"
+	= { "continue" #Continue }
 
 exportEnvStatement
-	= "export-env" _ VAR_NAME ws "=" _ expression
+	= { @{`System` #Type } @{"export-env" #Name } _ @VAR_NAME ws "=" _ @expression #Method }
 
 forStatement
-	= "for" _ '(' _ 
+	= { "for" _ '(' _ 
 		(
-			APPLIED_NAME ws "in" _ expression /
-			forInit _ LINE_END _ forCond _ LINE_END _ forIter
+			@APPLIED_NAME ws "in" _ @expression  #Foreach /
+			@forInit _ LINE_END _ @forCond _ LINE_END _ @forIter #For
 		)
-		_ ')' _ block
+		_ ')' _ @block }
 
 forInit
 	= (variableDeclaration
@@ -342,47 +343,45 @@ condExpression
 	/ expression
 
 ifStatement
-	= "if" _ '(' _ condExpression _ ')' _ block
-		(_ "else" _ (ifStatement / block))?
+	= { "if" _ '(' _ @condExpression _ ')' _ @block
+		(_ "else" _ (@ifStatement / @block))? #If }
 
 importEnvStatement
-	= "import-env" _ VAR_NAME
+	= { @{ `System` #Type } @{"import-env" #Name } _ @VAR_NAME #Method }
 
 returnStatement
-	= "return" (ws expression)?
+	= "return" { (ws @expression)? #Return }
 
 throwStatement
-	= "throw" _ expression
+	= "throw" _ { @expression  #Throw}
 
 whileStatement
-	= "while" _ '(' _ condExpression _ ')' _ block
+	= { "while" _ '(' _ @condExpression _ ')' _ @block #While }
 
 doWhileStatement
-	= "do" _ block _ "while" _ '(' _ condExpression _ ')'
+	= { "do" _ @block _ "while" _ '(' _ @condExpression _ ')'  #DoWhile }
 
 tryCatchStatement
-	= "try" _ block (_ catchStatement)* (_ finallyBlock)?
+	= { "try" _ @block @{ (_ @catchStatement)*  #List} (_ @finallyBlock)? #Try }
 
 finallyBlock
 	= "finally" _ block
 
 catchStatement
-	= "catch" _ '(' _ exceptDeclaration _ ')' _ block
+	= { "catch" _ '(' _ @[1]APPLIED_NAME (typeAnnoPrefix @[0]typeName)? _ ')' _ @[2]block #Catch }
 
-exceptDeclaration
-	= APPLIED_NAME (typeAnnoPrefix typeName)?
-
-variableDeclaration
-	= ("let" / "var") _ VAR_NAME ws "=" _ assignRightExpression
+variableDeclaration	//TODO: constant
+	= { ("let" / "var") _ @VAR_NAME ws "=" _ @assignRightExpression #VarDecl }
 
 assignRightExpression
 	= commandExpression
 	/ expression
 
 assignStatement
-	= applyOrGetExpression ws
-		(("=" / '+=' / '-=' / '*=' / '/=' / '%=') _ assignRightExpression
-		/ ('++' / '--'))
+	= { @applyOrGetExpression ws
+		(("=" #Assign / '+=' #AssignAdd / '-=' #AssignSub / '*=' #AssignMul / '/=' #AssignDiv / '%=' #AssignMod ) 
+			_ @assignRightExpression
+		/ ('++' #SuffixInc / '--' #SuffixDec )) }
 
 // expression definition
 // command expression
@@ -390,19 +389,22 @@ commandListExpression
 	= orListCommand
 
 orListCommand
-	= andListCommand (CMD_SEP? OR_LIST _ andListCommand)*
+	= andListCommand {@ CMD_SEP? OR_LIST _ @andListCommand #Or }*
 
 andListCommand
-	= commandExpression (CMD_SEP? AND_LIST _ commandExpression)*
+	= commandExpression {@ CMD_SEP? AND_LIST _ @commandExpression #And }*
 
 commandExpression
-	= singleCommandExpr (CMD_SEP? PIPE _ singleCommandExpr)* CMD_SEP? BACKGROUND?
+	= { @{`Task` #Type} @singleCommandExpr (CMD_SEP? PIPE _ @singleCommandExpr)* CMD_SEP? (@BACKGROUND)? #Method }
 
 singleCommandExpr
-	= !forbitKeyWord ("trace" CMD_SEP)? COMMAND (CMD_SEP commandArg)* (CMD_SEP redirOption)*
+	= !forbitKeyWord { @{`Process` #Type } (@{ "trace" #Name } CMD_SEP)? @COMMAND @commandArgs @redirOptions #Method }
+
+commandArgs
+	= { (CMD_SEP @commandArg)* #List }
 
 commandArg
-	= (commandArgSeg)+
+	= { (@commandArgSeg)+ #List }
 
 commandArgSeg
 	= CMD_ARG_PART
@@ -411,58 +413,62 @@ commandArgSeg
 	/ interpolation
 	/ stringExpr
 
+redirOptions
+	= { (CMD_SEP @redirOption)* #List }
+
 redirOption
 		[example: > gtr]
 		[example: >> 32]
-	= REDIRECT_OP CMD_SEP? commandArg
-	/ REDIRECT_OP_NO_ARG
+	= { @REDIRECT_OP CMD_SEP? @commandArg #List }
+	/ { @REDIRECT_OP_NO_ARG #List }
 
 // normal expression
 expression
 	= condOrExpression
 
 condOrExpression
-	= condAndExpression (ws '||' _ condAndExpression)*
+	= condAndExpression {@ ws '||' _ @condAndExpression #Or }*
 
 condAndExpression
-	= orExpression (ws '&&' _ orExpression)*
+	= orExpression {@ ws '&&' _ @orExpression #And }*
 
 orExpression
-	= xorExpression (ws "|" _ xorExpression)*
+	= xorExpression {@ ws "|" _ @xorExpression #LogicalOr }*
 
 xorExpression
-	= andExpression (ws '^' _ andExpression)*
+	= andExpression {@ ws '^' _ @andExpression #LogicalXor }*
 
 andExpression
-	= equalityExpression (ws "&" _ equalityExpression)*
+	= equalityExpression {@ ws "&" _ @equalityExpression #LogicalAnd }*
 
-equalityExpression
-	= typeExpression (ws ('==' / '!=' / '=~' / '!~') _ typeExpression)*
+equalityExpression	//TODO: regex 
+	= typeExpression {@ ws ('==' #Equals / '!=' #NotEquals / '=~' #Equals / '!~' #NotEquals ) _ @typeExpression}*
 
-typeExpression
-	= relationalExpression (ws ("as" / "is") _ typeName)*
+typeExpression	//TODO: cast
+	= relationalExpression {@ ws ("as" #InstanceOf / "is" #InstanceOf ) _ @typeName}*
 
 relationalExpression
-	= addExpression (ws ("<" / ">" / '<=' / '>=') _ addExpression)*
+	= addExpression {@ ws ("<" #LessThan / ">" #GreaterThan / '<=' #LessThanEquals / '>=' #GreaterThanEquals ) _ @addExpression}*
 
 addExpression
-	= mulExpression (ws ("+" / "-") _ mulExpression)*
+	= mulExpression {@ ws ("+" #Add / "-" #Sub) _ @mulExpression}*
 
 mulExpression
-	= unaryExpression (ws ("/" / "*" / "%") _ unaryExpression)*
+	= unaryExpression {@ ws ("/" #Div / "*" #Mul / "%" #Mod) _ @unaryExpression}*
 
 unaryExpression
-	= (("+" / "-" / "not") ws)* applyOrGetExpression
+	= { ("+" #Plus / "-" #Minus / "not" #Compl) ws @unaryExpression }
+	/ applyOrGetExpression
 
 applyOrGetExpression
-	= primaryExpression (ws (
-		'.' _ VAR_NAME
-		/ '[' _ expression _ ']'
-		/ arguments))*
+	= primaryExpression {@ ws (
+		'.' _ @VAR_NAME #Field
+		/ '[' _ @expression _ ']' #Index
+		/ @arguments #Apply) }*
 
 primaryExpression
 	= literal
-	/ "new" ws typeName _ arguments
+	/ { "new" ws @typeName _ @arguments #New }
 	/ symbol
 	/ substitutedCommand
 	/ '(' _ expression _ ')'
@@ -482,26 +488,26 @@ symbol
 	= APPLIED_NAME
 
 substitutedCommand
-	= BACKQUOTE_LITERAL
+	= { BACKQUOTE_LITERAL #Null } // TODO: 
 	/ '$(' _ commandListExpression _ ')'
 
 arrayLiteral
-	= '[' _ expression ("," _ expression)* _ ']'
+	= '[' _ { @expression ("," _ @expression)* #Array } _ ']'
 
 mapLiteral
-	= '{' _ mapEntry ("," _ mapEntry)* _ '}'
+	= '{' _ { @mapEntry ("," _ @mapEntry)* #Hash } _ '}'
 
 mapEntry
-	= expression ws ':' _ expression
+	= { @expression ws ':' _ @expression #KeyValue }
 
 pairLiteral
-	= '(' _ expression "," _ expression _ ')'
+	= '(' _ { @expression "," _ @expression #KeyValue } _ ')'
 
 arguments
-	= '(' _ argumentList? _ ')'
+	= '(' _ { argumentList? #List } _ ')'
 
 argumentList
-	= expression ("," _ expression)*
+	= @expression ("," _ @expression)*
 
 interpolation
 	= INNER_NAME
@@ -510,7 +516,7 @@ interpolation
 	/ '${' _ expression _ '}'
 
 stringExpr
-	= '"' stringElement* '"'
+	= '"' { @{`System` #Type }  @{`StringExpr` #Name } (@stringElement)* #Method } '"'
 
 stringElement
 	= STRING_ELEMENT
