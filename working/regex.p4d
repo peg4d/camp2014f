@@ -8,16 +8,16 @@ Chunk
 	= Statement
 
 TopLevel
-	= _ Statement _
+	= _ Statement _ BREAK? _
 
 Statement
-	= { (@LogOp)+ #regex }
+	= { (@LogOp)+ #Regex }
 
 _
 	= [ \t]*
 
 Comment
-	= { (!BREAK .)* #comment }
+	= { (!BREAK .)* #Comment }
 
 BREAK
 	= '\n' / '\r\n' / '\r'
@@ -35,7 +35,7 @@ EscapeLetter
 	= { UNICODE #Unicode }
 	/ { ASCII #ASCII }
 	/ { ESCAPE METACHARACTER #Symbol }
-	/ { ESCAPE ('p' / 'P') '{' _ ('In' / 'Is')? ( @{CLASSNAME #Class} / @{UNICODECLASSNAME #UnicodeClass} ) _ '}' #CharClass }	//Perl
+	/ { ESCAPE ('p' / 'P') '{' _ ('In' / 'Is')? ( @{CLASSNAME #ClassName} / @{UNICODECLASSNAME #UnicodeClassName} ) _ '}' #Class }	//Perl
 	/ { ESCAPE METALETTER #Letter }
 
 W
@@ -50,9 +50,9 @@ METACHARACTER
 
 METALETTER
 	= 'C' // 1Byte
-	/ 'A' // TopOfString 
-	/ 'z' // EndOfStringWithoutEOL 
-	/ 'Z' // EndOfString 
+	/ 'A' // TopOfString
+	/ 'z' // EndOfStringWithoutEOL
+	/ 'Z' // EndOfString
 	/ 'b' // WordBoundary or BackSpace
 	/ 'y' // WordBoundary
 	/ 'B' // NonWordBoundary
@@ -68,7 +68,7 @@ METALETTER
 	/ 'r' // CR
 
 SYMBOL
-	= '&' !'&' / '/' / '@' / '_' / '#' / '%' / ',' / '-' 
+	= '&' !'&' / '/' / '@' / '_' / '#' / '%' / ',' / '-'
 	/ ':' / ';' / '<' / '>' / '=' / '~' / '`'
 
 UNICODE
@@ -78,25 +78,25 @@ ASCII
 	= '\\x' HEXDIGIT HEXDIGIT?
 
 Token
-	= { ( @{ '^' #BiginWith })? _ @ParenBlock (@Quantifier)? _ ( @{ '$' !DECDIGIT !'{' !'$' !'`' !'\''#EndWith })? #Stmt }
-	/ { ( @{ '^' #BiginWith })? _ ( @Character / @Bracket ) (@Quantifier)? _ ( @{ '$' !DECDIGIT !'{' !'$' !'`' !'\'' #EndWith })? #Token }
+	= { ( @[0]{ '^' #BiginWith })? _ @[1]ParenBlock (@[2]Quantifier)? _ ( @[3]{ '$' !DECDIGIT !'{' !'$' !'`' !'\''#EndWith })? #Stmt }
+	/ { ( @[0]{ '^' #BiginWith })? _ ( @[1]Character / @[1]Bracket ) (@[2]Quantifier)? _ ( @[3]{ '$' !DECDIGIT !'{' !'$' !'`' !'\'' #EndWith })? #Token }
 
 Quantifier
-	= { '+?' #onemoreS }
-	/ { '+'  #onemoreL }
-	/ { '*?' #zeromoreS }
-	/ { '*'  #zeromoreL }
-	/ { '??'  #optionalS }
-	/ { '?' '+'?  #optionalL }
-	/ { '{' _ @{ DECDIGIT+ #AndMore } _ ',' _ @{ DECDIGIT+ #AndFewer } _ '}' '?'? #times }
-	/ { '{' _ @{ DECDIGIT+ #AndMore } _ ',' _ '}' '?'? #times }
-	/ { '{' _ ',' _ @{ DECDIGIT+ #AndFewer } _ '}' '?'? #times }
-	/ { '{' _ @{ DECDIGIT+ #Time } _ '}' '?'? #times }
+	= { '+?' #OneMoreS }
+	/ { '+'  #OneMoreL }
+	/ { '*?' #ZeroMoreS }
+	/ { '*'  #ZeroMoreL }
+	/ { '??'  #OptionalS }
+	/ { '?' '+'?  #OptionalL }
+	/ { '{' _ @{ DECDIGIT+ #AndMore } _ ',' _ @{ DECDIGIT+ #AndFewer } _ '}' '?'? #Times }
+	/ { '{' _ @{ DECDIGIT+ #AndMore } _ ',' _ '}' '?'? #Times }
+	/ { '{' _ ',' _ @{ DECDIGIT+ #AndFewer } _ '}' '?'? #Times }
+	/ { '{' _ @{ DECDIGIT+ #Time } _ '}' '?'? #Times }
 
 ParenBlock
-	= _ '(' _ '?#' _ { (!')' .)* #comment } ')'
+	= _ '(' _ '?#' _ { (!')' .)* #Comment } ')'
 	/ { _ '(' _  '?' addEXTOPERATOR _ ( @LogOp / @ParenBlock / @Character / @Bracket )+ ')' _ }
-	/ { _ '(' ( @LogOp / @ParenBlock / @Character / @Bracket / _ )+ ')' _ #block }
+	/ { _ '(' ( @LogOp / @ParenBlock / @Character / @Bracket / _ )+ ')' _ #Block }
 
 addEXTOPERATOR
 	= '<=' #LookBehind
@@ -110,16 +110,16 @@ Bracket
 	/ { '['  (@Items)+ ']' #OneOf }
 
 Items
-	= { ( '&&' #and / '-' #minus ) _ (@Bracket)+ }
+	= { ( '&&' #And / '-' #Minus ) _ (@Bracket)+ }
 	/ Item
 
 Item
-	= { '[:' @{CLASSNAME #Class} ':]' #class} 
-	/ { @{@Character #from} '-' @{@Character #to} #range }
+	= { '[:' @{CLASSNAME #ClassName} ':]' #Class}
+	/ { @{@Character #From} '-' @{@Character #To} #Range }
 	/ Character
 
 LogOp
-	= { (@Token)+ #item } _ {@ ( '&&' #and / '|' #or ) _ @{ (@Token)+ #item } }+
+	= { (@Token)+ #Item } _ {@ ( '&&' #And / '|' #Or ) _ @{ (@Token)+ #Item } }+
 	/ Token
 
 Character
