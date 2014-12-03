@@ -1,13 +1,13 @@
 // PEG4d Python 2 Grammar
 
 File
-	= { (_ NL / @TopLevel)* #File}
+	= { (_ NL / EOS / @TopLevel)* #Source}
 
 Chunk
 	= TopLevel
 
 TopLevel
-	= Stmt
+	= Statement
 
 W
 	= [a-zA-Z0-9_]
@@ -18,134 +18,144 @@ NL
 S
 	= [ \t]
 
-_
-	= S*
-
-// Token
-// ====
-
-"if"     = 'if' !W _
-"else"   = 'else' !W _
-"while"   = 'while' !W _
-"elif"     = 'elif' !W _
-"do"     = 'do' !W _
-"for"    = 'for' !W _
-"class"   = 'class' !W _
-"raise"   = 'raise' !W _
-"with"   = 'with' !W _
-"continue" = 'continue' !W _
-"break"    = 'break' !W _
-"return"   = 'return' !W _
-"print"    = 'print' !W _
-"as"       = 'as' !W _
-"in"       = 'in' !W _
-"import"   = 'import' !W _
-"from"     = 'from' !W _
-"def"      = 'def' !W _
-"try"      = 'try' !W _
-"except"   = 'except' !W _
-"or"       = 'or' !W _
-"and"      = 'and' !W _
-"not"      = 'not' !W _
-
-"*"      = '*' !'=' _
-"+"      = '+' ![+=] _
-"-"      = '-' !('-' / [=>]) _
-"~"      = '~' _
-"!"      = '!' !'=' _
-"["      = '[' _
-"]"      = ']' _
-","      = ',' _
-"..."    = '...' _
-":"      = _ ':' ![>] _
-"/"      = '/' !'=' _
-"%"      = '%' ![=>] _
-"{"      = '{' !'=' _
-"}"      = '}' !'=' _
-"<="     = '<=' _
-">="     = '>=' _
-"<"      = '<' ![=] _
-">"      = '>' ![=] _
-"=="     = '==' _
-"!="     = '!=' _
-"^"      = '^' ![=] _
-"|"      = '|' ![=] _
-"&&"     = '&&' _
-"||"     = '||' _
-"?"      = '?' _
-
-"/="       = '/=' _;
-"%="       = '%=' _
-"+="       = '+=' _
-"-="       = '-=' _
-"&="       = '&=' _
-"^="       = '^=' _
-"|="       = '|=' _
-"="        = '=' !'=' _
-"."        = '.' _
-
-"("        = '(' _
-")"        = ')' _
-
-// Block, Statement
-
-Stmt
-	= {"if" @Expr _ @Block (@Elif)* (_ NL* 'else' _ @Block)? #If }
-	/ {"while" @Expr @Block #While}
-	/ {"for" @Symbol "in" @Expr @Block #ForEach}
-	/ {"return" @Expr #Return}
-	/ ImportStmt EOS
-	/ {"break" #Break}
-	/ {"continue" #Continue}
-	/ {"def" _  @Symbol "(" @Params ")" @Block #Function}
-	/ {"class" @Symbol (S* "(" S* (Extend@)? S* ")" )? @ClassBlock #Class}
-	/ {"try" @Block "except" @Expr S* @Block #Try}
-	/ {"assert" @Expr (_ "," @Expr)? #Assert}
-	/ {"print"  @Expr #Print }
-	/ {"raise"  @Expr #Throw }
-	/ {"with"   @Expr "as" @Symbol ":" @Block #With}
-	/ {'return' _ @Expr #Return}
-	/ Expr EOS?
-	/ EOS+
-
-Elif
-	= {"elif" S+ @Expr _ @Block #if }
-
 EOS
 	= ';'
 	/ NL
 	/ "#" (!'\n' .)* '\n'
 
-ImportStmt
-	= {"import" @ImportSymbol (S* "," S* @Symbol)* #Import}
-	/ {"from" @Symbol "import" @ImportSymbol (S* "," S* @ImportSymbol)* #FromImport}
+_
+	= S*
+
+__
+	= (S / NL)*
+
+// Token
+// ====
+
+"if"       = 'if'       !W
+"else"     = 'else'     !W
+"while"    = 'while'    !W
+"elif"     = 'elif'     !W
+"do"       = 'do'       !W
+"for"      = 'for'      !W
+"class"    = 'class'    !W
+"raise"    = 'raise'    !W
+"with"     = 'with'     !W
+"continue" = 'continue' !W
+"break"    = 'break'    !W
+"return"   = 'return'   !W
+"print"    = 'print'    !W
+"as"       = 'as'       !W
+"in"       = 'in'       !W
+"import"   = 'import'   !W
+"from"     = 'from'     !W
+"def"      = 'def'      !W
+"try"      = 'try'      !W
+"except"   = 'except'   !W
+"or"       = 'or'       !W
+"and"      = 'and'      !W
+"not"      = 'not'      !W
+"True"     = 'True'     !W
+"False"    = 'False'    !W
+"self"     = 'self'     !W
+"pass"     = 'pass'     !W
+
+"*"   = '*' !'=' _
+"+"   = '+' ![+=] _
+"-"   = '-' !('-' / [=>]) _
+"~"   = '~' _
+"!"   = '!' !'=' _
+"["   = '[' _
+"]"   = ']' _
+","   = ',' _
+"..." = '...' _
+":"   = _ ':' ![>] _
+"/"   = '/' !'=' _
+"%"   = '%' ![=>] _
+"{"   = '{' !'=' _
+"}"   = '}' !'=' _
+"<="  = '<=' _
+">="  = '>=' _
+"<"   = '<' ![=] _
+">"   = '>' ![=] _
+"=="  = '==' _
+"!="  = '!=' _
+"^"   = '^' ![=] _
+"|"   = '|' ![=] _
+"&&"  = '&&' _
+"||"  = '||' _
+"?"   = '?' _
+
+"/="  = '/=' _
+"%="  = '%=' _
+"+="  = '+=' _
+"-="  = '-=' _
+"&="  = '&=' _
+"^="  = '^=' _
+"|="  = '|=' _
+"="   = '=' !'=' _
+"."   = '.' _
+
+"("   = '(' _
+")"   = ')' _
+
+// Block, Statement
+
+Statement
+	= { "if"     _ @Expr _ @Block (_ @Elif)* (_ NL* 'else' _ @Block)? #If }
+	/ { "while"  _ @Expr _ @Block #While}
+	/ { "for"    _ @Name _ "in" _ @Expr @Block #ForEach }
+	/ { "import" _ @ImportName (_ "," @Name)* #Import }
+	/ { "from"   _ @ImportName _ "import" _ @ImportName (_ "," @ImportName)* #FromImport }
+	/ { "break"    #Break }
+	/ { "continue" #Continue }
+	/ { (@Annotation)? "def"    _ @Name "(" @Params ")" @Block #Function }
+	/ { (@Annotation)? "class"  _ @Name (_ "(" (@Extend)? _ ")" )? @ClassBlock #Class }
+	/ { "try"    _ @Block "except" _ @Expr _ @Block #Try }
+	/ { "assert" _ @Expr (_ "," @Expr)? #Assert }
+	/ { "print"  _ @Expr #Print }
+	/ { "raise"  _ @Expr #Throw }
+	/ { "with"   _ @Expr ("as" _ @Name)? _ @Block #With }
+	/ { "return" (_ @Expr)? #Return }
+	/ "pass" { #Empty }
+	/ Expr EOS?
+
+Annotation
+	= '@' { @AnnotationContent #Annotation } __
+
+AnnotationContent
+	= { NAME #Name } {@  addSelector }* __
+
+Elif
+	= {"elif" S+ @Expr _ @Block #if }
+
+Asterisk
+	= { '*' #Asterisk}
+
+ImportName
+	= Name {@ '.' @Name #Field }*
+	/ Asterisk
 
 Extend
 	= { @ExtendContent #super }
 
 ExtendContent
-	= Symbol
+	= Name
 
 Block
-	= { <indent> ":" _ NL (_ NL / @IndentStmt)+ #Block}
-	/ _ { @Stmt #Block}
-
-IndentStmt
-	= <indent> S+ Stmt
+	= { <block ":" _ NL (_ NL / <indent> S+ @Statement)+ > #Block}
+	/ _ { @Statement #Block}
 
 ClassBlock
-	= NL+ { <indent> (S* EOS+ / @ClassStmt EOS?)+ #Block};
-
-ClassStmt
-	= <indent> _ Stmt
+	= { <block ":" _ NL (_ NL / <indent> S+ @Statement EOS?)+ > #Block};
 
 Expr
 	= Assign
 
 Assign
-	= OrExpr {@ S* AssignOp S* OrExpr@}*
+	= OrExpr {@ S* addAssignOp S* OrExpr@}*
 
-AssignOp
+addAssignOp
 	= '=' !'=' #Assign
 	/ '+='     #Addeq
 	/ '-='     #Subeq
@@ -162,9 +172,9 @@ BitwiseExpr
 	= Equal {@ S* ("|" !'|' #BitOr / "&" !'&' #BitAnd / "^" #BitXor) S* @Equal }*
 
 Equal
-	= Relation {@ S*  @EqOp S* @Relation}*
+	= Relation {@ S*  addEqOp S* @Relation}*
 
-EqOp
+addEqOp
 	= 'is' S+ 'not' #Noteq
 	/ 'is' #Eq
 	/ '==' #Eq
@@ -172,25 +182,31 @@ EqOp
 	/ 'in' #In
 
 Relation
-	= Shift {@ S* ('<' !'<' #Lt / '<=' #Lte / '>' !'>' #Gt / '>=' #Gte) S* @Shift }*
+	= Shift {@ _ addRelOp _ @Shift }*
+
+addRelOp
+	= '<=' #LessThanEquals
+	/ '<' !'<' #LessThan
+	/ '>=' #GreaterThanEquals
+	/ '>' !'>' #GreaterThan
 
 Shift
-	= Sum {@ S* ("<<" #LShift / ">>" #RShift) S* @Sum }*
+	= Sum {@ _ ("<<" #LeftShift / ">>" #RightShift) _ @Sum }*
 
 Sum
-	= Product {@ S* ('+' #Add / '-' #Sub) S* @Product }*
+	= Product {@ _ ('+' #Add / '-' #Sub) _ @Product }*
 
 Product
-	= Unary {@ S* ("*" #Mul / "/" #Div / "%" #Mod) S* @Unary }*
+	= Unary {@ _ ("*" #Mul / "/" #Div / "%" #Mod) _ @Unary }*
 
 Unary
-	= { ("not" #Not / "!" #Not / "-" #Minus / "+" #Plus / "~" #Compl) @Unary }
-	/ Value {@ Selector }*
+	= { ("not" #LogicalNot / "!" #LogicalNot / "-" #Minus / "+" #Plus / "~" #Compl ) @Unary }
+	/ Value {@ addSelector }*
 
-Selector
-	= '.' Symbol@ #Field
-	/ '[' S* (@Slice / @Expr) S* ']' #Index
-	/ '(' @{ _* ( _* @Expr ( _* ',' _* @Expr )* )? #Args } ')'  #Apply
+addSelector
+	= '.' @Name #Field
+	/ '[' _ (@Slice / @Expr) S* ']' #Index
+	/ '(' @{ _ ( @Expr (_ "," @Expr )* )? #Args } ')'  #Apply
 
 Slice
 	= { @SliceBegin ":" @SliceEnd #Slice }
@@ -206,39 +222,51 @@ SliceEnd
 Value
 	= StringLiteral
 	/ Symbol
+	/ Name
 	/ Number
 	/ ArrayLiteral
-	/ MapLiteral
+	/ DictLiteral
 	/ TupleLiteral
 
 ArrayLiteral
-	= { "[" (@Expr)? (_* "," _* @Expr)* _* "]" #Array}
-	/ { "[" @Expr "for" @Symbol "in" @Expr (_* "if" Expr@)? _* "]" #ListComprehension }
+	= { "[" (@Expr)? (__ ',' __ @Expr)* _* "]" #Array }
+	/ { "[" @Expr _ "for" _ @Name _ "in" _ @Expr (_ "if" _ @Expr)? _ "]" #ListComprehension }
 
-MapLiteral
-	= { "{" _* (@MapContent)? (_* "," _* @MapContent )* _* "}" #Map}
+DictLiteral
+	= { "{" _* (@DictContent)? (_* "," _* @DictContent )* _* "}" #Hash }
 
 TupleLiteral
-	= { "(" @Expr ")" #Group }
-	/ { "(" _* @Expr (_* "," _* @Expr)+ _* ")" #Tuple}
+	= "(" Expr ")"
+	/ { "(" @Expr (_ "," @Expr)+ _ ")" #List }
 
-MapContent
-	= { (@StringLiteral / @Symbol) ":" @Expr #KeyValue};
+DictContent
+	= { (@StringLiteral / @Name) ":" @Expr #KeyValue }
 
 Params
-	= { (@Param)? (_* "," _* @Param)* _* #Params};
+	= { (@Param)? (_ "," @Param)* _ #Params }
 
 Param
-	= { @Symbol (S* "=" @Expr)? #Param }
+	= { @Name (_ "=" @Expr)? #Param }
 
 Args
-	= { (@Expr)? (_* "," @Expr)* #Args};
+	= { (@Expr)? (_ "," @Expr)* #Args }
 
 Symbol
-	= { "True" #TTrue }
-	/ { "False" #TFalse }
-	/ { "None" #TNull }
-	/ { [a-zA-Z_$][0-9a-zA-Z_$]* #Name}
+	= { "True"  #True }
+	/ { "False" #False }
+	/ { "None"  #Null }
+	/ { "self"  #This }
+
+Name
+	= { NAME #Name}
+
+KEYWORD
+	= 'if' / 'else' / 'while' / 'elif' / 'do' / 'for' / 'class' / 'raise' / 'with' / 'continue'
+	/ 'break' / 'return' / 'print' / 'as' / 'in' / 'import' / 'from' / 'def' / 'try' / 'except'
+	/ 'or' / 'and' / 'not' / 'True' / 'False' / 'self'
+
+NAME
+	= !DIGIT !(KEYWORD !W) W+
 
 StringLiteral
 	= [bru]? '"""' { ('\\"' / !'"""' .)*  #String } '"""'
@@ -248,29 +276,19 @@ StringLiteral
 
 DIGIT = [0-9]
 
-Digits = DIGIT+
+EXPONENT = [eE] [+-]? DIGIT+
 
-Exponent = [eE] [+-]? Digits
+FLOAT
+	= "." DIGIT+ EXPONENT?
+	/ DIGIT+ '.' EXPONENT
+	/ DIGIT+ (('.' (DIGIT+ EXPONENT?)?) / EXPONENT)
 
-FloatLiteral
-	= "." Digits Exponent?
-	/ Digits "." Exponent
-	/ Digits (("." (Digits Exponent?)?) / Exponent);
-
-IntegerLiteral
+INTEGER
 	= "0" [xX] [0-9a-fA-F]+      // hexadecimal integer
 	/ "0" [0-7]+                 // octal integer
 	/ "0"                        // zero
-	/ [1-9] Digits?             // decimal integer
+	/ [1-9] DIGIT*               // decimal integer
 
 Number
-	= { ("-" / "+")? FloatLiteral   #Float }
-	/ { ("-" / "+")? IntegerLiteral #Int }
-
-Asterisk
-	= { '*' #Asterisk}
-
-ImportSymbol
-	= Symbol
-	/ Asterisk
-
+	= { ("-" / "+")? FLOAT   #Double }
+	/ { ("-" / "+")? INTEGER #Integer }
