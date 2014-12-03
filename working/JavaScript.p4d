@@ -176,6 +176,9 @@ KEYWORD
 //Expression
 //==========
 
+Untyped
+    = { `Untyped` #Untyped }
+
 ThisExpression
     = { "this" #This }
 
@@ -285,7 +288,7 @@ PostfixExpression
     / LeftHandSideExpression
 
 addPostfixOperator
-    = "++" #Inc / "--" #Dec
+    = "++" #SuffixInc / "--" #SuffixDec
 
 UnaryExpression
     [example: ++i]
@@ -296,10 +299,10 @@ addUnaryOperator
     / "--"     #PrefixDec
     / "+"      #Plus
     / "-"      #Minus
-    / "~"      #Compl
-    / "!"      #Not
-    / "delete" #Delete
-    / "void"   #Void
+    / "~"      #BitwiseNot
+    / "!"      #LogicalNot
+    / "delete" #DeleteProperty
+    / "void"   #VoidExpression
     / "typeof" #TypeOf
 
 MultiplicativeExpression
@@ -324,8 +327,8 @@ addRelationalOperator
     / ">=" #GreaterThanEquals
     / "<" #LessThan
     / ">" #GreaterThan
-    / "instanceof" #InstanceOf
-    / <if InOperator> "in" #In
+    / "instanceof" #StringInstanceOf
+    / <if InOperator> "in" #HashIn
   
 EqualityExpression
     = RelationalExpression {@ __ addEqualityOperator __ @RelationalExpression }*
@@ -346,13 +349,13 @@ BitwiseORExpression
     = BitwiseXORExpression {@ __ "|" __ @BitwiseXORExpression #BitwiseOr }*
 
 LogicalANDExpression
-    = BitwiseORExpression {@ __ "&&" __ @BitwiseORExpression #And }*
+    = BitwiseORExpression {@ __ "&&" __ @BitwiseORExpression #LogicalAnd }*
 
 LogicalORExpression
-    = LogicalANDExpression {@ __ "||" __ @LogicalANDExpression #Or }*
+    = LogicalANDExpression {@ __ "||" __ @LogicalANDExpression #LogicalOr }*
   
 ConditionalExpression
-    = LogicalORExpression {@ __ '?' __ <with InOperator @AssignmentExpression> __ ':' __ @AssignmentExpression #Trinary }*
+    = LogicalORExpression {@ __ '?' __ <with InOperator @AssignmentExpression> __ ':' __ @AssignmentExpression #Conditional }*
 
 AssignmentExpression
     = { <with InOperator @LeftHandSideExpression> __ addAssignmentOperator __ @AssignmentExpression }
@@ -372,7 +375,7 @@ addAssignmentOperator
     / "|="  #AssignBitwiseOr
 
 Expression
-    = AssignmentExpression {@ __ ',' __ @AssignmentExpression #Expression }*
+    = AssignmentExpression {@ __ ',' __ @AssignmentExpression #Comma }*
 
 //Statement
 //==========
@@ -404,10 +407,10 @@ Block
 
 VariableStatement
     [example: var a = 0, b, c = 1 + 3;]
-    = "var" __ VariableDeclarationList EOS
+    = { "var" __ @[2]VariableDeclarationList EOS #VarDeclStmt }
 
 VariableDeclarationList
-    = { @VariableDeclaration (__ ',' __ @VariableDeclaration)* #VarDeclList }
+    = { @VariableDeclaration (__ ',' __ @VariableDeclaration)* #List }
 
 VariableDeclaration
     = { @Identifier (__ addInitialiser)? #VarDecl }
@@ -452,7 +455,7 @@ addForStatementPart
 ForEachStatement
     [example:for(k in array);]
     [example:for(var k in array){ i += 1;}]
-    = { "for" __ '(' __ addForEachPart __ ')' __ @Statement #ForEach }
+    = { "for" __ '(' __ addForEachPart __ ')' __ @Statement #JSForeach }
 
 addForEachPart
     = "var" __ <without InOperator @VariableDeclarationList> __ "in" __ @Expression
@@ -490,8 +493,8 @@ addCaseClauses
 CaseClause
     [example: case 2: break;]
     [example: default: break;]
-    = { "case" __ @Expression __ ':' __ (@Statement __)* #CaseClause }
-    / { "default" __ ':' __ (@Statement __)* #CaseClause }
+    = { "case" __ @Expression __ ':' __ (@Statement __)* #Case }
+    / { "default" __ ':' __ (@Statement __)* #Default }
 
 LabelledStatement
     [example: label: var a = 1;]
@@ -505,17 +508,17 @@ TryStatement
     [example: try{}finally{}]
     [example: try{}catch(e){}]
     [example: try{}catch(e){}finally{}]
-    = { (  "try" __ @[0]Block __ @[1]Catch __ @[2]Finally
+    = { (  "try" __ @[0]Block __ @[1]Catch __ addFinally
          / "try" __ @[0]Block __ @[1]Catch
-         / "try" __ @[0]Block __ @[2]Finally ) #Try }
+         / "try" __ @[0]Block __ addFinally ) #Try }
 
 Catch
     [example: catch(e){}]
-    = { "catch" __ '(' __ @Identifier __ ')' __ @Block #Catch }
+    = { @{ "catch" __ '(' __ @Identifier __ ')' __ @Block #Catch } #List }
 
-Finally
+addFinally
     [example: finally{}]
-    = { "finally" __ @Block #Finally }
+    = "finally" __ @[2]Block
 
 DebuggerStatement
     = "debugger" EOS { #Debugger }
@@ -526,12 +529,12 @@ DebuggerStatement
 FunctionDeclaration
     [example: function func(){}]
     [example: function func(n){ return n+1; }]
-    = { "function" __ @[0]Identifier __ @[1]FormalParameterList __ @[2]FunctionBody #Function }
+    = { "function" __ @[2]Identifier __ @[4]FormalParameterList __ @[6]FunctionBody #FuncDecl }
 
 FunctionExpression
     [example: function func(){}]
     [example: function (){}]
-    = { "function" __ (@[0]Identifier __)? @[1]FormalParameterList __ @[2]FunctionBody #Function }
+    = { "function" __ (@[2]Identifier __)? @[4]FormalParameterList __ @[6]FunctionBody #FuncDecl }
 
 FormalParameterList
     = '(' __ { ( @Identifier (__ ',' __ @Identifier)* )? #List } __ ')'
@@ -554,7 +557,8 @@ NullLiteral
 
 BooleanLiteral
     [example: true]
-    = { ( "true" / "false" ) #Bool }
+    = { "true" #True }
+    / { "false" #False }
 
 NumericLiteral
     [example: 0x1F]
@@ -565,12 +569,12 @@ NumericLiteral
 
 DecimalIntegerLiteral
     [example: 123]
-    = { DECIMAL_INTEGER #DecimalInteger }
+    = { DECIMAL_INTEGER #Integer }
 
 OctaIntegerLiteral
     [example: 0]
     [example: 012]
-    = { '0' OCT* #OctaInteger }
+    = { '0' OCT* #OctalInteger }
 
 HexIntegerLiteral
     [example: 0xa12]
@@ -584,14 +588,14 @@ FloatingPointLiteral
     [example: .12]
     [example: .12e3]
     [example: 5e3]
-    = { DECIMAL_INTEGER? '.' DIGIT+ EXPONENT_PART? #FloatingPointNumber }
-    / { DECIMAL_INTEGER EXPONENT_PART #FloatingPointNumber }
+    = { DECIMAL_INTEGER? '.' DIGIT+ EXPONENT_PART? #Double }
+    / { DECIMAL_INTEGER EXPONENT_PART #Double }
 
 InfinityLiteral
-    = { 'Infinity' #FloatingPointNumber }
+    = { 'Infinity' #Double }
 
 NaNLiteral
-    = { 'NaN' #FloatingPointNumber }
+    = { 'NaN' #Double }
 
 DECIMAL_INTEGER
     = [1-9] DIGIT* / "0"
