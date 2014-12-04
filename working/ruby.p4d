@@ -205,17 +205,17 @@ NumericLiteral
     [example: 0.12]
     [example: 1234]
     = HexIntegerLiteral / BinaryIntegerLiteral
-    / FloatingPointLiteral / DecimalLiteral / OctaIntegerLiteral
+    / FloatingPointLiteral / DecimalLiteral / OctalIntegerLiteral
 
 DecimalLiteral
     [example: 123]
     = { [1-9] DIGIT* #DecimalInteger }
     / "0" [dD] { DIGIT+ #DecimalInteger }
 
-OctaIntegerLiteral
+OctalIntegerLiteral
     [example: 0]
     [example: 012]
-    = { '0' ([oO] OCT+ / OCT*) #OctaInteger }
+    = { '0' ([oO] OCT+ / OCT*) #OctalInteger }
 
 HexIntegerLiteral
     [example: 0xa12]
@@ -578,10 +578,10 @@ BraceBlockWithoutParameter
     = "{" __ CompleteStatement __ "}"
 
 ExpandExpression
-    = { '*' @Arg #Expand }
+    = { '*' @Arg #Sprat }
 
 LHSExpandExpression
-    = { '*' @LeftHandSideExpression #Expand }
+    = { '*' @LeftHandSideExpression #Sprat }
 
 THEN
     = "then" / EOS (__ "then")?
@@ -613,6 +613,9 @@ Args
 
 addArgs
     = @Arg (__ "," __ @Arg)*
+
+add2MoreArgs
+    = @Arg (__ "," __ @Arg)+
 
 addArgsNoAssoc
     = @Arg !(_ "=>") (__ "," __ @Arg !(_ "=>"))*
@@ -689,6 +692,11 @@ addAssocs
 Association
     [example: a => 1]
     = { @Arg __ "=>" __ @Arg #Assign }
+    / { @JsonStyleAssocSymbol _ ":" __ @Arg #Assign }
+
+JsonStyleAssocSymbol
+    = { FUNCTION_NAME #Symbol }
+    / { VARIABLE_NAME #Symbol }
 
 // Expression
 
@@ -756,7 +764,7 @@ ArrayLiteral
 
 UnwrapedArray
     [example: 1,2]
-    = { addArgs #Array }
+    = { add2MoreArgs #Array }
 
 HashLiteral
     [example: {"a"=>1,"b"=>2}]
@@ -814,7 +822,7 @@ UnaryExpression
 
 addUnaryOperator
     = "+" #Plus
-    / "~" #Compl
+    / "~" #Invert
     / "!" #Not
 
 PowerExpression
