@@ -146,8 +146,8 @@ addFieldList
     = @Field (__ [,;] __ @Field)* (__ [,;])?
 
 Field
-    = { "[" __ @Expression __ "]" __ "=" __ @Expression #SetterApply }
-    / { @Identifier __ "=" __ @Expression #Property }
+    = { "[" __ @Expression __ "]" __ "=" __ @Expression #TableSetterApply }
+    / { @Identifier __ "=" __ @Expression #TableProperty }
     / VariadicParameter
     / Expression
 
@@ -210,7 +210,7 @@ addUnaryOperator
     = "+"      #Plus
     / "-"      #Minus
     / "#"      #Count
-    / "not"    #Not
+    / "not"    #LogicalNot
 
 MultiplicativeExpression
     = UnaryExpression {@ __ ( "*" #Mul / "/" #Div / "%" #Mod ) __ @UnaryExpression }*
@@ -234,10 +234,10 @@ addEqualityOperator
     / "~="  #NotEquals
 
 LogicalANDExpression
-    = EqualityExpression {@ __ "and" __ @EqualityExpression #And }*
+    = EqualityExpression {@ __ "and" __ @EqualityExpression #LogicalAnd }*
 
 LogicalORExpression
-    = LogicalANDExpression {@ __ "or" __ @LogicalANDExpression #Or }*
+    = LogicalANDExpression {@ __ "or" __ @LogicalANDExpression #LogicalOr }*
 
 Expression
     = FunctionExpression
@@ -287,7 +287,7 @@ VariableStatement
 AssignmentStatement
     [example: x, y = y, x;]
     [example: a.b = 1;]
-    = { @LeftHandSideExpressionList __ "=" __ @ExpressionList EOS #Assign }
+    = { @LeftHandSideExpressionList __ "=" __ @ExpressionList EOS #MultiAssign }
 
 IfStatement
     [example: if n < 10 then return n end]
@@ -297,10 +297,7 @@ IfStatement
         (elseClause / elsifClause)? __ "end" EOS? #If }
 
 elsifClause
-    = @ElsifClause
-
-ElsifClause
-    = { "elseif" __ @Expression __ "then"__ @Block
+    = @{ "elseif" __ @Expression __ "then"__ @Block
         (elseClause / elsifClause)? #If }
 
 elseClause
@@ -318,7 +315,7 @@ ForStatement
 
 ForEachStatement
     [example: for k,v in list do end]
-    = { "for" __ @IdentifierList __ "in" __ @ExpressionList __ @BlockStatement #ForEach }
+    = { "for" __ @IdentifierList __ "in" __ @ExpressionList __ @BlockStatement #Foreach }
 
 BreakStatement
     [example: break;]
@@ -395,7 +392,8 @@ NilLiteral
 
 BooleanLiteral
     [example: true]
-    = { ( "true" / "false" ) #Bool }
+    = { "true" #True }
+    / { "false" #False }
 
 NumericLiteral
     [example: 0x1F]
@@ -437,10 +435,10 @@ StringLiteral
     [example: [==[foo[bar]123]==]]
     = ["] { (!["] QUOTED_STRING_CHAR)* #String } ["]
     / ['] { (!['] QUOTED_STRING_CHAR)* #String } [']
-    / '[' <name BracketStringEquals [=]*> '[' LINE_TERMINATOR_SEQUENCE? { BS_CHAR* #String } BS_TERMINATOR
+    / <block '[' <name BracketStringEquals [=]*> '[' LINE_TERMINATOR_SEQUENCE? { BS_CHAR* #String } BS_TERMINATOR >
 
 BRACKET_STRING_COMMENT
-    = '[' <name BracketStringEquals [=]*> '[' LINE_TERMINATOR_SEQUENCE? BS_COMMENT_CHAR* BS_TERMINATOR
+    = <block '[' <name BracketStringEquals [=]*> '[' LINE_TERMINATOR_SEQUENCE? BS_COMMENT_CHAR* BS_TERMINATOR >
 
 QUOTED_STRING_CHAR
     = !('\\' / LINE_TERMINATOR) . / '\\' ESCAPE_SEQUENCE
