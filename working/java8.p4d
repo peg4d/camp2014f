@@ -262,7 +262,7 @@ VariableModifiers
 	= { @VariableModifier ( _ @VariableModifier)* #List }
 
 InitDecl
-	= { @VarName _ ( "=" _ @Initializer)? #VarDecl }
+	= { @VarName ( _ "=" _ @Initializer)? #VarDecl }
 
 InitDeclAssign
 	= { @VarName _ "=" _ @Initializer #VarDecl }
@@ -542,7 +542,7 @@ Block
 	= { "{" _ ((@Statement / @LocalDeclaration) _ )* "}" #Block }
 
 LocalDeclaration
-	= VariableDeclaration ";"
+	= VariableDeclaration _ ";"
 	/ ClassDeclaration
 
 Statement
@@ -552,8 +552,8 @@ Statement
 	/ { "switch" _ "(" _ @Expression _ ")" _ @Statement #Switch }
 	/ { "while" _  "(" _ @Expression _ ")" _ @Statement #While }
 	/ { "do" _ @Statement _ "while" _ "(" _ @Expression _ ")" _ ";" #DoWhile }
-	/ { "for" _ "(" _ (@Expressions)? _    ";" _ (@Expression)? _ ";" _ (@Expressions)? _ ")" _ @Statement #For }
-	/ { "for" _ "(" _ @VariableDeclaration ";" _ (@Expression)? _ ";" _ (@Expressions)? _ ")" _ @Statement #For }
+	/ { "for" _ "(" _ (@Expressions)?      _ ";" _ (@Expression)? _ ";" _ (@Expressions)? _ ")" _ @Statement #For }
+	/ { "for" _ "(" _ @VariableDeclaration _ ";" _ (@Expression)? _ ";" _ (@Expressions)? _ ")" _ @Statement #For }
 	/ { "for" _ "(" _ (@VariableModifiers _ )? @Type _ @Name _ ":" _ @Expression _ ")" _ @Statement #ForEach }
 	/ { "goto" _ @Name _ ";" #Goto }
 	/ { "continue" _ ";" #Continue }
@@ -563,6 +563,7 @@ Statement
 	/ { "try" _ @Block _ (@CatchBlock _ )* @{ "finally" _ @Block #Finally } #Try }
 	/ { "try" _ @Block ( _ @CatchBlock)+ #Try }
 	/ { "throw" _ @Expression _ ";" #Throw }
+	/ { "synchronized" _ "(" _ @Expression _ ")" _ @Block #Synchronized }
 	/ { "case" _ @ConstantExpression _ ":" _ (!"case" !"default" @Statement)* #SwitchCase }
 	/ { "default" _ ":" _ (!"case" @Statement)* #SwitchDefault }
 	/ { @Name _ ":" #Label }
