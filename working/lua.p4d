@@ -177,7 +177,7 @@ CallStatement
     = MemberExpression {@ addCallOperator }+ EOS
 
 addCallOperator
-    = __ ":" __ @Identifier _ @Arguments #MethodApply
+    = __ ":" __ @Identifier _ @Arguments #Method
     / _ @Arguments #Apply
     / _ @TableArgument #Apply
     / _ @StringArgument #Apply
@@ -187,7 +187,7 @@ addCallOrMemberOperator
     / __ addMemberOperator
 
 Arguments
-    = '(' __ ExpressionList __ ')'
+    = '(' __ UnpackExpressionList __ ')'
 
 TableArgument
     = { @TableConstructor #List } 
@@ -253,6 +253,9 @@ VariadicParameter
 ExpressionList
     = { (@ExpressionListItem (__ ',' __ @ExpressionListItem)*)? #List }
 
+UnpackExpressionList
+    = { (@ExpressionListItem (__ ',' __ @ExpressionListItem)*)? #UnpackList }
+
 IdentifierList
     = { (@Identifier (__ ',' __ @Identifier)*)? #List }
 
@@ -282,7 +285,7 @@ BlockStatement
 
 VariableStatement
     [example: local a,b,c = 1,2,3;]
-    = { "local" __ @IdentifierList (__ "=" __ @ExpressionList)? EOS #VarDecl }
+    = { "local" __ @IdentifierList (__ "=" __ @ExpressionList)? EOS #MultiVarDecl }
 
 AssignmentStatement
     [example: x, y = y, x;]
@@ -311,7 +314,7 @@ WhileStatement
 
 ForStatement
     [example: for var = e1, e2, e3 do break end]
-    = { "for" __ @Identifier __ "=" __ @Expression __ "," __ @Expression __ ("," __ @Expression __)? @BlockStatement #For }
+    = { "for" __ @Identifier __ "=" __ @Expression __ "," __ @Expression __ ("," __ @Expression __)? @[4]BlockStatement #ForInRange }
 
 ForEachStatement
     [example: for k,v in list do end]
@@ -333,7 +336,7 @@ FunctionExpression
     [example: function (a, b) end]
     [example: function (a, b, ...) end]
     [example: function () return 1,2,3 end]
-    = { "function" __ addFuncBody "end" EOS? #Function }
+    = { "function" __ addFuncBody "end" EOS? #FuncDecl }
 
 FunctionDeclaration
     [example: function f(a, b) end]
@@ -362,10 +365,10 @@ addMethodName
     = @FuncName __ ":" __ @Identifier
 
 FunctionDeclarationBody
-    = { addFuncBody #Function }
+    = { addFuncBody #FuncDecl }
 
 addFuncBody
-    = @[1]ParameterList __ @[2]Block
+    = @[4]ParameterList __ @[6]Block
 
 ParameterList
     = { '(' __ addParameterList? __ ')' #List }
