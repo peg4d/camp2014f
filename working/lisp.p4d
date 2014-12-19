@@ -1,0 +1,124 @@
+/*
+
+  PEG4d Lisp Grammar
+
+  Authors:
+    Tetsuro Matsumura (https://github.com/tetsurom/)
+
+*/
+
+File = Chunk
+Chunk
+    = { (@Expression __)+ #Source }
+
+SPACE = [ \t]
+
+SP = (SPACE / LINE_TERMINATOR+ / COMMENT)+
+
+__
+    = (SPACE / LINE_TERMINATOR+ / COMMENT)*
+
+_
+    = (SPACE / MULTI_LINE_COMMENT_SINGLE_LINE)*
+
+COMMENT
+    = MULTI_LINE_COMMENT / SINGLE_LINE_COMMENT
+
+MULTI_LINE_COMMENT
+    = '#|' (!'|#' (MULTI_LINE_COMMENT / .))* '|#'
+
+MULTI_LINE_COMMENT_SINGLE_LINE
+    = '#|' (!('|#' / LINE_TERMINATOR) (MULTI_LINE_COMMENT_SINGLE_LINE / .))* '|#'
+
+SINGLE_LINE_COMMENT
+    = ';' (!LINE_TERMINATOR .)*
+
+DecimalInteger
+    = { DECIMAL_INTEGER #Integer }
+
+FloatingPointNumber
+    = { DECIMAL_INTEGER? '.' DIGIT+ EXPONENT_PART? #Double }
+    / { DECIMAL_INTEGER EXPONENT_PART #Double }
+
+DECIMAL_INTEGER
+    = [1-9] DIGIT* / "0"
+
+EXPONENT_PART
+    = [eE] SIGN? DECIMAL_INTEGER
+
+SIGN
+    = ( '+' / '-' )
+
+String
+    = '"' { (!["] STRING_CHAR)* #String } '"'
+
+STRING_CHAR
+    = !('\\' / LINE_TERMINATOR) . / '\\' ESCAPE_SEQUENCE
+
+LINE_TERMINATOR
+    = [\n\r]
+
+ESCAPE_SEQUENCE
+    = '\\' / ["abfnrtv]
+
+IDENTIFIER
+    = IDENTIFIER_START IDENTIFIER_PART*
+
+IDENTIFIER_START
+    = [a-zA-Z_]
+
+IDENTIFIER_PART
+    = IDENTIFIER_START
+    / DIGIT
+
+Identifier
+    = { IDENTIFIER #Name }
+
+OPERATOR
+    = [+%/<>*=~^&|-]+
+
+GlobalIdentifier
+    = { '*' IDENTIFIER '*' #Name }
+
+FunctionName
+    = { (OPERATOR / IDENTIFIER) #Name }
+
+FunctionReference
+    = '#`' FunctionName
+
+Tee
+    = { "t" #True }
+
+Nil
+    = { "nil" #Null }
+
+Expression
+    = DefunExpression
+    / CallExpression
+    / Quote
+    / String
+    / Tee
+    / Nil
+    / DecimalInteger
+    / FloatingPointNumber
+    / FunctionReference
+    / Identifier
+    / GlobalIdentifier
+
+FunctionBody
+    = CallExpression
+    / '(' __ { (@CallExpression (SP @CallExpression)*)? #Block } __ ')'
+
+CallExpression
+    = '(' __ { @FunctionName (SP @Expression)* #Apply } __ ')'
+
+DefunExpression
+    = '(' __ { "defun" SP @FunctionName SP @ExpressionList SP @FunctionBody #FuncDecl } __ ')'
+
+ExpressionList
+    = '(' __ { (@Expression (SP @Expression)*)? #List } __ ')'
+
+Quote
+    = '`' ExpressionList
+    / '`' { @Expression #Quote }
+
