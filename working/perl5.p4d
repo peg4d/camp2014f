@@ -48,6 +48,9 @@ SINGLE_LINE_COMMENT
 Identifier
     = !KEYWORD IdentifierName
 
+IDENTIFIER
+    = !KEYWORD (IDENTIFIER_PART / [ \t])+
+
 IdentifierName
     = { IDENTIFIER_START IDENTIFIER_PART* #Name }
 
@@ -566,6 +569,7 @@ SOURCE
 StringLiteral
     = ["] { DOUBLE_STRING_CHARACTER* #String } ["]
     / ['] { SINGLE_STRING_CHARACTER* #String } [']
+    / HereDocument
 
 DOUBLE_STRING_CHARACTER
     = !( ["] / '\\' / LINE_TERMINATOR ) SOURCE / '\\' ESCAPE_SEQUENCE
@@ -584,6 +588,19 @@ HEX_ESCAPE_SEQUENCE
 
 UNICODE_ESCAPE_SEQUUENCE
     = [uU] HEX4
+
+HereDocument
+    = "<<" HD_IDENTIFIER (!HD_NEWLINE .)* HD_NEWLINE
+    { (!(_ <isa HereDocID>) (!HD_NEWLINE .)* HD_NEWLINE)* #HereDocument }
+    <isa HereDocID> HD_NEWLINE
+
+HD_IDENTIFIER
+    = ["] <name HereDocID IDENTIFIER> ["]
+    / ['] <name HereDocID IDENTIFIER> [']
+    / [`] <name HereDocID IDENTIFIER> [`]
+
+HD_NEWLINE
+    = LINE_TERMINATOR_SEQUENCE
 
 RegularExpressionLiteral
     [example: /.*(?=#[^\s]*$)/]
