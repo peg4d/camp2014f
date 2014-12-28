@@ -65,6 +65,7 @@ DELIMITTED_COMMENT_SECTION
 
 WHITESPACE
     = ' ' / '\u0009' / '\u000b' / '\u000c' // / UNICODE_ZS
+    / '\uFEFF'
 
 _ = WHITESPACE*
 __ = (WHITESPACE / NEW_LINE / COMMENT)*
@@ -318,8 +319,7 @@ NullLiteral
 // B.1.10 Pre-processing directives
 
 PPDerective
-    = PPDeclaration
-    / PPConditional
+    = PPConditional
     / PPLine
     / PPDiagnostic
     / PPRegion
@@ -349,6 +349,7 @@ PPPrimaryExpression
     / ConditionalSymbol
     / '(' _ PPExpression _ ')'
 
+// used in CompilationUnit
 PPDeclaration
     = { _ '#' _ "define" _ @ConditionalSymbol PP_NEWLINE #PPDefine }
     / { _ '#' _ "undef" _ @ConditionalSymbol PP_NEWLINE #PPUndef }
@@ -372,10 +373,11 @@ PP_ENDIF
     = _ '#' _ "endif" PP_NEWLINE
 
 ConditionalSection
-    = { `not supported` !. }
+    //= { `not supported` !. }
 //    = <if PPInTopLevel> TopLevel
 //    / <if PPInClass> ClassBody
-//    / <if PPInBlock> Block
+    = <if PPInBlock> { __ (@StatementList)? __ #Block }
+    / <if PPInClass> ClassMemberDeclaration __
 
 PPDiagnostic
     = { _ '#' _ "error" @PPMessage #PPError }
@@ -536,13 +538,8 @@ PrimaryNoArrayCreationExpression
     = Literal
     / SimpleName
     / '(' __ Expression __ ')'
-//    / MemberAccess
-//    / InvocationExpression
-//    / ElementAccess
     / ThisAccess
     / BaseAccess
-//    / PostIncrementExpression
-//    / PostDecrementExpression
     / ObjectCreationExpression
     / DelegateCreationExpression
     / AnonymousObjectCreationExpression
@@ -580,13 +577,16 @@ addPostfixOperator
     / "--" #SuffixDec
 
 InvocationExpression
-    = PostfixExpressionLeftSide {@ __ @FunctionStyleArgList #Apply }+
+      = PostfixExpression
+//    = PostfixExpressionLeftSide {@ __ @FunctionStyleArgList #Apply }+
 
 PostIncrementExpression
-    = PostfixExpressionLeftSide {@ __ "++" #SuffixInc }+
+      = PostfixExpression
+//    = PostfixExpressionLeftSide {@ __ "++" #SuffixInc }+
 
 PostDecrementExpression
-    = PostfixExpressionLeftSide {@ __ "--" #SuffixDec }+
+      = PostfixExpression
+//    = PostfixExpressionLeftSide {@ __ "--" #SuffixDec }+
 
 ThisAccess
     = { "this" #This }
@@ -599,7 +599,7 @@ addBaseAccessOperator
     / "." __ @Identifier #Field
 
 ObjectCreationExpression
-    = { "new" __ @[0]Type __ @[1]FunctionStyleArgList (@[2]ObjectOrCollectionInitializer)? #New }
+    = { "new" __ @[0]Type __ @[1]FunctionStyleArgList (__ @[2]ObjectOrCollectionInitializer)? #New }
     / { "new" __ @[0]Type __ @[2]ObjectOrCollectionInitializer #New }
 
 ObjectOrCollectionInitializer
@@ -635,9 +635,9 @@ ExpressionList
     = { @Expression (__ "," __ @Expression)* #List }
 
 ArrayCreationExpression
-    = { "new" __ @NonArrayType __ "[" __ @ExpressionList "]" (__ @[2]RankSpecifier)? (__ @[3]ArrayInitializer)? #NewArray }
-    / { "new" __ @ArrayType @[3]ArrayInitializer #NewArray }
-    / { "new" __ @[2]RankSpecifier @[3]ArrayInitializer #NewArray }
+    = { "new" __ @NonArrayType __ "[" __ @ExpressionList __ "]" (__ @[2]RankSpecifier)? (__ @[3]ArrayInitializer)? #NewArray }
+    / { "new" __ @ArrayType __ @[3]ArrayInitializer #NewArray }
+    / { "new" __ @[2]RankSpecifier __ @[3]ArrayInitializer #NewArray }
 
 DelegateCreationExpression
     = { "new" __ @TypeName __ "(" __ @Expression __ ")" #NewDelegate }
@@ -892,6 +892,7 @@ Statement
     = LabeledStatement
     / DeclarationStatement
     / EmbeddedStatement
+    / PPStatement
 
 EmbeddedStatement
     = Block
@@ -935,7 +936,7 @@ LocalVariableDeclarators
     = { @LocalVariableDeclarator (__ "," __ @LocalVariableDeclarator)* #List }
 
 LocalVariableDeclarator
-    = { @Identifier (__ "=" __ @LocalVariableInitializer) #VarDecl }
+    = { @Identifier (__ "=" __ @LocalVariableInitializer)? #VarDecl }
 
 LocalVariableInitializer
     = Expression
@@ -951,11 +952,9 @@ ExpressionStatement
     = StatementExpression __ ";"
 
 StatementExpression
-    = InvocationExpression
-    / ObjectCreationExpression
+    = ObjectCreationExpression
     / Assignment
-    / PostIncrementExpression
-    / PostDecrementExpression
+    / PostfixExpression
     / PreIncrementExpression
     / PreDecrementExpression
 
@@ -1101,26 +1100,29 @@ YieldStatement
     = { "yield" __ @{ "return" __ @Expression __ ";" #Return } #Yield }
     / { "yield" __ @{ "break" __ ";" #Break } #Yield }
 
+PPStatement
+    = <with PPInBlock <without PPInTopLevel <without PPInClass PPDerective > > >
+
 // B.2.6 Namespaces
 
 CompilationUnit
-    = { (@ExternAliasDerective __)* (@UsingDirective __)* (@GlobalAttributes __)* (@NamespaceMemberDeclaration __)* #Source }
+    = { __ (@PPDeclaration __)* (@ExternAliasDerective __)* (@UsingDirective __)* (@GlobalAttributes __)* (@NamespaceMemberDeclaration __)* #Source }
 
 NamespaceDeclaration
     = { "namespace" __ @QualifiedIdentifier __ @NamespaceBody (__ ";")? #Namespace }
 
 QualifiedIdentifier
-    = Identifier {@ __ "." __ @Identifier #Field }
+    = Identifier {@ __ "." __ @Identifier #Field }*
 
 NamespaceBody
-    = { (@ExternAliasDerective __)* (@UsingDirective __)* (@NamespaceMemberDeclaration __)* #Source }
+    = { "{" __ (@ExternAliasDerective __)* (@UsingDirective __)* (@NamespaceMemberDeclaration __)* "}" #Source }
 
 ExternAliasDerective
     = { "extern" __ "alias" __ @Identifier __ ";" #CSExtern }
 
 UsingDirective
-    = { "using" __ @Identifier __ "=" __ @NamespaceOrTypeName #Using }
-    / { "using" __ @NamespaceName #Using }
+    = { "using" __ @Identifier __ "=" __ @NamespaceOrTypeName __ ";" #UsingDirective }
+    / { "using" __ @NamespaceName __ ";" #UsingDirective }
 
 NamespaceMemberDeclaration
     = NamespaceDeclaration
@@ -1187,7 +1189,10 @@ ConstructorConstraint
     = { "new" __ "(" __ ")" #ConstructorConstraint }
 
 ClassBody
-    = { "{" (__ @ClassMemberDeclaration)* __ "}" #List }
+    = "{" ClassMemberDeclarationList __ "}"
+
+ClassMemberDeclarationList
+    = { (__ @ClassMemberDeclaration)* #List }
 
 ClassMemberDeclaration
     = ConstantDeclaration
@@ -1201,6 +1206,7 @@ ClassMemberDeclaration
     / DestructorDeclaration
     / StaticConstructorDeclaration
     / TypeDeclaration
+//    / PPInClass
 
 ConstantDeclaration
     = { (@ConstantModifierAndAttributes __)? "const" __ @[1]Type __ @[2]{ @ConstantDeclarator #List } #ConstDeclStmt }
@@ -1212,7 +1218,7 @@ ConstantModifier
     = { ( "new" / "public" / "protected" / "internal" / "private" ) #Text }
 
 FieldDeclaration
-    = { (@FieldModifierAndAttributes __)? @[1]Type __ @[2]LocalVariableDeclarators #VarDeclStmt }
+    = { (@FieldModifierAndAttributes __)? @[1]Type __ @[2]LocalVariableDeclarators __ ";" #VarDeclStmt }
 
 FieldModifierAndAttributes
     = { (addAttributes __)? (@FieldModifier __)* #List }
@@ -1373,6 +1379,9 @@ DestructorModifierAndAttributes
 
 DestructorModifier
     = { "extern" #Text }
+
+PPInClass
+    = <without PPInBlock <without PPInTopLevel <with PPInClass PPDerective > > >
 
 // B.2.8 Structs
 
