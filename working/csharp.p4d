@@ -208,8 +208,8 @@ KEYWORD
 
 Literal
     = BooleanLiteral
-    / IntegerLiteral
     / RealLiteral
+    / IntegerLiteral
     / CharacterLiteral
     / StringLiteral
     / NullLiteral
@@ -373,11 +373,9 @@ PP_ENDIF
     = _ '#' _ "endif" PP_NEWLINE
 
 ConditionalSection
-    //= { `not supported` !. }
-//    = <if PPInTopLevel> TopLevel
-//    / <if PPInClass> ClassBody
     = <if PPInBlock> { __ (@StatementList)? __ #Block }
     / <if PPInClass> ClassMemberDeclaration __
+    / <if PPInTopLevel> { __ (@ExternAliasDerective __)* (@UsingDirective __)* (@TopLevelAttributes __)* (@NamespaceMemberDeclaration __)* #Source }
 
 PPDiagnostic
     = { _ '#' _ "error" @PPMessage #PPError }
@@ -449,6 +447,10 @@ SimpleName
     = { @[1]Identifier @[0]TypeArgumentList #Type }
     / Identifier
 
+Left1TypeName
+    = SimpleName {@ __ "." __ @SimpleName #Field &(__ "." __ SimpleName) }*
+    / QualifiedAliasMember
+
 // B.2.2 Types
 
 Type
@@ -483,6 +485,7 @@ PredefinedType
            / "dynamic"
            / "string"
            / "bool"
+           / "decimal"
            ) #Name }
      #Type }
 
@@ -537,7 +540,7 @@ FunctionStyleArgList
 PrimaryNoArrayCreationExpression
     = Literal
     / SimpleName
-    / '(' __ Expression __ ')'
+    / '(' __ !(Type __ ')') Expression __ ')'
     / ThisAccess
     / BaseAccess
     / ObjectCreationExpression
@@ -1105,8 +1108,15 @@ PPStatement
 
 // B.2.6 Namespaces
 
+PPInTopLevel
+    = <without PPInBlock <with PPInTopLevel <without PPInClass PPDerective > > >
+
 CompilationUnit
-    = { __ (@PPDeclaration __)* (@ExternAliasDerective __)* (@UsingDirective __)* (@GlobalAttributes __)* (@NamespaceMemberDeclaration __)* #Source }
+    = { __ (@PPDeclaration __)* (@ExternAliasDerective __)* (@UsingDirective __)* (@TopLevelAttributes __)* (@NamespaceMemberDeclaration __)* #Source }
+
+TopLevelAttributes
+    = GlobalAttributes
+    / PPInTopLevel
 
 NamespaceDeclaration
     = { "namespace" __ @QualifiedIdentifier __ @NamespaceBody (__ ";")? #Namespace }
@@ -1119,14 +1129,17 @@ NamespaceBody
 
 ExternAliasDerective
     = { "extern" __ "alias" __ @Identifier __ ";" #CSExtern }
+    / PPInTopLevel
 
 UsingDirective
     = { "using" __ @Identifier __ "=" __ @NamespaceOrTypeName __ ";" #UsingDirective }
     / { "using" __ @NamespaceName __ ";" #UsingDirective }
+    / PPInTopLevel
 
 NamespaceMemberDeclaration
     = NamespaceDeclaration
     / TypeDeclaration
+    / PPInTopLevel
 
 TypeDeclaration
     = ClassDeclaration
@@ -1244,7 +1257,7 @@ ReturnType
     / Type
 
 MemberName
-    = { @TypeName __ "." __ @Identifier #Field }
+    = { @Left1TypeName __ "." __ @Identifier #Field }
     / Identifier
 
 MethodBody
@@ -1487,7 +1500,7 @@ InterfaceIndexerDeclaration
 
 EnumDeclaration
     = { (@[0]ConstantModifierAndAttributes __)? "enum" __ @[1]Identifier __
-        (@[2]EnumBase __)?
+        (":" __ @[2]EnumBase __)?
         @[3]EnumBody (__ ";")? #Enum }
 
 EnumBase
