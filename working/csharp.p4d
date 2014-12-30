@@ -218,8 +218,8 @@ BooleanLiteral
     = { "true" #True } / { "false" #False }
 
 IntegerLiteral
-    = DecimalIntegerLiteral
-    / HexadecimalIntegerLiteral
+    = HexadecimalIntegerLiteral
+    / DecimalIntegerLiteral
 
 DecimalIntegerLiteral
     = { DIGIT+ INTEGER_TYPE_SUFFIX? #Integer }
@@ -374,7 +374,7 @@ PP_ENDIF
 
 ConditionalSection
     = <if PPInBlock> { __ (@StatementList)? __ #Block }
-    / <if PPInClass> ClassMemberDeclaration __
+    / <if PPInClass> { (__ @ClassMemberDeclaration)* __ #List }
     / <if PPInTopLevel> { __ (@ExternAliasDerective __)* (@UsingDirective __)* (@TopLevelAttributes __)* (@NamespaceMemberDeclaration __)* #Source }
 
 PPDiagnostic
@@ -655,9 +655,9 @@ MemberDeclaratorList
     = { @MemberDeclarator (__ "," __ @MemberDeclarator)* #List }
 
 MemberDeclarator
-    = SimpleName
+    = { @Identifier __ "=" __ @Expression #Assign }
     / MemberAccessExpression
-    / { @Identifier __ "=" __ @Expression #Assign }
+    / SimpleName
 
 TypeOfExpression
     = { "typeof" __ "(" __ "void" __ ")" #TypeOf }
@@ -724,13 +724,13 @@ addShiftOperator
     / ">>" #RightShift
 
 RelationalExpression
-    = ShiftExpression {@ __ addRelationalOperator __ @ShiftExpression }*
+    = ShiftExpression {@ __ addRelationalOperator }*
 
 addRelationalOperator
-    = '<' ('=' #LessThanEquals / #LessThan)
-    / '>' ('=' #GreaterThanEquals / #GreaterThan)
-    / "is" #InstanceOf
-    / "as" #As
+    = '<' ('=' #LessThanEquals / #LessThan) __ @ShiftExpression
+    / '>' ('=' #GreaterThanEquals / #GreaterThan) __ @ShiftExpression
+    / "is" #InstanceOf __ @Type
+    / "as" #As __ @Type
 
 EqualityExpression
     = RelationalExpression {@ __ addEqualityOperator __ @RelationalExpression }*
@@ -1219,7 +1219,7 @@ ClassMemberDeclaration
     / DestructorDeclaration
     / StaticConstructorDeclaration
     / TypeDeclaration
-//    / PPInClass
+    / PPInClass
 
 ConstantDeclaration
     = { (@ConstantModifierAndAttributes __)? "const" __ @[1]Type __ @[2]{ @ConstantDeclarator #List } #ConstDeclStmt }
