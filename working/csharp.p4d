@@ -186,6 +186,8 @@ W = IDENTIFIER_PART_CHARACTER
 "true" = 'true' !W
 "unchecked" = 'unchecked' !W
 "void" = 'void' !W
+"await" = 'await' !W
+"async" = 'async' !W
 
 KEYWORD
     = "abstract" / "byte" / "class" / "delegate" / "event"
@@ -203,6 +205,7 @@ KEYWORD
     / "break" / "checked" / "default" / "enum" / "finally"
     / "goto" / "interface" / "namespace" / "out" / "public"
     / "sealed" / "string" / "true" / "unchecked" / "void"
+    / <if AwaitKeyword> "await"
 
 // B.1.8 Literals
 
@@ -425,7 +428,7 @@ WARNING_ACTION
     = "disable" / "restore"
 
 WARNING_LIST
-    = DIGIT+ (_ ',' _ DIGIT+)*
+    = "CS"? DIGIT+ (_ ',' _ "CS"? DIGIT+)*
 
 //--------------------------------------------------
 // B.2 Syntactic grammar
@@ -540,13 +543,15 @@ FunctionStyleArgList
 PrimaryNoArrayCreationExpression
     = Literal
     / SimpleName
-    / '(' __ !(Type __ ')') Expression __ ')'
+//    / '(' __ !(Type __ ')') Expression __ ')' !(__ PrimaryNoArrayCreationExpression)
+    / '(' __ Expression __ ')' !(__ PostfixExpression)
     / ThisAccess
     / BaseAccess
     / ObjectCreationExpression
     / DelegateCreationExpression
     / AnonymousObjectCreationExpression
     / TypeOfExpression
+    / SizeOfExpression
     / CheckedExpression
     / UncheckedExpression
     / DefaultValueExpression
@@ -664,6 +669,10 @@ TypeOfExpression
     / { "typeof" __ "(" __ @Type __ ")" #TypeOf }
     / { "typeof" __ "(" __ @UnboundTypeName __ ")" #TypeOf }
 
+SizeOfExpression
+    = { "sizeof" __ "(" __ @Type __ ")" #SizeOf }
+    / { "sizeof" __ "(" __ @UnboundTypeName __ ")" #SizeOf }
+
 UnboundTypeName
     = UnboundTypeNameHead {@ __ "." __ @DimensionSpecifiedIdentifier #Field }*
 
@@ -709,6 +718,9 @@ PreIncrementExpression
 
 PreDecrementExpression
     = { "--" #PrefixDec __ @UnaryExpression }
+
+AwaitExpression
+    = { "await" #Await __ @UnaryExpression }
 
 MultiplicativeExpression
     = UnaryExpression {@ __ ( "*" #Mul / "/" #Div / "%" #Mod ) __ @UnaryExpression }*
@@ -764,10 +776,13 @@ ConditionalExpression
 
 LambdaExpression
     [example: x => x*x]
-    = { @[4]AnonymousFunctionSignature __ "=>" __ @[7]AnonymousFunctionBody #FuncDecl }
+    = { (addLambdaModifier __)? @[4]AnonymousFunctionSignature __ "=>" __ @[7]AnonymousFunctionBody #FuncDecl }
 
 AnonymousMethodExpression
-    = { "delegate" __ (@[4]ExplicitAnonymousFunctionSignature)? @[7]Block #FuncDecl }
+    = { (addLambdaModifier __)? "delegate" __ (@[4]ExplicitAnonymousFunctionSignature)? @[7]Block #FuncDecl }
+
+addLambdaModifier
+    = @[0]{ @{ "async" #Text } #List }
 
 AnonymousFunctionSignature
     = ExplicitAnonymousFunctionSignature
@@ -960,6 +975,7 @@ StatementExpression
     / PostfixExpression
     / PreIncrementExpression
     / PreDecrementExpression
+    / AwaitExpression
 
 SelectionStatement
     = IfStatement
@@ -1222,7 +1238,7 @@ ClassMemberDeclaration
     / PPInClass
 
 ConstantDeclaration
-    = { (@ConstantModifierAndAttributes __)? "const" __ @[1]Type __ @[2]{ @ConstantDeclarator #List } #ConstDeclStmt }
+    = { (@ConstantModifierAndAttributes __)? "const" __ @[1]Type __ @[2]{ @ConstantDeclarator #List } __ ";" #ConstDeclStmt }
 
 ConstantModifierAndAttributes
     = { (addAttributes __)? (@ConstantModifier __)* #List }
@@ -1241,16 +1257,25 @@ FieldModifier
     / { ( "static" / "readonly" / "volatile" ) #Text }
 
 MethodDeclaration
-    = { (@[0]MethodModifierAndAttributes __)? @[1]ReturnType __ @[2]MemberName __ (@[3]TypeParameterList __)?
-    	"(" __ (@[4]FormalParameterList __)? ")" __ (@[6]TypeParameterConstraintsClauses __)?
-    		@[7]MethodBody #FuncDecl }
+//    = { @[0]MethodModifierAndAttributesAsync __ <with AwaitKeyword addMethodDecl> }
+//    / { (@[0]MethodModifierAndAttributes __)? <without AwaitKeyword addMethodDecl> }
+    = { @[0]MethodModifierAndAttributes __ <with AwaitKeyword addMethodDecl> }
+
+addMethodDecl
+    = @[1]ReturnType __ @[2]MemberName __ (@[3]TypeParameterList __)?
+        "(" __ (@[4]FormalParameterList __)? ")" __ (@[6]TypeParameterConstraintsClauses __)?
+            @[7]MethodBody #FuncDecl
 
 MethodModifierAndAttributes
     = { (addAttributes __)? (@MethodModifier __)* (@{ "partial" #Text})? #List }
 
+MethodModifierAndAttributesAsync
+    = { (addAttributes __)? (@MethodModifier __)* @{ "async" #Text }
+            (__ @MethodModifier)* (__ @{ "partial" #Text })? #List }
+
 MethodModifier
     = PropertyModifier
-    / { ( "async" ) #Text }
+    / { "async" #Text } // FIXME: remove this line 
 
 ReturnType
     = { @{ "void" #Name } #Type }
@@ -1265,10 +1290,15 @@ MethodBody
     / Block
 
 FormalParameterList
-    = { @FixedParameter (__ "," __ @FixedParameter)* #List }
+    = { @FixedParameter (__ "," __ @FixedParameter)* (__ "," __ @FormalParameter)? #List }
+    / { @FormalParameter #List }
+
+FormalParameter
+    = ParameterArray
+    / FixedParameter
 
 FixedParameter
-    = { (@ParameterModifierAndAttributes __)? @[1]Type __ @[2]Identifier __ (@DefaultArgument __)? #Parameter }
+    = { (@ParameterModifierAndAttributes __)? @[1]Type __ @[2]Identifier (__ @DefaultArgument)? #Parameter }
 
 DefaultArgument
     = "=" __ Expression
@@ -1278,6 +1308,9 @@ ParameterModifierAndAttributes
 
 ParameterModifier
     = { ( "ref" / "out" / "this" ) #Text }
+
+ParameterArray
+    = { (@Attributes __)? "params" __ @[1]Type __ @[2]Identifier #VariadicParameter }
 
 PropertyDeclaration
     = { (@PropertyModifierAndAttributes __)? @[1]Type __ @[2]MemberName __ @[3]AccessorDeclaration #Property }
@@ -1303,11 +1336,12 @@ AccessorModifierAndAttributes
     = { (addAttributes __)? (@AccessorModifier __)* #List }
 
 AccessorModifier
-    = { ( "protected" / "internal" / "private") #Text }
+    = { ( "protected" / "internal" / "private" ) #Text }
 
 EventDeclaration
-    = { (@[0]MethodModifierAndAttributes __)? "event" __ @[1]TypeName __ @[2]LocalVariableDeclarators #Event }
-    / { (@[0]MethodModifierAndAttributes __)? "event" __ @[1]TypeName __ @[2]MemberName __ @EventAccessorDeclaration #Event }
+    = { (@[0]MethodModifierAndAttributes __)? "event" __ @[1]TypeName __
+            (@[2]LocalVariableDeclarators __ ";"
+            / @[2]MemberName __ @EventAccessorDeclaration) #Event }
 
 EventAccessorDeclaration
     = { "{" __ @AddAccessorDeclaration __ (@RemoveAccessorDeclaration __)? "}" #List }
@@ -1373,7 +1407,7 @@ addConstructorDeclarator
     = @[2]Identifier __ "(" __ (@[4]FormalParameterList __)? ")" (__ @[6]{ @ConstructorInitializer #List })?
 
 ConstructorInitializer
-    = ":" __ { (@BaseAccess / @ThisAccess) __ @FunctionStyleArgList #Apply }
+    = ":" __ { (@{ "base" #Super } / @ThisAccess) __ @FunctionStyleArgList #Apply }
 
 StaticConstructorDeclaration
     = { (@StaticConstructorModifierAndAttributes __)? @[2]Identifier __ "(" __ ")" __ @[7]MethodBody #FuncDecl }
