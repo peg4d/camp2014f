@@ -46,10 +46,10 @@ SINGLE_LINE_COMMENT
     = '#' (!LINE_TERMINATOR .)*
 
 Identifier
-    = !KEYWORD IdentifierName
+    = !RESERVED IdentifierName
 
 IDENTIFIER
-    = !KEYWORD (IDENTIFIER_PART / [ \t])+
+    = !RESERVED (IDENTIFIER_PART / [ \t])+
 
 IdentifierName
     = { IDENTIFIER_START IDENTIFIER_PART* #Name }
@@ -65,6 +65,9 @@ IDENTIFIER_PART
 //    / UnicodeConnectorPunctuation
 //    / "\u200C"
 //    / "\u200D"
+
+ReservedName
+    = { PERL_FUNCTION #Name }
 
 W
   = [a-zA-Z0-9_]
@@ -159,6 +162,252 @@ EOF
 "false" = 'false' !W
 "Infinity" = 'Infinity' !W
 "NaN" = 'NaN' !W
+"AUTOLOAD" = 'AUTOLOAD' !W
+"abs" = 'abs' !W
+"accept" = 'accept' !W
+"alarm" = 'alarm' !W
+"and" = 'and' !W
+"atan2" = 'atan2' !W
+"BEGIN" = 'BEGIN' !W
+"bind" = 'bind' !W
+"binmode" = 'binmode' !W
+"bless" = 'bless' !W
+"CHECK" = 'CHECK' !W
+"caller" = 'caller' !W
+"chdir" = 'chdir' !W
+"chmod" = 'chmod' !W
+"chomp" = 'chomp' !W
+"chop" = 'chop' !W
+"chown" = 'chown' !W
+"chr" = 'chr' !W
+"chroot" = 'chroot' !W
+"close" = 'close' !W
+"closedir" = 'closedir' !W
+"cmp" = 'cmp' !W
+"connect" = 'connect' !W
+"cos" = 'cos' !W
+"crypt" = 'crypt' !W
+"DESTROY" = 'DESTROY' !W
+"__DATA__" = '__DATA__' !W
+"dbmclose" = 'dbmclose' !W
+"dbmopen" = 'dbmopen' !W
+"defined" = 'defined' !W
+"die" = 'die' !W
+"dump" = 'dump' !W
+"END" = 'END' !W
+"__END__" = '__END__' !W
+"each" = 'each' !W
+"elseif" = 'elseif' !W
+"elsif" = 'elsif' !W
+"endgrent" = 'endgrent' !W
+"endhostent" = 'endhostent' !W
+"endnetent" = 'endnetent' !W
+"endprotoent" = 'endprotoent' !W
+"endpwent" = 'endpwent' !W
+"endservent" = 'endservent' !W
+"eof" = 'eof' !W
+"eq" = 'eq' !W
+"eval" = 'eval' !W
+"evalbytes" = 'evalbytes' !W
+"exec" = 'exec' !W
+"exists" = 'exists' !W
+"exit" = 'exit' !W
+"exp" = 'exp' !W
+"__FILE__" = '__FILE__' !W
+"fc" = 'fc' !W
+"fcntl" = 'fcntl' !W
+"fileno" = 'fileno' !W
+"flock" = 'flock' !W
+"foreach" = 'foreach' !W
+"fork" = 'fork' !W
+"format" = 'format' !W
+"formline" = 'formline' !W
+"ge" = 'ge' !W
+"getc" = 'getc' !W
+"getgrent" = 'getgrent' !W
+"getgrgid" = 'getgrgid' !W
+"getgrnam" = 'getgrnam' !W
+"gethostbyaddr" = 'gethostbyaddr' !W
+"gethostbyname" = 'gethostbyname' !W
+"gethostent" = 'gethostent' !W
+"getlogin" = 'getlogin' !W
+"getnetbyaddr" = 'getnetbyaddr' !W
+"getnetbyname" = 'getnetbyname' !W
+"getnetent" = 'getnetent' !W
+"getpeername" = 'getpeername' !W
+"getpgrp" = 'getpgrp' !W
+"getppid" = 'getppid' !W
+"getpriority" = 'getpriority' !W
+"getprotobyname" = 'getprotobyname' !W
+"getprotobynumber" = 'getprotobynumber' !W
+"getprotoent" = 'getprotoent' !W
+"getpwent" = 'getpwent' !W
+"getpwnam" = 'getpwnam' !W
+"getpwuid" = 'getpwuid' !W
+"getservbyname" = 'getservbyname' !W
+"getservbyport" = 'getservbyport' !W
+"getservent" = 'getservent' !W
+"getsockname" = 'getsockname' !W
+"getsockopt" = 'getsockopt' !W
+"given" = 'given' !W
+"glob" = 'glob' !W
+"gmtime" = 'gmtime' !W
+"goto" = 'goto' !W
+"grep" = 'grep' !W
+"gt" = 'gt' !W
+"hex" = 'hex' !W
+"INIT" = 'INIT' !W
+"index" = 'index' !W
+"int" = 'int' !W
+"ioctl" = 'ioctl' !W
+"join" = 'join' !W
+"keys" = 'keys' !W
+"kill" = 'kill' !W
+"__LINE__" = '__LINE__' !W
+"last" = 'last' !W
+"lc" = 'lc' !W
+"lcfirst" = 'lcfirst' !W
+"le" = 'le' !W
+"length" = 'length' !W
+"link" = 'link' !W
+"listen" = 'listen' !W
+"local" = 'local' !W
+"localtime" = 'localtime' !W
+"lock" = 'lock' !W
+"log" = 'log' !W
+"lstat" = 'lstat' !W
+"lt" = 'lt' !W
+"m" = 'm' !W
+"map" = 'map' !W
+"mkdir" = 'mkdir' !W
+"msgctl" = 'msgctl' !W
+"msgget" = 'msgget' !W
+"msgrcv" = 'msgrcv' !W
+"msgsnd" = 'msgsnd' !W
+"ne" = 'ne' !W
+"next" = 'next' !W
+"no" = 'no' !W
+"not" = 'not' !W
+"oct" = 'oct' !W
+"open" = 'open' !W
+"opendir" = 'opendir' !W
+"or" = 'or' !W
+"ord" = 'ord' !W
+"our" = 'our' !W
+"__PACKAGE__" = '__PACKAGE__' !W
+"pack" = 'pack' !W
+"pipe" = 'pipe' !W
+"pop" = 'pop' !W
+"pos" = 'pos' !W
+"print" = 'print' !W
+"printf" = 'printf' !W
+"prototype" = 'prototype' !W
+"push" = 'push' !W
+"q" = 'q' !W
+"qq" = 'qq' !W
+"qr" = 'qr' !W
+"quotemeta" = 'quotemeta' !W
+"qw" = 'qw' !W
+"qx" = 'qx' !W
+"rand" = 'rand' !W
+"read" = 'read' !W
+"readdir" = 'readdir' !W
+"readline" = 'readline' !W
+"readlink" = 'readlink' !W
+"readpipe" = 'readpipe' !W
+"recv" = 'recv' !W
+"redo" = 'redo' !W
+"ref" = 'ref' !W
+"rename" = 'rename' !W
+"require" = 'require' !W
+"reset" = 'reset' !W
+"reverse" = 'reverse' !W
+"rewinddir" = 'rewinddir' !W
+"rindex" = 'rindex' !W
+"rmdir" = 'rmdir' !W
+"__SUB__" = '__SUB__' !W
+"s" = 's' !W
+"say" = 'say' !W
+"scalar" = 'scalar' !W
+"seek" = 'seek' !W
+"seekdir" = 'seekdir' !W
+"select" = 'select' !W
+"semctl" = 'semctl' !W
+"semget" = 'semget' !W
+"semop" = 'semop' !W
+"send" = 'send' !W
+"setgrent" = 'setgrent' !W
+"sethostent" = 'sethostent' !W
+"setnetent" = 'setnetent' !W
+"setpgrp" = 'setpgrp' !W
+"setpriority" = 'setpriority' !W
+"setprotoent" = 'setprotoent' !W
+"setpwent" = 'setpwent' !W
+"setservent" = 'setservent' !W
+"setsockopt" = 'setsockopt' !W
+"shift" = 'shift' !W
+"shmctl" = 'shmctl' !W
+"shmget" = 'shmget' !W
+"shmread" = 'shmread' !W
+"shmwrite" = 'shmwrite' !W
+"shutdown" = 'shutdown' !W
+"sin" = 'sin' !W
+"sleep" = 'sleep' !W
+"socket" = 'socket' !W
+"socketpair" = 'socketpair' !W
+"sort" = 'sort' !W
+"splice" = 'splice' !W
+"split" = 'split' !W
+"sprintf" = 'sprintf' !W
+"sqrt" = 'sqrt' !W
+"srand" = 'srand' !W
+"stat" = 'stat' !W
+"state" = 'state' !W
+"study" = 'study' !W
+"substr" = 'substr' !W
+"symlink" = 'symlink' !W
+"syscall" = 'syscall' !W
+"sysopen" = 'sysopen' !W
+"sysread" = 'sysread' !W
+"sysseek" = 'sysseek' !W
+"system" = 'system' !W
+"syswrite" = 'syswrite' !W
+"tell" = 'tell' !W
+"telldir" = 'telldir' !W
+"tie" = 'tie' !W
+"tied" = 'tied' !W
+"time" = 'time' !W
+"times" = 'times' !W
+"tr" = 'tr' !W
+"truncate" = 'truncate' !W
+"UNITCHECK" = 'UNITCHECK' !W
+"uc" = 'uc' !W
+"ucfirst" = 'ucfirst' !W
+"umask" = 'umask' !W
+"undef" = 'undef' !W
+"unless" = 'unless' !W
+"unlink" = 'unlink' !W
+"unpack" = 'unpack' !W
+"unshift" = 'unshift' !W
+"untie" = 'untie' !W
+"until" = 'until' !W
+"use" = 'use' !W
+"utime" = 'utime' !W
+"values" = 'values' !W
+"vec" = 'vec' !W
+"wait" = 'wait' !W
+"waitpid" = 'waitpid' !W
+"wantarray" = 'wantarray' !W
+"warn" = 'warn' !W
+"when" = 'when' !W
+"write" = 'write' !W
+"-X" = '-X' !W
+"x" = 'x' !W
+"xor" = 'xor' !W
+"y" = 'y' !W
+
+RESERVED
+    = KEYWORD / PERL_FUNCTION
 
 KEYWORD
     = "break" / "case" / "catch" / "continue" / "debugger" / "default" / "delete" / "do"
@@ -167,6 +416,60 @@ KEYWORD
     / "while" / "with" / "class" / "enum" / "export" / "extends" / "import" / "super"
     / "implements" / "interface" / "let" / "package" / "private" / "protected" / "public"
     / "static" / "yield" / "null" / "true" / "false" / "Infinity" / "NaN"
+
+PERL_FUNCTION
+    = "AUTOLOAD" / "abs" / "accept" / "alarm" / "and"
+    / "atan2" / "BEGIN" / "bind" / "binmode" / "bless"
+    / "break" / "CHECK" / "caller" / "chdir" / "chmod"
+    / "chomp" / "chop" / "chown" / "chr" / "chroot"
+    / "close" / "closedir" / "cmp" / "connect" / "continue"
+    / "cos" / "crypt" / "DESTROY" / "__DATA__" / "dbmclose"
+    / "dbmopen" / "default" / "defined" / "delete" / "die"
+    / "do" / "dump" / "END" / "__END__" / "each"
+    / "else" / "elseif" / "elsif" / "endgrent" / "endhostent"
+    / "endnetent" / "endprotoent" / "endpwent" / "endservent" / "eof"
+    / "eq" / "eval" / "evalbytes" / "exec" / "exists"
+    / "exit" / "exp" / "__FILE__" / "fc" / "fcntl"
+    / "fileno" / "flock" / "for" / "foreach" / "fork"
+    / "format" / "formline" / "ge" / "getc" / "getgrent"
+    / "getgrgid" / "getgrnam" / "gethostbyaddr" / "gethostbyname" / "gethostent"
+    / "getlogin" / "getnetbyaddr" / "getnetbyname" / "getnetent" / "getpeername"
+    / "getpgrp" / "getppid" / "getpriority" / "getprotobyname" / "getprotobynumber"
+    / "getprotoent" / "getpwent" / "getpwnam" / "getpwuid" / "getservbyname"
+    / "getservbyport" / "getservent" / "getsockname" / "getsockopt" / "given"
+    / "glob" / "gmtime" / "goto" / "grep" / "gt"
+    / "hex" / "INIT" / "if" / "import" / "index"
+    / "int" / "ioctl" / "join" / "keys" / "kill"
+    / "__LINE__" / "last" / "lc" / "lcfirst" / "le"
+    / "length" / "link" / "listen" / "local" / "localtime"
+    / "lock" / "log" / "lstat" / "lt" / "m"
+    / "map" / "mkdir" / "msgctl" / "msgget" / "msgrcv"
+    / "msgsnd" / "my" / "ne" / "next" / "no"
+    / "not" / "oct" / "open" / "opendir" / "or"
+    / "ord" / "our" / "__PACKAGE__" / "pack" / "package"
+    / "pipe" / "pop" / "pos" / "print" / "printf"
+    / "prototype" / "push" / "q" / "qq" / "qr"
+    / "quotemeta" / "qw" / "qx" / "rand" / "read"
+    / "readdir" / "readline" / "readlink" / "readpipe" / "recv"
+    / "redo" / "ref" / "rename" / "require" / "reset"
+    / "return" / "reverse" / "rewinddir" / "rindex" / "rmdir"
+    / "__SUB__" / "s" / "say" / "scalar" / "seek"
+    / "seekdir" / "select" / "semctl" / "semget" / "semop"
+    / "send" / "setgrent" / "sethostent" / "setnetent" / "setpgrp"
+    / "setpriority" / "setprotoent" / "setpwent" / "setservent" / "setsockopt"
+    / "shift" / "shmctl" / "shmget" / "shmread" / "shmwrite"
+    / "shutdown" / "sin" / "sleep" / "socket" / "socketpair"
+    / "sort" / "splice" / "split" / "sprintf" / "sqrt"
+    / "srand" / "stat" / "state" / "study" / "sub"
+    / "substr" / "symlink" / "syscall" / "sysopen" / "sysread"
+    / "sysseek" / "system" / "syswrite" / "tell" / "telldir"
+    / "tie" / "tied" / "time" / "times" / "tr"
+    / "truncate" / "UNITCHECK" / "uc" / "ucfirst" / "umask"
+    / "undef" / "unless" / "unlink" / "unpack" / "unshift"
+    / "untie" / "until" / "use" / "utime" / "values"
+    / "vec" / "wait" / "waitpid" / "wantarray" / "warn"
+    / "when" / "while" / "write" / "-X" / "x"
+    / "xor" / "y"
 
 //Expression
 //==========
@@ -202,7 +505,7 @@ ElisionExpression
     = ',' { #Undefined }
 
 ReceiverExpression
-    = PrimaryExpression / FunctionExpression
+    = PrimaryExpression / FunctionExpression / FunctionCall
 
 MemberExpression
     = ReceiverExpression {@ __ addMemberOperator }*
@@ -483,6 +786,11 @@ DebuggerStatement
 
 //Program
 //==========
+FunctionCall
+    = { "&" __ ( @[2]Identifier / @[2]ReservedName ) __ '(' __ (@[6]Expression)? __ ')' #FuncCall }
+    / { "&" __ ( @[2]Identifier / @[2]ReservedName ) #FuncCall }
+    / { ( @[2]Identifier / @[2]ReservedName ) __ '(' __ (@[6]Expression)? __ ')' #FuncCall }
+    / { ( @[2]Identifier / @[2]ReservedName ) __ @[6]Expression #FuncCall }
 
 FunctionDeclaration
     = { "sub" __ @[2]Identifier __ @[6]FunctionBody #FuncDecl }
