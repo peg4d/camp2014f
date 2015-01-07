@@ -56,6 +56,7 @@ IdentifierName
 
 IDENTIFIER_START
     = [a-zA-Z$_@]
+    / "&"
     / UCHAR
 
 IDENTIFIER_PART
@@ -505,7 +506,7 @@ ElisionExpression
     = ',' { #Undefined }
 
 ReceiverExpression
-    = PrimaryExpression / FunctionExpression / FunctionCall
+    = PrimaryExpression / FunctionExpression // FunctionCall
 
 MemberExpression
     = ReceiverExpression {@ __ addMemberOperator }*
@@ -515,12 +516,20 @@ addMemberOperator
     / '.' __ @IdentifierName #Field
 
 CallExpression
-    = MemberExpression {@ __ addCallOrMemberOperator }*
+    = &'&' MemberExpression {@ __ addCallOrMemberOperator }*
+    / MemberExpression {@ __ addCallOrMemberOperatorNoAmp }*
 
 addCallOrMemberOperator
-    = @Arguments #Apply
-    / '[' __ @Expression __ ']' #Index
+    = '[' __ @Expression __ ']' #Index
     / '->' __ @IdentifierName #Field
+    / @Arguments #Apply
+    / !. #Apply
+
+addCallOrMemberOperatorNoAmp
+    = '[' __ @Expression __ ']' #Index
+    / '->' __ @IdentifierName #Field
+    / @Arguments #Apply
+    / @AssignmentExpression #Apply
 
 Arguments
     = { '(' __ (addArgumentList __)? ')' #List }
@@ -786,12 +795,6 @@ DebuggerStatement
 
 //Program
 //==========
-FunctionCall
-    = { "&" __ ( @[2]Identifier / @[2]ReservedName ) __ '(' __ (@[6]Expression)? __ ')' #FuncCall }
-    / { "&" __ ( @[2]Identifier / @[2]ReservedName ) #FuncCall }
-    / { ( @[2]Identifier / @[2]ReservedName ) __ '(' __ (@[6]Expression)? __ ')' #FuncCall }
-    / { ( @[2]Identifier / @[2]ReservedName ) __ @[6]Expression #FuncCall }
-
 FunctionDeclaration
     = { "sub" __ @[2]Identifier __ @[6]FunctionBody #FuncDecl }
 
