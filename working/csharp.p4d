@@ -776,10 +776,10 @@ ConditionalExpression
 
 LambdaExpression
     [example: x => x*x]
-    = { (addLambdaModifier __)? @[4]AnonymousFunctionSignature __ "=>" __ @[7]AnonymousFunctionBody #FuncDecl }
+    = { (addLambdaModifier __)? @[4]AnonymousFunctionSignature __ "=>" __ @[6]AnonymousFunctionBody #FuncDecl }
 
 AnonymousMethodExpression
-    = { (addLambdaModifier __)? "delegate" __ (@[4]ExplicitAnonymousFunctionSignature)? @[7]Block #FuncDecl }
+    = { (addLambdaModifier __)? "delegate" __ (@[4]ExplicitAnonymousFunctionSignature)? @[6]Block #FuncDecl }
 
 addLambdaModifier
     = @[0]{ @{ "async" #Text } #List }
@@ -1263,8 +1263,8 @@ MethodDeclaration
 
 addMethodDecl
     = @[1]ReturnType __ @[2]MemberName __ (@[3]TypeParameterList __)?
-        "(" __ (@[4]FormalParameterList __)? ")" __ (@[6]TypeParameterConstraintsClauses __)?
-            @[7]MethodBody #FuncDecl
+        "(" __ (@[4]FormalParameterList __)? ")" __ (@[7]TypeParameterConstraintsClauses __)?
+            @[6]MethodBody #FuncDecl
 
 MethodModifierAndAttributes
     = { (addAttributes __)? (@MethodModifier __)* (@{ "partial" #Text})? #List }
@@ -1395,7 +1395,7 @@ addConversionOperatorDeclarator
     = ("im" / "ex") "plicit" __ "operator" __ @[1]Type __ "(" __ @[4]{ @OperatorParameter #List } __ ")"
 
 ConstructorDeclaration
-    = { (@ConstructorModifierAndAttributes __)? addConstructorDeclarator __ @[7]MethodBody #FuncDecl }
+    = { (@ConstructorModifierAndAttributes __)? addConstructorDeclarator __ @[6]MethodBody #FuncDecl }
 
 ConstructorModifierAndAttributes
     = { (addAttributes __)? (@ConstructorModifier __)* #List }
@@ -1410,7 +1410,7 @@ ConstructorInitializer
     = ":" __ { (@{ "base" #Super } / @ThisAccess) __ @FunctionStyleArgList #Apply }
 
 StaticConstructorDeclaration
-    = { (@StaticConstructorModifierAndAttributes __)? @[2]Identifier __ "(" __ ")" __ @[7]MethodBody #FuncDecl }
+    = { (@StaticConstructorModifierAndAttributes __)? @[2]Identifier __ "(" __ ")" __ @[6]MethodBody #FuncDecl }
 
 StaticConstructorModifierAndAttributes
     = { (addAttributes __)? (@StaticConstructorModifier __)* #List }
@@ -1419,7 +1419,7 @@ StaticConstructorModifier
     = { ("static" / "extern") #Text }
 
 DestructorDeclaration
-    = { (@DestructorModifierAndAttributes __)? @[2]DestructorIdentifier __ "(" __ ")" __ @[7]MethodBody #FuncDecl }
+    = { (@DestructorModifierAndAttributes __)? @[2]DestructorIdentifier __ "(" __ ")" __ @[6]MethodBody #FuncDecl }
 
 DestructorModifierAndAttributes
     = { (addAttributes __)? (@DestructorModifier __)? #List }
@@ -1505,7 +1505,7 @@ InterfaceMemberDeclaration
 
 InterfaceMethodDeclaration
     = { (@[0]InterfaceMemberModifierAndAttributes __)? @[1]ReturnType __ @[2]MemberName __ (@[3]TypeParameterList __)?
-    	"(" __ (@[4]FormalParameterList __)? ")" __ (@[6]TypeParameterConstraintsClauses __)?
+    	"(" __ (@[4]FormalParameterList __)? ")" __ (@[7]TypeParameterConstraintsClauses __)?
     	";" #FuncDecl }
 
 InterfaceMemberModifierAndAttributes

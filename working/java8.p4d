@@ -252,7 +252,7 @@ ElementValueList
 
 //local variable
 VariableDeclaration
-	= { (@VariableModifiers _ )? @Type _ @InitDecl ( _ "," _ @InitDecl)* #Declaration }
+	= { (@VariableModifiers _ )? @[1]Type _ @[2]{ @InitDecl ( _ "," _ @InitDecl)* #List } #VarDeclStmt }
 
 VariableModifier
 	= Annotation
@@ -282,8 +282,8 @@ arrayInitializeExpressionList
 
 //class type, enum type
 ClassDeclaration
-	= { (@ClassModifiers _ )? "class" _ @Name _ (@TypeParameters)? _ (@SuperClass _ )? (@SuperInterfaces _ )* @ClassBody #ClassDeclaration }
-	/ { (@ClassModifiers _ )? "enum" _ @Name _ (@SuperInterfaces _ )* @EnumBody #EnumDeclaration }
+	= { (@[0]ClassModifiers _ )? "class" _ @[1]Name _ (@[2]TypeParameters)? _ (@[3]SuperClass _ )? (@[4]SuperInterfaces _ )* @[5]ClassBody #Class }
+	/ { (@[0]ClassModifiers _ )? "enum" _ @[1]Name _ (@[4]SuperInterfaces _ )* @[5]EnumBody #Enum }
 
 ClassModifier
 	= Annotation
@@ -315,7 +315,7 @@ Enumerator
 	= { (@Annotations _ )? @Name _ (@{ "(" _ addArgumentExpressionList? _ ")" #List })? ( _ @ClassBody)? #Enumerator }
 
 ClassBody
-	= "{" _ { (@ClassBodyDeclaration _ )* #ClassBody } "}"
+	= "{" _ { (@ClassBodyDeclaration _ )* #Block } "}"
 
 ClassBodyDeclaration
 	= ClassMemberDeclaration
@@ -375,8 +375,12 @@ AnnotationTypeElementDeclaration
 
 AnnotationTypeElementModifier
 	= Annotation
+/*
 	/ "public"   _ { #KeyValue @{`visibility`  #Key } @{`public`   #Value } }
 	/ "abstract" _ { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } }
+*/
+	/ { "public" #Text }
+	/ { "abstract" #Text }
 
 AnnotationTypeElementModifiers
 	= { @AnnotationTypeElementModifier ( _ @AnnotationTypeElementModifier)* #List }
@@ -387,39 +391,48 @@ AnnotationTypeElementDefaultValue
 
 //field, constant
 FieldDeclaration
-	= { (@FieldModifiers _ )? @Type _ @InitDecl ( _ "," _ @InitDecl)* #Field } _ ";"
+	= { (@FieldModifiers _ )? @[1]Type _ @[2]{ @InitDecl ( _ "," _ @InitDecl)* #List } #VarDeclStmt } _ ";"
 
 FieldModifier
-	= Annotation
-	/ "public"    _ { #KeyValue @{`visibility` #Key } @{`public`    #Value } }
-	/ "protected" _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } }
-	/ "private"   _ { #KeyValue @{`visibility` #Key } @{`private`   #Value } }
+	= ConstructorModifier
+/*
 	/ "final"     _ { #KeyValue @{`final`      #Key } @{`true`      #Value } }
 	/ "static"    _ { #KeyValue @{`static`     #Key } @{`true`      #Value } }
 	/ "transient" _ { #KeyValue @{`transient`  #Key } @{`true`      #Value } }
 	/ "volatile"  _ { #KeyValue @{`volatile`   #Key } @{`true`      #Value } }
+*/
+	/ { "final" #Text }
+	/ { "static" #Text }
+	/ { "transient" #Text }
+	/ { "volatile" #Text }
 
 FieldModifiers
 	= { @FieldModifier ( _ @FieldModifier)* #List }
 
 ConstantDeclaration
-	= { (@ConstantModifiers _ )? @Type _ @InitDecl ( _ "," _ @InitDecl)* #Constant } _ ";"
+	= { (@ConstantModifiers _ )? @Type _ @[2]{ @InitDecl ( _ "," _ @InitDecl)* #List } #Constant } _ ";"
 
 ConstantModifier
 	= Annotation
+/*
 	/ "public" _ { #KeyValue @{`visibility` #Key } @{`public` #Value } }
 	/ "final"  _ { #KeyValue @{`final`      #Key } @{`true`   #Value } }
 	/ "static" _ { #KeyValue @{`static`     #Key } @{`true`   #Value } }
+*/
+	/ { "public" #Text }
+	/ { "final" #Text }
+	/ { "static" #Text }
 
 ConstantModifiers
 	= { @ConstantModifier ( _ @ConstantModifier)* #List }
 
 //method
 MethodDeclaration
-	= { (@MethodModifiers _ )? (@TypeParameters _ (@Annotations _ )? )? @TypeOrVoid _ @Name _ "(" _ @MethodParamList _ ")" _ (@Throws)? _ (@Block / ";" ) #Method }
+	= { (@[0]MethodModifiers _ )? (@[3]TypeParameters _ (@Annotations _ )? )? @[1]TypeOrVoid _ @[2]Name _ "(" _ @[4]MethodParamList _ ")" _ (@[5]Throws)? _ (@[6]Block / ";" ) #FuncDecl }
 
 MethodModifier
-	= Annotation
+	= ConstructorModifier
+/*
 	/ "public"       _ { #KeyValue @{`visibility`   #Key } @{`public`    #Value } }
 	/ "protected"    _ { #KeyValue @{`visibility`   #Key } @{`protected` #Value } }
 	/ "private"      _ { #KeyValue @{`visibility`   #Key } @{`private`   #Value } }
@@ -429,20 +442,35 @@ MethodModifier
 	/ "synchronized" _ { #KeyValue @{`synchronized` #Key } @{`true`      #Value } }
 	/ "native"       _ { #KeyValue @{`native`       #Key } @{`true`      #Value } }
 	/ "strictfp"     _ { #KeyValue @{`strictfp`     #Key } @{`true`      #Value } }
+*/
+	/ { "abstract" #Text }
+	/ { "final" #Text }
+	/ { "static" #Text }
+	/ { "synchronized" #Text }
+	/ { "native" #Text }
+	/ { "strictfp" #Text }
+
 
 MethodModifiers
 	= { @MethodModifier ( _ @MethodModifier)* #List }
 
 InterfaceMethodDeclaration
-	= { (@InterfaceMethodModifiers _ )? (@TypeParameters _ (@Annotations _ )? )? @TypeOrVoid _ @Name _ "(" _ @MethodParamList _ ")" _ (@Throws)? _ (@Block / ";" ) #Method }
+	= { (@[0]InterfaceMethodModifiers _ )? (@[3]TypeParameters _ (@Annotations _ )? )? @[1]TypeOrVoid _ @[2]Name _ "(" _ @[4]MethodParamList _ ")" _ (@[5]Throws)? _ (@[6]Block / ";" ) #FuncDecl }
 
 InterfaceMethodModifier
 	= Annotation
+/*
 	/ "public"   _ { #KeyValue @{`visibility`  #Key } @{`public`   #Value } }
 	/ "abstract" _ { #KeyValue @{`abstraction` #Key } @{`abstract` #Value } }
 	/ "default"  _ { #KeyValue @{`abstraction` #Key } @{`default`  #Value } }
 	/ "static"   _ { #KeyValue @{`static`      #Key } @{`true`     #Value } }
 	/ "strictfp" _ { #KeyValue @{`strictfp`    #Key } @{`true`     #Value } }
+*/
+	/ { "public" #Text }
+	/ { "abstract" #Text }
+	/ { "default" #Text }
+	/ { "static" #Text }
+	/ { "strictfp" #Text }
 
 InterfaceMethodModifiers
 	= { @InterfaceMethodModifier ( _ @InterfaceMethodModifier)* #List }
@@ -452,23 +480,28 @@ MethodParamList
 	/ { ( @MethodParam ( _ "," _ @MethodParam)* )? #List }
 
 MethodParam
-	= { (@VariableModifiers _ )? @Type _ @VarName #Param }
+	= { (@VariableModifiers _ )? @[1]Type _ @[2]VarName #Parameter }
 
 VarArgs
-	= { (@VariableModifiers _ )? @Type _ "..." _ @VarName #VarArgs }
+	= { (@VariableModifiers _ )? @Type _ "..." _ @VarName #VariadicParameter }
 
 Throws
 	= "throws" _ { @ClassOrInterfaceTypes #Throws }
 
 //constructor
 ConstructorDeclaration
-	= { (@ConstructorModifiers _ )? @ReferenceType _ "(" _ @MethodParamList _ ")" _ (@Throws)? _ @ConstructorBody #Constructor }
+	= { (@[0]ConstructorModifiers _ )? @[2]ReferenceType _ "(" _ @[4]MethodParamList _ ")" _ (@[5]Throws)? _ @[6]ConstructorBody #FuncDecl }
 
 ConstructorModifier
 	= Annotation
+/*
 	/ "public"    _ { #KeyValue @{`visibility` #Key } @{`public`    #Value } }
 	/ "protected" _ { #KeyValue @{`visibility` #Key } @{`protected` #Value } }
 	/ "private"   _ { #KeyValue @{`visibility` #Key } @{`private`   #Value } }
+*/
+	/ { "public" #Text }
+	/ { "protected" #Text }
+	/ { "private" #Text }
 
 ConstructorModifiers
 	= { @ConstructorModifier ( _ @ConstructorModifier)* #List }
@@ -477,10 +510,14 @@ ConstructorBody
 	= { "{" _ (@ExplicitConstructorInvocation _ )? ((@Statement / @LocalDeclaration) _ )* "}" #Block }
 
 ExplicitConstructorInvocation
+/*
 	= { (@TypeArguments _ )? @{ @This  _ "(" _ addArgumentExpressionList? _ ")" #List } #ExplicitConstructorInvocation } _ ";"
 	/ { (@TypeArguments _ )? @{ @Super _ "(" _ addArgumentExpressionList? _ ")" #List } #ExplicitConstructorInvocation } _ ";"
 	/ { @PostfixExpression _ "." _ (@TypeArguments _ )? @Super _ @{ "(" _ addArgumentExpressionList? _ ")" #List } #ExplicitConstructorInvocation  } _ ";"
-
+*/
+	= { (@[2]TypeArguments _ )? @[0]This  _ @[1]{ "(" _ addArgumentExpressionList? _ ")" #List } #Apply } _ ";"
+	/ { (@[2]TypeArguments _ )? @[0]Super _ @[1]{ "(" _ addArgumentExpressionList? _ ")" #List } #Apply } _ ";"
+	/ { @[0]PostfixExpression _ "." _ (@[3]TypeArguments _ )? @[1]Super _ @[2]{ "(" _ addArgumentExpressionList? _ ")" #List } #Method  } _ ";"
 
 //Type
 //====
@@ -567,7 +604,7 @@ Statement
 	/ { "case" _ @ConstantExpression _ ":" _ (!"case" !"default" @Statement)* #SwitchCase }
 	/ { "default" _ ":" _ (!"case" @Statement)* #SwitchDefault }
 	/ { @Name _ ":" #Label }
-	/ { @Expression _ ";" #ExpressionStatement }
+	/ Expression _ ";"
 	/ { ";" #Empty }
 
 //trycatch
@@ -671,7 +708,7 @@ PostfixExpression
 	= PrimaryExpression {@ _ (addMethodCall / addInstanceCreation / addIndex / addField / addMethodReference / addInc / addDec ) }*
 
 addMethodCall
-	= "." _ (@TypeArguments)? _ @Name _ @{ "(" _ addArgumentExpressionList? _ ")" #List } #Method
+	= "." _ (@[3]TypeArguments)? _ @[1]Name _ @[2]{ "(" _ addArgumentExpressionList? _ ")" #List } #Method
 
 addInstanceCreation
 	= "." _ "new" _ (@TypeArguments)? _ (@Annotations _ )? @ClassOrInterfaceType _ @{ "(" _ addArgumentExpressionList? _ ")" #List } ( _ @ClassBody)? #InstanceCreation
