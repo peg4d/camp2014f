@@ -449,10 +449,10 @@ MethodParamList
 	/ { ( @MethodParam ( _ "," _ @MethodParam)* )? #List }
 
 MethodParam
-	= { (@VariableModifiers _ )? @[1]Type _ @[2]VarName #Parameter }
+	= { (@[0]VariableModifiers _ )? @[1]Type _ @[2]VarName #Parameter }
 
 ReceiverParam
-	= { (@Annotations _ )? @Type _ (@Name _ "." )? _ @This #Parameter }
+	= { (@[0]Annotations _ )? @[1]Type _ @[2]{ (@Name _ "." )? _ @This #Field } #Parameter }
 
 VarArgs
 	= { (@VariableModifiers _ )? @Type _ "..." _ @VarName #VariadicParameter }
@@ -499,10 +499,10 @@ ReferenceType
 	/ ClassOrInterfaceType
 
 ArrayType
-	= Type_noArray {@ _ (@[1]Annotations)? _ "[" _ "]" @[2]{ `Array` #Name } #Type }+
+	= Type_noArray {@ _ (@[2]Annotations)? _ "[" _ "]" @[1]{ `Array` #Name } #Type }+
 
 SimpleClassOrInterfaceType
-	= { (@[1]Annotations _ )? @[2]Name _ (@[0]TypeArguments)? #Type }
+	= { (@[2]Annotations _ )? @[1]Name _ (@[0]TypeArguments)? #Type }
 
 ClassOrInterfaceType
 	= SimpleClassOrInterfaceType {@ _ "." _ @SimpleClassOrInterfaceType #Field }*
@@ -519,18 +519,15 @@ TypeParameter
 TypeArguments
 	= { "<" _ @TypeArgument ( _ "," _ @TypeArgument)* _ ">" #List }
 
-TypeArgumentsOrDiamond
-	= TypeArguments / "<" _ ">" { `` #Text }
-
 TypeArgument
 	= ReferenceType
 	/ { (@[0]Annotations _ )? "?" _ ( "extends" _ @[1]ReferenceType / "super" _ @[2]ReferenceType)? #AnyType }
 
 PrimaryType
-	= { (@[1]Annotations _ )? @[2]PrimaryTypeName #Type }
+	= { (@[2]Annotations _ )? @[1]PrimaryTypeName #Type }
 
 Void
-	= { (@[1]Annotations _ )? @[2]VoidName #Type }
+	= { (@[2]Annotations _ )? @[1]VoidName #Type }
 
 //TypeName
 TypeName
@@ -652,20 +649,20 @@ addAssignmentOperator
 	/ "+="   #AssignAdd
 	/ "-="   #AssignSub
 	/ "<<="  #AssignLeftShift
-	/ ">>="  #AssignArithmeticRightShift
+	/ ">>="  #AssignRightShift
 	/ ">>>=" #AssignLogicalRightShift
 	/ "&="   #AssignBitwiseAnd
-	/ "^="   #AssignBitwiseXOr
+	/ "^="   #AssignBitwiseXor
 	/ "|="   #AssignBitwiseOr
 
 ConditionalExpression
-	= LogicalORExpression {@ _ "?" _  @Expression _ ":" _ @LogicalORExpression #Trinary }*
+	= LogicalORExpression {@ _ "?" _  @Expression _ ":" _ @LogicalORExpression #Conditional }*
 
 LogicalORExpression
-	= LogicalANDExpression {@ _ "||" _ @LogicalANDExpression #Or }*
+	= LogicalANDExpression {@ _ "||" _ @LogicalANDExpression #LogicalOr }*
 
 LogicalANDExpression
-	= InclusiveORExpression {@ _ "&&" _ @InclusiveORExpression #And }*
+	= InclusiveORExpression {@ _ "&&" _ @InclusiveORExpression #LogicalAnd }*
 
 InclusiveORExpression
 	= ExclusiveORExpression {@ _ "|" _ @ExclusiveORExpression #BitwiseOr }*
@@ -689,7 +686,7 @@ RelationalExpression
 	= ShiftExpression {@ _ ( relationalOperator _ @ShiftExpression / "instanceof" _ @ReferenceType #InstanceOf ) }*
 
 ShiftExpression
-	= AdditiveExpression {@ _ ( "<<" #LeftShift / ">>" #ArithmeticRightShift / ">>>" #LogicalRightShift ) _ @AdditiveExpression }*
+	= AdditiveExpression {@ _ ( "<<" #LeftShift / ">>" #RightShift / ">>>" #LogicalRightShift ) _ @AdditiveExpression }*
 
 AdditiveExpression
 	= MultiplicativeExpression {@ _ ( "+" #Add / "-" #Sub ) _ @MultiplicativeExpression }*
@@ -723,32 +720,31 @@ addMethodCall
 	= "." _ (@[3]TypeArguments)? _ @[1]Name _ "(" _ @[2]ArgumentList _ ")" #Method
 
 addInstanceCreation
-	= "." _ "new" _ (@TypeArgumentsOrDiamond)? _ @SimpleClassOrInterfaceType _ "(" _ @ArgumentList _ ")" ( _ @ClassBody)? #InstanceCreation
+	= "." _ "new" _ (@[3]TypeArguments / "<" _ ">" )? _ @[1]SimpleClassOrInterfaceType _ "(" _ @[2]ArgumentList _ ")" ( _ @[4]ClassBody)? #New
 
 addIndex
-	= "[" _ @Expression _ "]" #Index
+	= "[" _ @[1]Expression _ "]" #Index
 
 addField
-	= "." _ @Name _ !'(' #Field
+	= "." _ @[1]Name _ !'(' #Field
 
 addMethodReference
-	= "::" _ (@TypeArguments)? _ @Name #MethodReference
+	= "::" _ (@[3]TypeArguments)? _ @[1]Name #MethodRef
 
 addInc
-	= "++" #Inc
+	= "++" #SuffixInc
 
 addDec
-	= "--" #Dec
+	= "--" #SuffixDec
 
-//FIXME #Class
 PrimaryExpression
 	= Constant
 	/ "(" _ Expression _ ")"
-	/ { @TypeOrVoidName _ "." _ "class" #Class }
+	/ { @TypeOrVoidName _ "." _ "class" #TypeOf }
 	/ This
-	/ { @ClassOrInterfaceTypeName _ "." _ "this" #This }
+	/ { @ClassOrInterfaceTypeName _ "." _ @This  #Field }
 	/ Super
-	/ { @ClassOrInterfaceTypeName _ "." _ "super" #Super }
+	/ { @ClassOrInterfaceTypeName _ "." _ @Super #Field }
 	/ MethodInvocationExpression
 	/ InstanceCreationExpression
 	/ ArrayCreationExpression
@@ -762,37 +758,37 @@ Super
 	= { "super" #Super }
 
 MethodInvocationExpression
-	= { @[1]Name _ "(" _ @[3]ArgumentList _ ")" #Method }
-	/ { @[0]ClassOrInterfaceTypeName _ "." _ (@[2]TypeArguments)? _ @[1]Name _ "(" _ @[3]ArgumentList _ ")" #Method }
+	= { @[1]Name _ "(" _ @[2]ArgumentList _ ")" #Method }
+	/ { @[0]ClassOrInterfaceTypeName _ "." _ (@[3]TypeArguments)? _ @[1]Name _ "(" _ @[2]ArgumentList _ ")" #Method }
 
 ArgumentList
 	= { (@Expression ( _ "," _ @Expression )* )? #List }
 
 InstanceCreationExpression
-	= { "new" _ (@[2]TypeArgumentsOrDiamond)? _ @[1]ClassOrInterfaceType _ "(" _ @[3]ArgumentList _ ")" ( _ @[4]ClassBody)? #New }
+	= { "new" _ (@[3]TypeArguments / "<" _ ">" )? _ @[1]ClassOrInterfaceType _ "(" _ @[2]ArgumentList _ ")" ( _ @[4]ClassBody)? #New }
 
 //FIXME with size
 ArrayCreationExpression
 	= { "new" _ @(Type_noArray {@ _ (@Annotations)? _ "[" _ @Expression _ "]" #ArraySize }+ {@ _ (@Annotations)? _ "[" _ "]" #ArraySize }* ) #ArrayCreation }
-	/ { "new" _ @[1]ArrayType _ @[5]ArrayInitializer #ArrayCreation }
+	/ { "new" _ @[1]ArrayType _ @[4]ArrayInitializer #New }
 
 MethodReference
-	= { @[0]ReferenceType _ "::" _ (@[1]TypeArguments)? _ @[2]( Name / { "new" #Name } ) #MethodRef }
+	= { @[0]ReferenceType _ "::" _ (@[3]TypeArguments)? _ @[1]( Name / { "new" #Name } ) #MethodRef }
 
 LambdaExpression
-	= { @LambdaParameters _ "->" _ @LambdaBody #LambdaExpression }
+	= { @LambdaParameters _ "->" _ @LambdaBody #Lambda }
 
 LambdaParameters
-	= { ( @Name
-		/ "(" _ @MethodParamList _ ")"
-		/ "(" _ @InferredFormalParameterList _ ")"
-		) #LambdaParameters }
+	= "(" _ MethodParamList _ ")"
+	/ "(" _ InferredFormalParameterList _ ")"
+	/ { @Name #List }
 
 InferredFormalParameterList
-	= { @Name ( _ "," _ @Name)* #InferredFormalParameterList }
+	= { @Name ( _ "," _ @Name)* #List }
 
 LambdaBody
-	= { (@Expression / @Block) #LambdaBody }
+	= Expression
+	/ Block
 
 
 //Literal
