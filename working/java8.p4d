@@ -1,3 +1,4 @@
+
 // PEG4d Java8 Grammar
 // ===============
 
@@ -252,7 +253,7 @@ ElementValueList
 
 //local variable
 VariableDeclaration
-	= { (@VariableModifiers _ )? @[1]Type _ @[2]{ @InitDecl ( _ "," _ @InitDecl)* #List } #VarDeclStmt }
+	= { (@[0]VariableModifiers _ )? @[1]Type _ @[2]{ @InitDecl ( _ "," _ @InitDecl)* #List } #VarDeclStmt }
 
 VariableModifier
 	= Annotation
@@ -262,27 +263,27 @@ VariableModifiers
 	= { @VariableModifier ( _ @VariableModifier)* #List }
 
 InitDecl
-	= { @VarName ( _ "=" _ @Initializer)? #VarDecl }
+	= { @[0]VarName ( _ "=" _ @[1]Initializer)? #VarDecl }
 
 InitDeclAssign
-	= { @VarName _ "=" _ @Initializer #VarDecl }
+	= { @[0]VarName _ "=" _ @[1]Initializer #VarDecl }
 
 VarName
-	= Name {@ _ (@Annotations _ )? "[" _ "]" #ArrayName }*
+	= Name {@ _ (@[1]Annotations)? _ "[" _ "]" #ArrayName }*
 
 Initializer
 	= Expression
 	/ ArrayInitializer
 
-ArrayInitializer
-	= { "{" _ arrayInitializeExpressionList? _ ","? _ "}" #ArrayInitializer }
+InitializerList
+	= { @Initializer ( _ "," _ @Initializer)* #List }
 
-arrayInitializeExpressionList
-	= (@Initializer ( _ "," _ @Initializer)*)
+ArrayInitializer
+	= { "{" _ (@InitializerList)? _ ","? _ "}" #Array }
 
 //class type, enum type
 ClassDeclaration
-	= { (@[0]ClassModifiers _ )? "class" _ @[1]Name _ (@[2]TypeParameters)? _ (@[3]SuperClass _ )? (@[4]SuperInterfaces _ )* @[5]ClassBody #Class }
+	= { (@[0]ClassModifiers _ )? "class" _ @[1]Name _ (@[2]TypeParameters)? _ (@[3]SuperClass)? _ (@[4]SuperInterfaces _ )* @[5]ClassBody #Class }
 	/ { (@[0]ClassModifiers _ )? "enum" _ @[1]Name _ (@[4]SuperInterfaces _ )* @[5]EnumBody #Enum }
 
 ClassModifier
@@ -451,7 +452,7 @@ MethodParam
 	= { (@VariableModifiers _ )? @[1]Type _ @[2]VarName #Parameter }
 
 ReceiverParam
-	= { (@Annotations _ )? @Type _ (@Name _ "." _ )? @This #Param }
+	= { (@Annotations _ )? @Type _ (@Name _ "." )? _ @This #Parameter }
 
 VarArgs
 	= { (@VariableModifiers _ )? @Type _ "..." _ @VarName #VariadicParameter }
@@ -473,12 +474,12 @@ ConstructorModifiers
 	= { @ConstructorModifier ( _ @ConstructorModifier)* #List }
 
 ConstructorBody
-	= { "{" _ (@ExplicitConstructorInvocation _ )? ((@Statement / @LocalDeclaration) _ )* "}" #Block }
+	= { "{" _ (@ExplicitConstructorInvocation)? _ ((@Statement / @LocalDeclaration) _ )* "}" #Block }
 
 ExplicitConstructorInvocation
 	= { (@[2]TypeArguments _ )? @[0]This  _ "(" _ @[1]ArgumentList _ ")" #Apply } _ ";"
 	/ { (@[2]TypeArguments _ )? @[0]Super _ "(" _ @[1]ArgumentList _ ")" #Apply } _ ";"
-	/ { @[0]PostfixExpression _ "." _ (@[3]TypeArguments _ )? @[1]Super _ "(" _ @[2]ArgumentList _ ")" #Method } _ ";"
+	/ { @[0]PostfixExpression _ "." _ (@[3]TypeArguments)? _ @[1]Super _ "(" _ @[2]ArgumentList _ ")" #Method } _ ";"
 
 
 //Type
@@ -498,28 +499,28 @@ ReferenceType
 	/ ClassOrInterfaceType
 
 ArrayType
-	= Type_noArray {@ _ (@[1]Annotations _ )? "[" _ "]" @[2]{ `Array` #Name } #Type }+
+	= Type_noArray {@ _ (@[1]Annotations)? _ "[" _ "]" @[2]{ `Array` #Name } #Type }+
 
 SimpleClassOrInterfaceType
 	= { (@[1]Annotations _ )? @[2]Name _ (@[0]TypeArguments)? #Type }
 
-//FIXME [3]
 ClassOrInterfaceType
-	= SimpleClassOrInterfaceType {@ _ "." _ (@[1]Annotations _ )? @[2]Name _ (@[3]TypeArguments)? #Type }*
+	= SimpleClassOrInterfaceType {@ _ "." _ @SimpleClassOrInterfaceType #Field }*
 
 ClassOrInterfaceTypes
 	= { @ClassOrInterfaceType ( _ "," _ @ClassOrInterfaceType)* #List }
 
 TypeParameters
-	= { "<" _ @TypeParameter ( _ "," _ @TypeParameter _ )* _ ">" #List }
+	= { "<" _ @TypeParameter ( _ "," _ @TypeParameter)* _ ">" #List }
 
 TypeParameter
 	= { (@[0]Annotations _ )? @[1]Name ( _ "extends" _ @[2]{ @ReferenceType ( _ "&" _ @ReferenceType)* #List } )? #TypeParameter }
 
-//FIXME
 TypeArguments
 	= { "<" _ @TypeArgument ( _ "," _ @TypeArgument)* _ ">" #List }
-	/ "<" _ ">" { `` #List }
+
+TypeArgumentsOrDiamond
+	= TypeArguments / "<" _ ">" { `` #Text }
 
 TypeArgument
 	= ReferenceType
@@ -571,8 +572,6 @@ PRIMARY_TYPE
 	/ "boolean"
 
 
-
-
 // Block, Statement
 //===================
 
@@ -585,14 +584,14 @@ LocalDeclaration
 
 Statement
 	= Block
-	/ { "assert" _ @Expression _ ( ":" _ @Expression _ )? ";" #Assert }
+	/ { "assert" _ @Expression _ ( ":" _ @Expression)? _ ";" #Assert }
 	/ { "if" _   "(" _ @Expression _ ")" _ @Statement ( _ "else" _ @Statement)? #If }
 	/ { "switch" _ "(" _ @Expression _ ")" _ @Statement #Switch }
 	/ { "while" _  "(" _ @Expression _ ")" _ @Statement #While }
 	/ { "do" _ @Statement _ "while" _ "(" _ @Expression _ ")" _ ";" #DoWhile }
 	/ { "for" _ "(" _ (@StatementExpressionList)? _ ";" _ (@Expression)? _ ";" _ (@StatementExpressionList)? _ ")" _ @Statement #For }
 	/ { "for" _ "(" _  @VariableDeclaration       _ ";" _ (@Expression)? _ ";" _ (@StatementExpressionList)? _ ")" _ @Statement #For }
-	/ { "for" _ "(" _ (@VariableModifiers _ )? @Type _ @Name _ ":" _ @Expression _ ")" _ @Statement #ForEach }
+	/ { "for" _ "(" _ (@VariableModifiers)? _ @Type _ @Name _ ":" _ @Expression _ ")" _ @Statement #ForEach }
 	/ { "goto" _ @Name _ ";" #Goto }
 	/ { "continue" _ (@Name)? _ ";" #Continue }
 	/ { "break" _ (@Name)? _ ";" #Break }
@@ -724,7 +723,7 @@ addMethodCall
 	= "." _ (@[3]TypeArguments)? _ @[1]Name _ "(" _ @[2]ArgumentList _ ")" #Method
 
 addInstanceCreation
-	= "." _ "new" _ (@TypeArguments)? _ @SimpleClassOrInterfaceType _ "(" _ @ArgumentList _ ")" ( _ @ClassBody)? #InstanceCreation
+	= "." _ "new" _ (@TypeArgumentsOrDiamond)? _ @SimpleClassOrInterfaceType _ "(" _ @ArgumentList _ ")" ( _ @ClassBody)? #InstanceCreation
 
 addIndex
 	= "[" _ @Expression _ "]" #Index
@@ -770,15 +769,15 @@ ArgumentList
 	= { (@Expression ( _ "," _ @Expression )* )? #List }
 
 InstanceCreationExpression
-	= { "new" _ (@[2]TypeArguments)? _ @[1]ClassOrInterfaceType _ "(" _ @[3]ArgumentList _ ")" ( _ @[4]ClassBody)? #New }
+	= { "new" _ (@[2]TypeArgumentsOrDiamond)? _ @[1]ClassOrInterfaceType _ "(" _ @[3]ArgumentList _ ")" ( _ @[4]ClassBody)? #New }
 
 //FIXME with size
 ArrayCreationExpression
-	= { "new" _ @(Type_noArray {@ _ (@Annotations _ )? "[" _ @Expression _ "]" #ArraySize }+ {@ _ (@Annotations _ )? "[" _ "]" #ArraySize }* ) #ArrayCreation }
+	= { "new" _ @(Type_noArray {@ _ (@Annotations)? _ "[" _ @Expression _ "]" #ArraySize }+ {@ _ (@Annotations)? _ "[" _ "]" #ArraySize }* ) #ArrayCreation }
 	/ { "new" _ @[1]ArrayType _ @[5]ArrayInitializer #ArrayCreation }
 
 MethodReference
-	= { @[0]ReferenceType _ "::" _ (@[1]TypeArguments)? _ ( @[2]Name / { "new" #Name } ) #MethodRef }
+	= { @[0]ReferenceType _ "::" _ (@[1]TypeArguments)? _ @[2]( Name / { "new" #Name } ) #MethodRef }
 
 LambdaExpression
 	= { @LambdaParameters _ "->" _ @LambdaBody #LambdaExpression }
