@@ -720,7 +720,7 @@ addMethodCall
 	= "." _ (@[3]TypeArguments)? _ @[1]Name _ "(" _ @[2]ArgumentList _ ")" #Method
 
 addInstanceCreation
-	= "." _ "new" _ (@[3]TypeArguments / "<" _ ">" )? _ @[1]SimpleClassOrInterfaceType _ "(" _ @[2]ArgumentList _ ")" ( _ @[4]ClassBody)? #New
+	= "." _ "new" _ (@[3]TypeArguments)? _ @[1]SimpleClassOrInterfaceType ( _ "<" _ ">" )? _ "(" _ @[2]ArgumentList _ ")" ( _ @[4]ClassBody)? #New
 
 addIndex
 	= "[" _ @[1]Expression _ "]" #Index
@@ -765,7 +765,7 @@ ArgumentList
 	= { (@Expression ( _ "," _ @Expression )* )? #List }
 
 InstanceCreationExpression
-	= { "new" _ (@[3]TypeArguments / "<" _ ">" )? _ @[1]ClassOrInterfaceType _ "(" _ @[2]ArgumentList _ ")" ( _ @[4]ClassBody)? #New }
+	= { "new" _ (@[3]TypeArguments)? _ @[1]ClassOrInterfaceType ( _ "<" _ ">" )? _ "(" _ @[2]ArgumentList _ ")" ( _ @[4]ClassBody)? #New }
 
 //FIXME with size
 ArrayCreationExpression
